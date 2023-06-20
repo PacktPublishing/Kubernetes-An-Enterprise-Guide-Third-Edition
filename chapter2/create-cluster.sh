@@ -2,7 +2,7 @@
 clear
 
 # Most of the coding segments in the book have been removed to make room for additional technical contact.  Scripts will now
-# contain more in-code docuentation to help users understand what the scripts are executing.
+# contain more documentation to help users understand what the scripts are executing.
 tput setaf 3
 echo -e "*******************************************************************************************************************"
 echo -e "Creating KinD Cluster"
@@ -17,7 +17,7 @@ echo -e "All of the exercises in the book have been tested against KinD v0.19.0.
 echo -e "will work on any other KinD release."
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.19.0/kind-linux-amd64
+curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.20.0/kind-linux-amd64
 chmod +x ./kind
 
 tput setaf 5
@@ -45,7 +45,7 @@ chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin/kubectl
 
 tput setaf 5
-# Install helm and jq
+# Install helmi and jq - We will use these in future chapters
 echo -e "\n \n*******************************************************************************************************************"
 echo -e "Installing Helm3 and jq"
 echo -e "*******************************************************************************************************************"
@@ -65,7 +65,9 @@ echo -e "\n \n******************************************************************
 echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the v.127.1 Image"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.27.1@sha256:b7d12ed662b873bd8510879c1846e87c7e676a79fefc93e17b2a52989d3ff42b
+kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.27.3
+
+# Add a label to the worker node, ingress-ready=true.  The NGINX deployment will only deploy to nodes that have this label.
 
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
