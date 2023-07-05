@@ -29,8 +29,8 @@ echo -e "Adding node labels for Ingress Controller to worker node"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 kubectl label node multinode-worker ingress-ready=true
-kubectl label node multinode-worker02 ingress-ready=true
-kubectl label node multinode-worker03 ingress-ready=true
+kubectl label node multinode-worker2 ingress-ready=true
+kubectl label node multinode-worker3 ingress-ready=true
 
 # Install Calico
 # The Calico scripts have been downloaded and added to the GIT repo to maintain the best release to use with KinD
