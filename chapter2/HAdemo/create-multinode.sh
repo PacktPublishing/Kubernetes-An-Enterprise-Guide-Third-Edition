@@ -105,9 +105,9 @@ frontend workers_https
 backend ingress_https
  option httpchk GET /healthz
  mode tcp
- server worker $worker1:443 check port 80
- server worker2 $worker2:443 check port 80
- server worker3 $worker3:443 check port 80
+ server worker $worker1:443 check port 443
+ server worker2 $worker2:443 check port 443
+ server worker3 $worker3:443 check port 443
 
 frontend workers_http
  bind *:80
