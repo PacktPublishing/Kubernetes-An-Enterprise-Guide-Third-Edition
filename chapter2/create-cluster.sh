@@ -113,6 +113,7 @@ echo -e "\n \n******************************************************************
 echo -e "Cluster Creation Complete.  Please see the summary beloq for key information that will be used in later chapters"
 echo -e "*******************************************************************************************************************"
 
+# Use the IP found in the previous step:
 # Summarize the KinD deployment and show the user an example of a nip.io address that can be used for Ingress rules.
 tput setaf 7
 echo -e "\n \n*******************************************************************************************************************"
