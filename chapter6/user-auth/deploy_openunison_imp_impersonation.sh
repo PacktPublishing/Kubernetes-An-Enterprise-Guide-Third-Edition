@@ -57,12 +57,26 @@ echo "Generating helm chart values to /tmp/openunison-values.yaml"
 export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
 
 
-sed "s/IPADDR/$hostip/g" < ./openunison-values-noimpersonation.yaml  > /tmp/openunison-values.yaml
+sed "s/IPADDR/$hostip/g" < ./openunison-values-impersonation.yaml  > /tmp/openunison-values.yaml
 
 echo "Deploying Orchestra"
 echo -n 'start123' > /tmp/ldaps
 /tmp/ouctl install-auth-portal -s /tmp/ldaps  -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal /tmp/openunison-values.yaml
 
+kubectl create -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+   name: ou-cluster-admins
+subjects:
+- kind: Group
+  name: cn=k8s-cluster-admins,ou=Groups,DC=domain,DC=com
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+EOF
 
 
 
