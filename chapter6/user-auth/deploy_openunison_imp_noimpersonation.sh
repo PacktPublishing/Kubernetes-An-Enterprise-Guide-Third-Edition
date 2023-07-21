@@ -57,7 +57,7 @@ echo "Generating helm chart values to /tmp/openunison-values.yaml"
 export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
 
 
-sed "s/IPADDR/$hostip/g" < ./openunison-values.yaml  > /tmp/openunison-values.yaml
+sed "s/IPADDR/$hostip/g" < ./openunison-values-noimpersonation.yaml  > /tmp/openunison-values.yaml
 
 echo "Deploying Orchestra"
 echo -n 'start123' > /tmp/ldaps
