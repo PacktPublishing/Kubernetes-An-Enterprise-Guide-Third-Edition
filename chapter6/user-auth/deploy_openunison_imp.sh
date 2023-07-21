@@ -60,8 +60,8 @@ export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
 sed "s/IPADDR/$hostip/g" < ./openunison-values.yaml  > /tmp/openunison-values.yaml
 
 echo "Deploying Orchestra"
-
-ouctl install-auth-portal -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal /tmp/openunison-values.yaml
+echo -n 'start123' > /tmp/ldaps
+/tmp/ouctl install-auth-portal -s /tmp/ldaps  -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal /tmp/openunison-values.yaml
 
 
 kubectl create -f - <<EOF
