@@ -22,7 +22,7 @@ echo "Helm Repo URL $REPO_URL"
 
 echo "Deploying the Kubernetes Dashboard"
 
-kubectl apply -f kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
 
 echo "Deploying ActiveDirectory (ApacheDS)"
 
