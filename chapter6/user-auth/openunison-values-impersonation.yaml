@@ -70,7 +70,6 @@ network_policies:
 
 services:
   enable_tokenrequest: true
-  token_request_audience: api
   token_request_expiration_seconds: 600
   node_selectors: []
   liveness_probe:
