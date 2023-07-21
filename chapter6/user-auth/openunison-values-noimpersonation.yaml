@@ -22,8 +22,8 @@ cert_template:
 #image: "docker.io/tremolosecurity/openunison-k8s-login-activedirectory:latest"
 image: docker.io/tremolosecurity/openunison-k8s:latest
 myvd_config_path: "WEB-INF/myvd.conf"
-k8s_cluster_name: kubernetes
-enable_impersonation: true
+k8s_cluster_name: no-impersonation
+enable_impersonation: false
 
 impersonation:
   use_jetstack: true
