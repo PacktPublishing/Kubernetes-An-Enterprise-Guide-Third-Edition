@@ -4,7 +4,7 @@ cicd_proxy:
   explicit_certificate_trust: true
   oidc:
     audience: https://cicd-proxy.apps.IPADDR.nip.io/
-    issuer: https://kubernetes.default.svc.cluster.local/
+    issuer: kubernetes.default.svc.cluster.local
     claims:
       user: sub
     ca: CERTPEM
@@ -25,7 +25,7 @@ cicd_proxy:
     node_selectors: []
   impersonation:
     users:
-    - "cicd-workflow-user"
+    - "system:serviceaccount:cicd-ns:default"
       
     
   
