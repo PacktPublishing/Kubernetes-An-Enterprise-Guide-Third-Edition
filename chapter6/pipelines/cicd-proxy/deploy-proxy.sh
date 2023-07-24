@@ -1,5 +1,24 @@
 #!/bin/bash
 
+if [[ -z "${TS_REPO_NAME}" ]]; then
+	REPO_NAME="tremolo"
+else
+	REPO_NAME=$TS_REPO_NAME
+fi
+
+echo "Helm Repo Name $REPO_NAME"
+
+if [[ -z "${TS_REPO_URL}" ]]; then
+	REPO_URL="https://nexus.tremolo.io/repository/helm"
+else
+	REPO_URL=$TS_REPO_URL
+fi
+
+echo "Helm Repo URL $REPO_URL"
+
+helm repo add $REPO_NAME $REPO_URL
+helm repo update
+
 # expose the oidc discovery document for un-authenticated users
 kubectl create clusterrolebinding oidc-reviewer --clusterrole=system:service-account-issuer-discovery --group=system:unauthenticated
 
@@ -92,3 +111,8 @@ EOF
 export CERT=$(kubectl get cm kube-root-ca.crt -n cicd-proxy -o json | jq -r '.data["ca.crt"]' | base64 -w 0)
 
 sed "s/IPADDR/$hostip/g" < ./cicd-proxy_template.yaml | sed "s/CERTPEM/$CERT/g"  > /tmp/cicd-proxy-values.yaml
+
+helm install cicd-proxy tremolo/cicd-proxy -n cicd-proxy -f /tmp/cicd-proxy-values.yaml
+
+# Create namespace for our pipeline to manipulate
+
