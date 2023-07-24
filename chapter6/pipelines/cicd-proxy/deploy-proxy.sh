@@ -116,3 +116,4 @@ helm install cicd-proxy tremolo/cicd-proxy -n cicd-proxy -f /tmp/cicd-proxy-valu
 
 # Create namespace for our pipeline to manipulate
 
+kubectl create -f target-ns.yaml
