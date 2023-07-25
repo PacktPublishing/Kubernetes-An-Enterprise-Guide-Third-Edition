@@ -24,9 +24,8 @@ cicd_proxy:
     expirationSeconds: 600
     node_selectors: []
   impersonation:
-    users:
-    - "system:serviceaccount:cicd-ns:default"
     serviceaccounts:
-    - "system:serviceaccount:cicd-ns:default"
+    - namespace: cicd-ns
+      name: default
     
   
