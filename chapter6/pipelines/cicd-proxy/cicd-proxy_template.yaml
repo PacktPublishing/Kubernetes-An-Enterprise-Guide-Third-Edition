@@ -19,13 +19,14 @@ cicd_proxy:
         labels:
           kubernetes.io/metadata.name: ingress-nginx
   services:
-    enable_tokenrequest: true
+    enable_tokenrequest: false
     token_request_audience: https://kubernetes.default.svc.cluster.local/
     expirationSeconds: 600
     node_selectors: []
   impersonation:
     users:
     - "system:serviceaccount:cicd-ns:default"
-      
+    serviceaccounts:
+    - "system:serviceaccount:cicd-ns:default"
     
   
