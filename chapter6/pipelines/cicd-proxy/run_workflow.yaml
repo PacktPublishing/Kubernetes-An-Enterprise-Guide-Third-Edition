@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-data
+  namespace: cicd-ns
+data:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDETCCAfmgAwIBAgIUbkbKfQ7oeurnTzrygH/GCKI36E0wDQYJKoZIhvcNAQEL
+    BQAwGDEWMBQGA1UEAwwNZW50ZXJwcmlzZS1jYTAeFw0yMjExMDcxNDQ1MjJaFw0z
+    MjExMDQxNDQ1MjJaMBgxFjAUBgNVBAMMDWVudGVycHJpc2UtY2EwggEiMA0GCSqG
+    SIb3DQEBAQUAA4IBDwAwggEKAoIBAQCnqVwyQo22rG6nUZcSe/GmVfr90Kzgux09
+    468pSSQdpDq9RTQUOvfATPBW81wBRfP1/ryEhshruAKa9/5h+5B/x8ncxTXpm8B7
+    vD7etv8WuryKPsILuidOD0GQSETo77AXM7FfiROr01j7w6QPwuPvBJSp3ikiC/Dc
+    vE66lvIEXN7dSgDddvuvGQNDWOYlGZhf5FHW/5drPHuO9zuyUG+MMi1iP+RBMPRg
+    Ie6v8BpOgrsgdtmXLa4VMsPM+0XfD0H8cSf/2H6WS4/7D8AulnPIoKcY+FLJPAm3
+    ITR7/l6Q0IQuMSw6BLKafBFnBVcTQSH7yJdAJ5gH4VYDr2jkUZL3AgMBAAGjUzBR
+    MB0GA1UdDgQWBBSf9D5FKwHIF7xWqF/48n+r/RTQ3jAfBgNVHSMEGDAWgBSf9D5F
+    KwHIF7xWqF/48n+r/RTQ3jAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUA
+    A4IBAQB7Pl29+rRvxp+TxKOtBddKxHaE2UELnbidhU/16QmnuViBAXbuERHAvcJa
+    naoZecBUARtiLXOjh91A6Ao5ZDOdDNYNRCgLb6s7CUXR+3KzvVFcITTRtkSNLJ15
+    g4hjYrAKDY1H3OswQ/SrhLoFBwgxbICQyxSKit49Dk+exszn1BE716iiIVgYOGZO
+    yIayzBYumFss40jkmhlnk5enab8IL4TqpCe/qbvm5wNjKZUZ3jbl3d1UemqYNuYV
+    cEcZ4QymABYKy4VE3TRYRbIdet4V6uYHF5YPyEEiY0TUe+XURZVAmiOcrkjnUHOx
+    1bjzRqJZL5TwoFCg5eeDzuY4ZTcc
+    -----END CERTIFICATE-----
+  workflows.sh: |
+    #!/bin/bash
+    cat /var/run/secrets/wf-token/serviceaccount/token
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: workflow
+  namespace: cicd-ns
+spec:
+  template:
+    metadata:
+    spec:
+      containers:
+      - image: docker.io/tremolosecurity/vcluster-onboard
+        name: workflow
+        volumesMounts:
+        - mountPath: /workflow
+          name: workflow
+        resources: {}
+      restartPolicy: Never
+      volumes:
+      - name: workflow
+        configMap:
+          name: workflow-data
+      - name: wf-token
+        projected:
+          defaultMode: 420
+          sources:
+          - serviceAccountToken:
+            audience: https://cicd-proxy.apps.IPADDR.nip.io/
+            expirationSeconds: 6000
+            path: wf-token
+
+  
