@@ -55,8 +55,8 @@ spec:
           defaultMode: 420
           sources:
           - serviceAccountToken:
-            audience: https://cicd-proxy.apps.IPADDR.nip.io/
-            expirationSeconds: 6000
-            path: wf-token
+              audience: https://cicd-proxy.apps.IPADDR.nip.io/
+              expirationSeconds: 6000
+              path: wf-token
 
   
