@@ -40,6 +40,10 @@ spec:
     spec:
       containers:
       - image: docker.io/tremolosecurity/vcluster-onboard
+        command:
+        - bash
+        - -c
+        - /workflow/workflows.sh
         name: workflow
         volumeMounts:
         - mountPath: /workflow
