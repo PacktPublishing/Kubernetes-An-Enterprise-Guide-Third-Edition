@@ -27,7 +27,10 @@ data:
     -----END CERTIFICATE-----
   workflows.sh: |
     #!/bin/bash
-    cat /var/run/secrets/wf-token/serviceaccount/token
+    ls /var/run/wfsecrets
+    
+
+    cat /var/run/wfsecrets/wf-token
 ---
 apiVersion: batch/v1
 kind: Job
@@ -42,12 +45,13 @@ spec:
       - image: docker.io/tremolosecurity/vcluster-onboard
         command:
         - bash
-        - -c
         - /workflow/workflows.sh
         name: workflow
         volumeMounts:
         - mountPath: /workflow
           name: workflow
+        - mountPath: /var/run/wfsecrets
+          name: wf-token
         resources: {}
       restartPolicy: Never
       volumes:
