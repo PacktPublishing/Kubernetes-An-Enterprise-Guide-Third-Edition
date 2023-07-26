@@ -41,7 +41,7 @@ spec:
       containers:
       - image: docker.io/tremolosecurity/vcluster-onboard
         name: workflow
-        volumesMounts:
+        volumeMounts:
         - mountPath: /workflow
           name: workflow
         resources: {}
