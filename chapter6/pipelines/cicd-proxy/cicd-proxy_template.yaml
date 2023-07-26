@@ -1,0 +1,31 @@
+cicd_proxy:
+  image: docker.io/tremolosecurity/kube-oidc-proxy:latest
+  replicas: 1
+  explicit_certificate_trust: true
+  oidc:
+    audience: https://cicd-proxy.apps.IPADDR.nip.io/
+    issuer: kubernetes.default.svc.cluster.local
+    claims:
+      user: sub
+    ca: CERTPEM
+  network:
+    ingress_type: nginx
+    ingress_annotations: {}
+    api_server_host: cicd-proxy.apps.IPADDR.nip.io
+    secure_from_ingress: true
+    network_policies:
+      enabled: true
+      ingress:
+        labels:
+          kubernetes.io/metadata.name: ingress-nginx
+  services:
+    enable_tokenrequest: false
+    token_request_audience: https://kubernetes.default.svc.cluster.local/
+    expirationSeconds: 600
+    node_selectors: []
+  impersonation:
+    serviceaccounts:
+    - namespace: cicd-ns
+      name: default
+    
+  
