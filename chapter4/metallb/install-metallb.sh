@@ -27,15 +27,18 @@ tput setaf 2
 kind_subnet=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$@" cluster01-worker)
 first_octets=$(echo $kind_subnet | cut -d '.' -f 1,2)
 metallb_pool=$first_octets".200.100-"$first_octets".200.125"
+metallb_pool2=$first_octets".201.200-"$first_octets".201.225"
 
 # This section will create the manifest for the IPaddressPool using the metallb_pool variable from the previous step
 # It uses a template manifest and replaces the <metallb_pool> with the address pool that was created.
 tput setaf 5
 echo -e "\n*******************************************************************************************************************"
-echo -e "Creating the MetalLB IPaddressPool using an address pool of $metallb_pool"
+echo -e "Creating the MetalLB IPaddressPool using an address pool using $metallb_pool"
+echo -e "and a second pool using $metallb_pool2"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
 cat metallb-pool-template.yaml | sed -E "s/<metallb_pool>/${metallb_pool}/"  > metallb-pool.yaml
+cat metallb-pool-template2.yaml | sed -E "s/<metallb_pool>/${metallb_pool2}/"  > metallb-pool-2.yaml
 
 # Apply the MetalLB Configuration - This will set up MetalLB in Layer 2 mode, with an IP range that will be used
 # to assign IP addresses to services that require a LoadBalancer type.
