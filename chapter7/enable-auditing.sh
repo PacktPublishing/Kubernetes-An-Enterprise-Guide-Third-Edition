@@ -20,7 +20,7 @@ tput setaf 5
 echo -e "\n*******************************************************************************************************************"
 echo -e "Step 3: Copying Kubernetes audit policy to API server"
 echo -e "*******************************************************************************************************************"
-docker cp k8s-audit-policy.yaml cluster01-control-plane:/etc/kubernetes/audit/
+docker cp cm/k8s-audit-policy.yaml cluster01-control-plane:/etc/kubernetes/audit/
 
 tput setaf 3
 echo -e "\n\n*******************************************************************************************************************"
