@@ -10,9 +10,12 @@ spec:
         http:
           paths:
           - backend:
-              serviceName: nginx-fe # Service name to enable GSLB for
-              servicePort: 80
+              service:
+                name: nginx # Service name to enable GSLB for
+                port:
+                  name: http
             path: /
+            pathType: Prefix
   strategy:
     type: failover # Global load balancing strategy
     primaryGeoTag: us-nyc # Primary cluster geo tag
