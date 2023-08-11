@@ -19,17 +19,17 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-fe
+  name: nginx
   namespace: demo
 spec:
   selector:
     matchLabels:
-      app: nginx
+      name: nginx
   replicas: 1
   template:
     metadata:
       labels:
-        app: nginx
+        name: nginx
     spec:
       containers:
       - name: nginx
@@ -47,11 +47,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-fe
+  name: nginx
   namespace: demo
 spec:
   selector:
-    app: nginx
+    name: nginx
   ports:
     - protocol: TCP
       port: 80
