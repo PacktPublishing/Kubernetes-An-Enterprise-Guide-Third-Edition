@@ -18,4 +18,4 @@ spec:
             pathType: Prefix
   strategy:
     type: failover # Global load balancing strategy
-    primaryGeoTag: us-nyc # Primary cluster geo tag
+    primaryGeoTag: us-buf # Primary cluster geo tag

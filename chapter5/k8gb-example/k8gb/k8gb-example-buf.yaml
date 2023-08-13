@@ -5,17 +5,18 @@ metadata:
   namespace: demo
 spec:
   ingress:
+    ingressClassName: nginx
     rules:
-      - host: fe.gb.foowidgets.k8s # Desired GSLB enabled FQDN
-        http:
-          paths:
-          - backend:
-              service:
-                name: nginx # Service name to enable GSLB for
-                port:
-                  name: http
-            path: /
-            pathType: Prefix
+    - host: fe.gb.foowidgets.k8s # Desired GSLB enabled FQDN
+      http:
+        paths:
+        - backend:
+            service:
+              name: nginx # Service name to enable GSLB for
+              port:
+                number: 80
+          path: /
+          pathType: Prefix
   strategy:
     type: failover # Global load balancing strategy
-    primaryGeoTag: us-nyc # Primary cluster geo tag
+    primaryGeoTag: us-buf # Primary cluster geo tag

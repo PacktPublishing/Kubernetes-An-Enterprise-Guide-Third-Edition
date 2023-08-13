@@ -25,6 +25,13 @@ kubectl create -f nginx-fe-buff.yaml
 
 tput setaf 6
 echo -e "\n \n*******************************************************************************************************************"
+echo -e "Adding service to expose CoreDNS on both TCP/UDP port 53"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
+kubectl create -f coredns-dual-svc.yaml -n k8gb
+
+tput setaf 6
+echo -e "\n \n*******************************************************************************************************************"
 echo -e "Deploying of K8GB and example application complete for the Buffalo cluster"
 echo -e "*******************************************************************************************************************\n\n"
 tput setaf 3

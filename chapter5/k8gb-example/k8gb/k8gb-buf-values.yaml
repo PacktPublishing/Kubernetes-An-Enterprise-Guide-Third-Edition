@@ -6,21 +6,28 @@ k8gb:
   clusterGeoTag: "us-buf" # used for places where we need to distinguish between differnet Gslb instances
   extGslbClustersGeoTags: "us-nyc" # comma-separated list of external gslb geo tags to pair with
 
-externaldns:
+  log:
+    # -- log format (simple,json)
+    format: simple # log format (simple,json)
+    # -- log level (panic,fatal,error,warn,info,debug,trace)
+    level: trace # log level (panic,fatal,error,warn,info,debug,trace)
+
+
+#externaldns:
   # -- external-dns image repo:tag
   # It is important to use the image from k8gb external-dns fork to get the full
   # functionality. See links below
   # https://github.com/k8gb-io/external-dns
   # https://github.com/k8gb-io/external-dns/pkgs/container/external-dns
-  image: ghcr.io/k8gb-io/external-dns:v0.13.4-azure-ns
+  #image: ghcr.io/k8gb-io/external-dns:v0.13.4-azure-ns
   # -- external-dns sync interval
-  interval: "20s"
-  securityContext:
+  #interval: "20s"
+  #securityContext:
     # -- For more options consult https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#securitycontext-v1-core
-    runAsUser: 1000
+    #runAsUser: 1000
     # -- For ExternalDNS to be able to read Kubernetes and AWS token files
-    fsGroup: 65534 # For ExternalDNS to be able to read Kubernetes and AWS token files
-    runAsNonRoot: true
+    #fsGroup: 65534 # For ExternalDNS to be able to read Kubernetes and AWS token files
+    #runAsNonRoot: true
 
 coredns:
   # -- service: refer to https://www.k8gb.io/docs/service_upgrade.html for upgrading CoreDNS service steps
