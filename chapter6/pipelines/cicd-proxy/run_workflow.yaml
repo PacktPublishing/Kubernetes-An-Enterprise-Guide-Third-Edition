@@ -29,7 +29,7 @@ data:
     #!/bin/bash
     ls /var/run/wfsecrets
     
-
+    cat /var/run/secrets/kubernetes.io/serviceaccount/token
     cat /var/run/wfsecrets/wf-token
 
     export KUBECONFIG=/tmp/kubeconfig

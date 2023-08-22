@@ -266,7 +266,7 @@ args: []
 
 ## @param replicaCount Number of etcd replicas to deploy
 ##
-replicaCount: 3
+replicaCount: 1
 ## Update strategy
 ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
 ## @param updateStrategy.type Update strategy type, can be set to RollingUpdate or OnDelete.
