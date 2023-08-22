@@ -1,9 +1,9 @@
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
-  name: pool-02
+  name: pool-01
   namespace: metallb-system
 spec:
   addresses:
-  - .201.200-.201.225
+  - 10.2.1.223-10.2.1.225
 

@@ -1,0 +1,6 @@
+        etcd foowidgets.k8s {
+          stubzones
+          path /skydns
+          endpoint http://10.96.113.214:2379
+        }
+

@@ -1,0 +1,6 @@
+        etcd foowidgets.k8s {
+          stubzones
+          path /skydns
+          endpoint http://<ETCD_URL>:2379
+        }
+

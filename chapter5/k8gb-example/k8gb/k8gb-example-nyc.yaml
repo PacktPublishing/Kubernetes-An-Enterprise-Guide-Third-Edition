@@ -1,0 +1,22 @@
+apiVersion: k8gb.absa.oss/v1beta1
+kind: Gslb
+metadata:
+  name: gslb-failover-nyc
+  namespace: demo
+spec:
+  ingress:
+    ingressClassName: nginx
+    rules:
+      - host: fe.gb.foowidgets.k8s # Desired GSLB enabled FQDN
+        http:
+          paths:
+          - backend:
+              service:
+                name: nginx # Service name to enable GSLB for
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+  strategy:
+    type: failover # Global load balancing strategy
+    primaryGeoTag: us-buf # Primary cluster geo tag
