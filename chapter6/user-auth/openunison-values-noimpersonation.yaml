@@ -19,15 +19,13 @@ cert_template:
   st: "State of Cluster"
   c: "MyCountry"
 
-#image: "docker.io/tremolosecurity/openunison-k8s-login-activedirectory:latest"
-image: docker.io/tremolosecurity/openunison-k8s:latest
+
 myvd_config_path: "WEB-INF/myvd.conf"
 k8s_cluster_name: no-impersonation
 enable_impersonation: false
 
 impersonation:
   use_jetstack: true
-  jetstack_oidc_proxy_image: docker.io/tremolosecurity/kube-oidc-proxy:latest
   explicit_certificate_trust: true
 
 dashboard:
@@ -92,7 +90,8 @@ openunison:
     K8S_DB_SSO: oidc
   secrets: []
   html:
-    image: docker.io/tremolosecurity/openunison-k8s-html
+    image: docker pull ghcr.io/openunison/openunison-k8s-react:0.0.1-46fa32
+    legacy: false
   enable_provisioning: false
   use_standard_jit_workflow: true
 
