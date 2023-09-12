@@ -8,6 +8,11 @@ helm install external-secrets \
     -n external-secrets \
     --create-namespace
 
+while [[ $(kubectl get pods -l app.kubernetes.io/name=external-secrets-webhook -n external-secrets -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for external-secrets webhook" && sleep 1; done
+while [[ $(kubectl get pods -l app.kubernetes.io/name=external-secrets -n external-secrets -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for external-secrets controller" && sleep 1; done
+while [[ $(kubectl get pods -l app.kubernetes.io/name=external-secrets-cert-controller -n external-secrets -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for external-secrets certbot" && sleep 1; done
+
+
 kubectl create ns my-ext-secret
 kubectl create sa ext-secret-vault -n my-ext-secret
 
@@ -21,6 +26,8 @@ kubectl create configmap cacerts --from-file=/tmp/cabundle -n my-ext-secret
 
 
 . ../vault/vault_cli.sh
+
+vault kv put secret/data/extsecret/config some-password=mysupersecretp@ssw0rd
 
 vault policy write extsecret - <<EOF
 path "secret/data/extsecret/config" {
