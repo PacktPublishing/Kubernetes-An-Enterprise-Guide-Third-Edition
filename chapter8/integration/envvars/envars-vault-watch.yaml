@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: watch-vault-env
+  name: test-envvars-vault-watch
+  namespace: my-ext-secret
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/log-level: trace
+    vault.hashicorp.com/role: extsecret
+    vault.hashicorp.com/tls-skip-verify: "true"
+    vault.hashicorp.com/agent-inject-secret-myenv: 'secret/data/extsecret/config'
+    vault.hashicorp.com/agent-inject-template-myenv: |
+          {{- with secret "secret/data/extsecret/config" -}}
+            export MY_SECRET_PASSWORD="{{ index .Data "some-password" }}"
+          {{- end }}
+spec:
+  containers:
+  - image: ubuntu:22.04
+    name: test
+    resources: {}
+    command:
+    - bash
+    - -c
+    - 'echo "sleeping 5 seconds"; sleep 5;source /vault/secrets/myenv ; env | grep MY_SECRET_PASSWORD'
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+  serviceAccountName: ext-secret-vault
+  serviceAccount: ext-secret-vault
