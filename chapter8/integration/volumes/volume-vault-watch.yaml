@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: watch-vault-volume
+  name: test-vault-vault-watch
+  namespace: my-ext-secret
+  annotations:
+    vault.hashicorp.com/service: "https://vault.apps.IPADDR.nip.io"
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/log-level: trace
+    vault.hashicorp.com/role: extsecret
+    vault.hashicorp.com/tls-skip-verify: "true"
+    vault.hashicorp.com/agent-inject-secret-myenv: 'secret/data/extsecret/config'
+    vault.hashicorp.com/secret-volume-path-myenv: '/etc/secrets'
+    vault.hashicorp.com/agent-inject-template-myenv: |
+          {{- with secret "secret/data/extsecret/config" -}}
+          MY_SECRET_PASSWORD="{{ index .Data "some-password" }}"
+          {{- end }}
+spec:
+  containers:
+  - image: ubuntu:22.04
+    name: test
+    resources: {}
+    command:
+    - bash
+    - -c
+    - 'while [[ 1 == 1 ]]; do date && cat /etc/secrets/myenv && echo "" && echo "----------" && sleep 1; done'
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+  serviceAccountName: ext-secret-vault
+  serviceAccount: ext-secret-vault

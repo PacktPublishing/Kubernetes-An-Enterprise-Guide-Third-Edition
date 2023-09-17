@@ -49,3 +49,15 @@ export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
 sed "s/IPADDR/$hostip/g" < ./vault-ingress.yaml  > /tmp/vault-ingress.yaml
 kubectl create -f /tmp/vault-ingress.yaml
 
+# create API Server Ingress
+
+sed "s/IPADDR/$hostip/g" < ./api-server-ingress.yaml  > /tmp/api-server-ingress.yaml
+kubectl create -f /tmp/api-server-ingress.yaml
+
+# install CLI
+./install_vault.sh
+
+
+
+
+
