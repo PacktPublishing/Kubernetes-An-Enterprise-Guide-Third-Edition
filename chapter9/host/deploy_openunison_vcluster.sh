@@ -1,5 +1,21 @@
 #!/bin/bash
 
+if [[ -z "${TS_REPO_NAME}" ]]; then
+	REPO_NAME="tremolo"
+else
+	REPO_NAME=$TS_REPO_NAME
+fi
+
+echo "Helm Repo Name $REPO_NAME"
+
+if [[ -z "${TS_REPO_URL}" ]]; then
+	REPO_URL="https://nexus.tremolo.io/repository/helm"
+else
+	REPO_URL=$TS_REPO_URL
+fi
+
+echo "Helm Repo URL $REPO_URL"
+
 vcluster connect myvcluster -n tenant1
 
 echo "Deploying the Kubernetes Dashboard"
