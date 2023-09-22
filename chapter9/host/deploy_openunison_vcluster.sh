@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+vcluster create myvcluster --upgrade -f ./vcluster-values.yaml -n tenant1
+
 if [[ -z "${TS_REPO_NAME}" ]]; then
 	REPO_NAME="tremolo"
 else

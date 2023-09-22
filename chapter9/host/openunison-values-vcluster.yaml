@@ -1,7 +1,7 @@
 network:
-  openunison_host: "k8sou-tennant1.apps.IPADDR.nip.io"
-  dashboard_host: "k8sdb-tennant1.apps.IPADDR.nip.io"
-  api_server_host: "k8sapi-tennant1.apps.IPADDR.nip.io"
+  openunison_host: "k8sou-tenant1.apps.IPADDR.nip.io"
+  dashboard_host: "k8sdb-tenant1.apps.IPADDR.nip.io"
+  api_server_host: "k8sapi-tenant1.apps.IPADDR.nip.io"
   session_inactivity_timeout_seconds: 900
   k8s_url: https://0.0.0.0:6443
   force_redirect_to_tls: false

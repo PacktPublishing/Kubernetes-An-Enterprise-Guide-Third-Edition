@@ -1,0 +1,3 @@
+sync:
+  ingress:
+    enabled: true
