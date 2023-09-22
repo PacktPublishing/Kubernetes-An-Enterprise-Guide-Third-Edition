@@ -18,7 +18,7 @@ export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
 sed "s/IPADDR/$hostip/g" < ./openunison-values-vcluster.yaml  > /tmp/openunison-vcluster-values.yaml
 
 echo "Deploying Orchestra"
-/tmp/ouctl install-auth-portal -s /tmp/ldaps  -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal /tmp/openunison-vcluster-values.yaml kind-cluster01 vcluster_myvcluster_tenant1_kind-cluster01
+/tmp/ouctl install-satelite -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal /tmp/openunison-vcluster-values.yaml kind-cluster01 vcluster_myvcluster_tenant1_kind-cluster01
 
 kubectl create -f - <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
