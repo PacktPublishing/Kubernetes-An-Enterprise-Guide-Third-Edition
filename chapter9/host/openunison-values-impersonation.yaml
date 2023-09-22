@@ -88,6 +88,7 @@ openunison:
   non_secret_data:
     K8S_DB_SSO: oidc
     SHOW_PORTAL_ORGS: "true"
+    K8S_DEPLOYMENT_NAME: "Host Cluster"
   secrets: []
   html:
     image: ghcr.io/openunison/openunison-k8s-react:0.0.1
