@@ -1,0 +1,89 @@
+network:
+  openunison_host: "k8sou-tennant1.apps.IPADDR.nip.io"
+  dashboard_host: "k8sdb-tennant1.apps.IPADDR.nip.io"
+  api_server_host: "k8sapi-tennant1.apps.IPADDR.nip.io"
+  session_inactivity_timeout_seconds: 900
+  k8s_url: https://0.0.0.0:6443
+  force_redirect_to_tls: false
+  createIngressCertificate: true
+  ingress_type: nginx
+  ingress_annotations:
+    kubernetes.io/ingress.class: nginx
+  
+
+
+cert_template:
+  ou: "Kubernetes"
+  o: "MyOrg"
+  l: "My Cluster"
+  st: "State of Cluster"
+  c: "MyCountry"
+
+myvd_config_path: "WEB-INF/myvd.conf"
+k8s_cluster_name: impersonation
+enable_impersonation: true
+
+impersonation:
+  use_jetstack: true
+  explicit_certificate_trust: true
+
+dashboard:
+  namespace: "kubernetes-dashboard"
+  cert_name: "kubernetes-dashboard-certs"
+  label: "k8s-app=kubernetes-dashboard"
+  service_name: kubernetes-dashboard
+certs:
+  use_k8s_cm: false
+
+trusted_certs: []
+
+monitoring:
+  prometheus_service_account: system:serviceaccount:monitoring:prometheus-k8s
+
+       
+network_policies:
+  enabled: false
+  ingress:
+    enabled: true
+    labels:
+      kubernetes.io/metadata.name: ingress-nginx
+  monitoring:
+    enabled: true
+    labels:
+      kubernetes.io/metadata.name: monitoring
+  apiserver:
+    enabled: true
+    labels:
+      kubernetes.io/metadata.name: kube-system
+
+services:
+  enable_tokenrequest: true
+  token_request_audience: https://kubernetes.default.svc.cluster.local
+  token_request_expiration_seconds: 600
+  node_selectors: []
+  liveness_probe:
+  - /usr/local/openunison/bin/check_alive.sh
+  - https://127.0.0.1:8443/auth/idp/k8sIdp/.well-known/openid-configuration
+  - issuer
+  - https://127.0.0.1:8443/check_alive
+  - Anonymous
+  readiness_probe:
+  - /usr/local/openunison/bin/check_alive.sh
+  - https://127.0.0.1:8443/auth/idp/k8sIdp/.well-known/openid-configuration
+  - issuer
+  - https://127.0.0.1:8443/check_alive
+  - Anonymous
+  
+openunison:
+  replicas: 1
+  non_secret_data:
+    K8S_DB_SSO: oidc
+    SHOW_PORTAL_ORGS: "false"
+    K8S_DEPLOYMENT_NAME: "tenant1"
+  secrets: []
+  html:
+    image: ghcr.io/openunison/openunison-k8s-react:0.0.1
+    legacy: false
+  enable_provisioning: false
+  use_standard_jit_workflow: true
+
