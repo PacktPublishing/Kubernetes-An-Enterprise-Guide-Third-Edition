@@ -20,7 +20,7 @@ cert_template:
   c: "MyCountry"
 
 myvd_config_path: "WEB-INF/myvd.conf"
-k8s_cluster_name: impersonation
+k8s_cluster_name: tenant1
 enable_impersonation: true
 
 impersonation:
