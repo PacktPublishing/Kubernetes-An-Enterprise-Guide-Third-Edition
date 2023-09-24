@@ -1,0 +1,5 @@
+sync:
+  ingresses:
+    enabled: true
+  serviceaccounts:
+    enabled: true
