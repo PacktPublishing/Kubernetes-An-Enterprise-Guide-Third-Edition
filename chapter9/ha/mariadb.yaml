@@ -3,9 +3,9 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: selfsigned-issuer
-  namespace: internal
 spec:
-  selfSigned: {}
+  ca:
+    secretName: root-ca
 ---
 apiVersion: v1
 kind: Namespace
