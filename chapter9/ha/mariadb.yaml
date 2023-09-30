@@ -42,7 +42,7 @@ spec:
     - mariadb.mariadb.svc
   # Issuer references are always required.
   issuerRef:
-    name: internal
+    name: selfsigned-issuer
     # We can reference ClusterIssuers by changing the kind here.
     # The default value is Issuer (i.e. a locally namespaced Issuer)
     kind: ClusterIssuer
