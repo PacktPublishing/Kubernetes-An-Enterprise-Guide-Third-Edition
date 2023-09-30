@@ -50,6 +50,18 @@ spec:
     # if you are using an external issuer, change this to that issuer group.
     group: cert-manager.io
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-config
+data:
+  mysql-tls.cnf: |-
+    [mysqld]
+    ssl-ca=/etc/maridb-tls/ca.crt
+    ssl-cert=/etc/maridb-tls/tls.crt
+    ssl-key=/etc/maridb-tls/tls.key
+    require_secure_transport=ON
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -91,6 +103,8 @@ spec:
           name: mariadb-data
         - mountPath: /etc/maridb-tls
           name: mariadb-tls
+        - mountPath: /etc/mysql/conf.d
+          name: mariadb-config
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -100,6 +114,9 @@ spec:
       - name: mariadb-tls
         secret:
           secretName: mariadb-tls
+      - name: mariadb-config
+        configMap:
+          name: mariadb-config
   volumeClaimTemplates:
   - metadata:
       name: mariadb-data
