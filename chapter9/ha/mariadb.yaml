@@ -1,0 +1,127 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+  namespace: internal
+spec:
+  selfSigned: {}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mariadb
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mariadb
+  namespace: mariadb
+spec:
+  # Secret names are always required.
+  secretName: mariadb-tls
+
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  subject:
+    organizations:
+      - k8s-enterprise-guide
+  # The use of the common name field has been deprecated since 2000 and is
+  # discouraged from being used.
+  commonName: mariadb.mariadb.svc
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  usages:
+    - server auth
+    - client auth
+  # At least one of a DNS Name, URI, or IP address is required.
+  dnsNames:
+    - mariadb.mariadb.svc
+  # Issuer references are always required.
+  issuerRef:
+    name: internal
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: ClusterIssuer
+    # This is optional since cert-manager will default to this value however
+    # if you are using an external issuer, change this to that issuer group.
+    group: cert-manager.io
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: mariadb
+  name: mariadb
+  namespace: mariadb
+spec:
+  serviceName: mariadb
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: start123
+        - name: MYSQL_DATABASE
+          value: unison
+        - name: MYSQL_USER
+          value: unison
+        - name: MYSQL_PASSWORD
+          value: startt123
+        image: mariadb
+        imagePullPolicy: Always
+        name: mariadb
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mariadb-data
+        - mountPath: /etc/maridb-tls
+          name: mariadb-tls
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  volumes:
+  - name: mariadb-tls
+    secret:
+      secretName: mariadb-tls
+  volumeClaimTemplates:
+  - metadata:
+      name: mariadb-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mariadb
+  name: mariadb
+  namespace: mariadb
+spec:
+  ports:
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    app: mariadb
+  sessionAffinity: None
+  type: ClusterIP
