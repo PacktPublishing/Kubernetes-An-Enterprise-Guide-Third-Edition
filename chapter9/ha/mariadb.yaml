@@ -96,10 +96,10 @@ spec:
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
-  volumes:
-  - name: mariadb-tls
-    secret:
-      secretName: mariadb-tls
+      volumes:
+      - name: mariadb-tls
+        secret:
+          secretName: mariadb-tls
   volumeClaimTemplates:
   - metadata:
       name: mariadb-data
