@@ -13,6 +13,8 @@ vcluster:
       value: /etc/mariadb-tls/tls.crt
     - name: K3S_DATASTORE_KEYFILE
       value: /etc/mariadb-tls/tls.key
+    - name: K3S_DATASTORE_CAFILE
+      value: /etc/mariadb-tls/ca.crt
   volumeMounts:
   - mountPath: /etc/mariadb-tls
     name: mariadb-tls
