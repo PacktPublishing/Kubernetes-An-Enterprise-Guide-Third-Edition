@@ -1,0 +1,30 @@
+# Enable HA mode
+#enableHA: true
+
+# Scale up k3s replicas
+#replicas: 2
+
+# Set external datastore endpoint
+vcluster:
+  env:
+    - name: K3S_DATASTORE_ENDPOINT
+      value: mysql://vcluster_tenant1@tcp(mariadb.mariadb.svc:3306)/vcluster_tenant1
+    - name: K3S_DATASTORE_CERTFILE
+      value: /etc/mariadb-tls/tls.crt
+    - name: K3S_DATASTORE_KEYFILE
+      value: /etc/mariadb-tls/tls.key
+  volumeMounts:
+  - mountPath: /etc/mariadb-tls
+    name: mariadb-tls
+volumes:
+- name: mariadb-tls
+  secret:
+    secretName: vcluster-client-tls
+
+# Disable persistent storage as all data (including bootstrap data) is stored in external datastore
+storage:
+  persistence: false
+
+# Scale up CoreDNS replicas
+#coredns:
+#  replicas: 2
