@@ -1,8 +1,8 @@
 # Enable HA mode
-#enableHA: true
+enableHA: true
 
 # Scale up k3s replicas
-#replicas: 2
+replicas: 2
 
 # Set external datastore endpoint
 vcluster:
@@ -28,5 +28,5 @@ storage:
   persistence: false
 
 # Scale up CoreDNS replicas
-#coredns:
-#  replicas: 2
+coredns:
+  replicas: 2
