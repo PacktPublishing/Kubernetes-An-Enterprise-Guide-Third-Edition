@@ -46,4 +46,4 @@ spec:
     secretName: root-ca
 EOF
 
-kubectl create -f ./mariadb.yaml
+kubectl create -f ./mysql.yaml

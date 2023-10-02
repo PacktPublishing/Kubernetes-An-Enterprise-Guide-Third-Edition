@@ -8,18 +8,18 @@
 vcluster:
   env:
     - name: K3S_DATASTORE_ENDPOINT
-      value: mysql://vcluster_tenant1@tcp(mariadb.mariadb.svc:3306)/vcluster_tenant1?skip-verify=true
+      value: mysql://vcluster_tenant1@tcp(mysql.mysql.svc:3306)/vcluster_tenant1
     - name: K3S_DATASTORE_CERTFILE
-      value: /etc/mariadb-tls/tls.crt
+      value: /etc/mysql-tls/tls.crt
     - name: K3S_DATASTORE_KEYFILE
-      value: /etc/mariadb-tls/tls.key
+      value: /etc/mysql-tls/tls.key
     - name: K3S_DATASTORE_CAFILE
-      value: /etc/mariadb-tls/ca.crt
+      value: /etc/mysql-tls/ca.crt
   volumeMounts:
-  - mountPath: /etc/mariadb-tls
-    name: mariadb-tls
+  - mountPath: /etc/mysql-tls
+    name: mysql-tls
 volumes:
-- name: mariadb-tls
+- name: mysql-tls
   secret:
     secretName: vcluster-client-tls
 

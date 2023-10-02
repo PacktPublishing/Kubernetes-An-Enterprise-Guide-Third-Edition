@@ -10,16 +10,16 @@ spec:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: mariadb
+  name: mysql
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: mariadb
-  namespace: mariadb
+  name: mysql
+  namespace: mysql
 spec:
   # Secret names are always required.
-  secretName: mariadb-tls
+  secretName: mysql-tls
 
   duration: 2160h # 90d
   renewBefore: 360h # 15d
@@ -28,7 +28,7 @@ spec:
       - k8s-enterprise-guide
   # The use of the common name field has been deprecated since 2000 and is
   # discouraged from being used.
-  commonName: mariadb.mariadb.svc
+  commonName: mysql.mysql.svc
   isCA: false
   privateKey:
     algorithm: RSA
@@ -39,7 +39,7 @@ spec:
     - client auth
   # At least one of a DNS Name, URI, or IP address is required.
   dnsNames:
-    - mariadb.mariadb.svc
+    - mysql.mysql.svc
   # Issuer references are always required.
   issuerRef:
     name: selfsigned-issuer
@@ -53,35 +53,35 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mariadb-config
-  namespace: mariadb
+  name: mysql-config
+  namespace: mysql
 data:
   mysql-tls.cnf: |-
     [mysqld]
-    ssl-ca=/etc/maridb-tls/ca.crt
-    ssl-cert=/etc/maridb-tls/tls.crt
-    ssl-key=/etc/maridb-tls/tls.key
+    ssl-ca=/etc/mysql-tls/ca.crt
+    ssl-cert=/etc/mysql-tls/tls.crt
+    ssl-key=/etc/mysql-tls/tls.key
     require_secure_transport=ON
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app: mariadb
-  name: mariadb
-  namespace: mariadb
+    app: mysql
+  name: mysql
+  namespace: mysql
 spec:
-  serviceName: mariadb
+  serviceName: mysql
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: mariadb
+      app: mysql
   template:
     metadata:
       creationTimestamp: null
       labels:
-        app: mariadb
+        app: mysql
     spec:
       containers:
       - env:
@@ -93,34 +93,34 @@ spec:
           value: unison
         - name: MYSQL_PASSWORD
           value: startt123
-        image: mariadb
+        image: mysql
         imagePullPolicy: Always
-        name: mariadb
+        name: mysql
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
         - mountPath: /var/lib/mysql
-          name: mariadb-data
-        - mountPath: /etc/maridb-tls
-          name: mariadb-tls
+          name: mysql-data
+        - mountPath: /etc/mysql-tls
+          name: mysql-tls
         - mountPath: /etc/mysql/conf.d
-          name: mariadb-config
+          name: mysql-config
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
       volumes:
-      - name: mariadb-tls
+      - name: mysql-tls
         secret:
-          secretName: mariadb-tls
-      - name: mariadb-config
+          secretName: mysql-tls
+      - name: mysql-config
         configMap:
-          name: mariadb-config
+          name: mysql-config
   volumeClaimTemplates:
   - metadata:
-      name: mariadb-data
+      name: mysql-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
@@ -131,15 +131,15 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: mariadb
-  name: mariadb
-  namespace: mariadb
+    app: mysql
+  name: mysql
+  namespace: mysql
 spec:
   ports:
   - port: 3306
     protocol: TCP
     targetPort: 3306
   selector:
-    app: mariadb
+    app: mysql
   sessionAffinity: None
   type: ClusterIP
