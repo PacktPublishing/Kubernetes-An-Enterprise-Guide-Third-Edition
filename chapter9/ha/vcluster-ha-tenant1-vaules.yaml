@@ -8,7 +8,7 @@
 vcluster:
   env:
     - name: K3S_DATASTORE_ENDPOINT
-      value: mysql://vcluster_tenant1@tcp(mariadb.mariadb.svc:3306)/vcluster_tenant1
+      value: mysql://vcluster_tenant1@tcp(mariadb.mariadb.svc:3306)/vcluster_tenant1?skip-verify=true
     - name: K3S_DATASTORE_CERTFILE
       value: /etc/mariadb-tls/tls.crt
     - name: K3S_DATASTORE_KEYFILE
