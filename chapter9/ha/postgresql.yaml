@@ -115,10 +115,8 @@ spec:
           items:
           - key: ca.crt
             path: ca.crt
-            mode: 400
           - key: tls.crt
             path: tls.crt
-            mode: 400
           - key: tls.key
             path: tls.key
             mode: 400
