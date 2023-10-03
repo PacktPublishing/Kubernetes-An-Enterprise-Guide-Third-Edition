@@ -56,12 +56,12 @@ metadata:
   name: postgresql-config
   namespace: postgresql
 data:
-  postgresql-tls.cnf: |-
-    [postgresqld]
-    ssl-ca=/etc/postgresql-tls/ca.crt
-    ssl-cert=/etc/postgresql-tls/tls.crt
-    ssl-key=/etc/postgresql-tls/tls.key
-    require_secure_transport=ON
+  postgresql.conf: |-
+    listen_addresses = '*'
+    ssl = off
+    ssl_ca_file = '/etc/postgresql-tls/ca.crt'
+    ssl_cert_file = '/etc/postgresql-tls/tls.crt'
+    ssl_key_file = '/etc/postgresql-tls/tls.key'
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -89,7 +89,7 @@ spec:
           value: admin
         - name: POSTGRES_PASSWORD
           value: start123
-        image: postgresql
+        image: postgres
         imagePullPolicy: Always
         name: postgresql
         resources: {}
@@ -100,7 +100,7 @@ spec:
           name: postgresql-data
         - mountPath: /etc/postgresql-tls
           name: postgresql-tls
-        - mountPath: /etc/postgresql/conf.d
+        - mountPath: /etc/postgresql
           name: postgresql-config
       dnsPolicy: ClusterFirst
       restartPolicy: Always
