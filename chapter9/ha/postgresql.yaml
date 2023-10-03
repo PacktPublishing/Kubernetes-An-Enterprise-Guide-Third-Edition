@@ -100,6 +100,7 @@ spec:
           name: postgresql-data
         - mountPath: /etc/postgresql-tls
           name: postgresql-tls
+          readOnly: true
         - mountPath: /etc/postgresql
           name: postgresql-config
       dnsPolicy: ClusterFirst
@@ -111,6 +112,16 @@ spec:
       - name: postgresql-tls
         secret:
           secretName: postgresql-tls
+          items:
+          - key: ca.crt
+            path: ca.crt
+            mode: 0640
+          - key: tls.crt
+            path: tls.crt
+            mode: 0640
+          - key: tls.key
+            path: tls.key
+            mode: 0640
       - name: postgresql-config
         configMap:
           name: postgresql-config
