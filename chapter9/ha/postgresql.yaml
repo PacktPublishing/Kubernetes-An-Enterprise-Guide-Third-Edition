@@ -58,7 +58,7 @@ metadata:
 data:
   postgresql.conf: |-
     listen_addresses = '*'
-    ssl = off
+    ssl = on
     ssl_ca_file = '/etc/postgresql-tls/ca.crt'
     ssl_cert_file = '/etc/postgresql-tls/tls.crt'
     ssl_key_file = '/etc/postgresql-tls/tls.key'
