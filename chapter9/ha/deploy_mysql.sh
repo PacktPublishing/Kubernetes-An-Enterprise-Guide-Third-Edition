@@ -47,3 +47,7 @@ spec:
 EOF
 
 kubectl create -f ./mysql.yaml
+
+while [[ $(kubectl get pod mysql-0 -n mysql -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for mysql pod" && sleep 1; done
+
+cat create-ha-db.sql | kubectl exec -ti mysql-0 -n mysql -- mysql -u root --password=start123

@@ -28,7 +28,7 @@ spec:
       - k8s-enterprise-guide
   # The use of the common name field has been deprecated since 2000 and is
   # discouraged from being used.
-  commonName: postgresql.postgresql.svc
+  commonName: postgres
   isCA: false
   privateKey:
     algorithm: RSA
@@ -119,7 +119,7 @@ spec:
             path: tls.crt
           - key: tls.key
             path: tls.key
-            mode: 400
+            mode: 600
       - name: postgresql-config
         configMap:
           name: postgresql-config

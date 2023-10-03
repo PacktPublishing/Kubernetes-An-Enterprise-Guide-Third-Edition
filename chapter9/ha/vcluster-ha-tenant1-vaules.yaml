@@ -18,6 +18,8 @@ vcluster:
   volumeMounts:
   - mountPath: /etc/mysql-tls
     name: mysql-tls
+  - mountPath: /data
+    name: data
 volumes:
 - name: mysql-tls
   secret:
