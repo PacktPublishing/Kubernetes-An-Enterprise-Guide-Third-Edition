@@ -115,13 +115,13 @@ spec:
           items:
           - key: ca.crt
             path: ca.crt
-            mode: 0640
+            mode: 400
           - key: tls.crt
             path: tls.crt
-            mode: 0640
+            mode: 400
           - key: tls.key
             path: tls.key
-            mode: 0640
+            mode: 400
       - name: postgresql-config
         configMap:
           name: postgresql-config
