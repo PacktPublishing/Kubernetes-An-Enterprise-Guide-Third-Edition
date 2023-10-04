@@ -8,11 +8,11 @@ clear
 
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Adding apparmor-utils to the Cluster Nodes"
+echo -e "Updating APT and Installing the apparmor-utils package on the Nodes"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-docker exec -it cluster01-worker bash -c "apt install apparmor-utils -y && systemctl restart containerd"
-docker exec -it cluster01-control-plane bash -c "apt install apparmor-utils -y && systemctl restart containerd"
+docker exec -it cluster01-worker bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
+docker exec -it cluster01-control-plane bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
 
 # Add calico-typha to Apparmor unconfined mode
 tput setaf 5
