@@ -97,6 +97,8 @@ openunison:
   use_standard_jit_workflow: false
   naas:
     groups:
+      internal:
+        enabled: false
       external:
         enabled: true
         adminGroup: cn=k8s-cluster-admins,ou=Groups,DC=domain,DC=com
