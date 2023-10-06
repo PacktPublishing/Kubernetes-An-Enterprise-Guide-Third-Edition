@@ -98,6 +98,12 @@ data:
     member: cn=mmosley,ou=Users,DC=domain,DC=com
     member: cn=pipeline_svc_account,ou=Users,DC=domain,DC=com
 
+    dn: cn=openunison-admins,ou=Groups,DC=domain,DC=com
+    objectClass: group
+    cn: openunison-admins
+    member: cn=mmosley,ou=Users,DC=domain,DC=com
+    
+
     dn: cn=group2,ou=Groups,DC=domain,DC=com
     objectClass: group
     cn: group2

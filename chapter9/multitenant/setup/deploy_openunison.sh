@@ -116,31 +116,3 @@ echo -n 'start123' > /tmp/smtp
 echo -n 'start123' > /tmp/db
 /tmp/ouctl install-auth-portal -s /tmp/ldaps  -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal -m $REPO_NAME/openunison-k8s-cluster-management -b /tmp/db -t /tmp/smtp  /tmp/openunison-values.yaml
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-kubectl create -f - <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-   name: ou-cluster-admins
-subjects:
-- kind: Group
-  name: cn=k8s-cluster-admins,ou=Groups,DC=domain,DC=com
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
-EOF
