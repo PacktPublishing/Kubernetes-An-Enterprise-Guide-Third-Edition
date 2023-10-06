@@ -82,7 +82,7 @@ data:
     server.shadowGroups.tremolo.config.mapping=cn=name,uniqueMember=sub
     server.shadowGroups.tremolo.config.sql=SELECT name,sub FROM localGroups LEFT OUTER JOIN userGroups ON localGroups.groupId=userGroups.groupId LEFT OUTER JOIN localUsers ON userGroups.userId=localUsers.userId
 
-    server.activedirectory.chain=objectguid2text,dnmapper,memberofmapper,memberof,objmap,membertrans,ldap
+    server.activedirectory.chain=objectguid2text,dnmapper,memberofmapper,memberof,objmap,membertrans,adddn,ldap
     server.activedirectory.nameSpace=ou=activedirectory,o=Data
     server.activedirectory.weight=0
     server.activedirectory.enabled=true
@@ -109,6 +109,7 @@ data:
     server.activedirectory.objmap.config.mapping=objectClass.inetOrgPerson=user,objectClass.groupofnames=group
     server.activedirectory.membertrans.className=net.sourceforge.myvd.inserts.mapping.AttributeMapper
     server.activedirectory.membertrans.config.mapping=member=member,uid=samAccountName
+    server.activedirectory.adddn.className=com.tremolosecurity.proxy.myvd.inserts.ad.AddDnAttributes
     server.activedirectory.ldap.className=com.tremolosecurity.proxy.myvd.inserts.ad.ADLdapInsert
     server.activedirectory.ldap.config.host=apacheds.activedirectory.svc
     server.activedirectory.ldap.config.port=10636

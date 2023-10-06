@@ -24,7 +24,7 @@ cert_template:
 myvd_config_path: "WEB-INF/myvd.conf"
 k8s_cluster_name: impersonation
 enable_impersonation: true
-
+image: docker.io/mlbiam/openunison-k8s:1.0.38
 impersonation:
   use_jetstack: true
   explicit_certificate_trust: true
@@ -89,6 +89,7 @@ openunison:
   replicas: 1
   non_secret_data:
     K8S_DB_SSO: oidc
+    SHOW_PORTAL_ORGS: "true"
   secrets: []
   html:
     image: ghcr.io/openunison/openunison-k8s-react:0.0.1
