@@ -11,7 +11,7 @@ data:
 
     server.globalChain.accesslog.className=com.tremolosecurity.proxy.myvd.log.AccessLog
 
-    server.nameSpaces=rootdse,myvdroot,shadowUsers,activedirectory
+    server.nameSpaces=rootdse,myvdroot,shadow,shadowUsers,shadowGroups,activedirectory
     server.rootdse.chain=dse
     server.rootdse.nameSpace=
     server.rootdse.weight=0
@@ -22,20 +22,65 @@ data:
     server.myvdroot.weight=0
     server.myvdroot.root.className=net.sourceforge.myvd.inserts.RootObject
 
-    server.shadowUsers.chain=mapping,api
-    server.shadowUsers.nameSpace=ou=shadow,o=Tremolo
+    server.shadow.chain=entry
+    server.shadow.nameSpace=ou=shadow,o=Tremolo
+    server.shadow.weight=0
+    server.shadow.entry.className=net.sourceforge.myvd.inserts.RootObject
+
+    server.shadowUsers.chain=loadGroups,map,logit,makesub,tremolo
+    server.shadowUsers.nameSpace=ou=users,ou=shadow,o=Tremolo
     server.shadowUsers.weight=0
     server.shadowUsers.enabled=true
-    server.shadowUsers.debug.className=net.sourceforge.myvd.inserts.DumpTransaction
-    server.shadowUsers.debug.config.logLevel=info
-    server.shadowUsers.debug.config.label=k8s
-    server.shadowUsers.mapping.className=net.sourceforge.myvd.inserts.mapping.AttributeMapper
-    server.shadowUsers.mapping.config.mapping=mail=email,givenName=first_name,sn=last_name
-    server.shadowUsers.api.className=com.tremolosecurity.myvd.K8sCrdInsert
-    server.shadowUsers.api.config.alwaysMapUIDInFilter=true
-    server.shadowUsers.api.config.nameSpace=#[K8S_OPENUNISON_NS:openunison]
-    server.shadowUsers.api.config.k8sTargetName=k8s
-    server.shadowUsers.api.config.alwaysMapUIDInFilter=true
+    server.shadowUsers.logit.className=net.sourceforge.myvd.inserts.DumpTransaction
+    server.shadowUsers.logit.config.logLevel=info
+    server.shadowUsers.logit.config.label=fromdb
+    server.shadowUsers.loadGroups.className=com.tremolosecurity.proxy.myvd.inserts.AddGroupsFromProvisioningTarget
+    server.shadowUsers.loadGroups.config.attributeName=groups
+    server.shadowUsers.loadGroups.config.targetName=jitdb
+    server.shadowUsers.loadGroups.config.uidAttribute=uid
+    server.shadowUsers.loadGroups.config.label=
+    server.shadowUsers.map.className=net.sourceforge.myvd.inserts.mapping.AttributeMapper
+    server.shadowUsers.map.config.mapping=givenName=givenname
+    server.shadowUsers.makesub.className=net.sourceforge.myvd.inserts.mapping.CopyAttirbute
+    server.shadowUsers.makesub.config.sourceAttribute=uid
+    server.shadowUsers.makesub.config.targetAttribute=sub
+    server.shadowUsers.tremolo.className=net.sourceforge.myvd.inserts.jdbc.JdbcInsert
+    server.shadowUsers.tremolo.config.driver=#[OU_JDBC_DRIVER]
+    server.shadowUsers.tremolo.config.url=#[OU_JDBC_URL]
+    server.shadowUsers.tremolo.config.user=#[OU_JDBC_USER]
+    server.shadowUsers.tremolo.config.password=#[OU_JDBC_PASSWORD]
+    server.shadowUsers.tremolo.config.maxCons=10
+    server.shadowUsers.tremolo.config.maxConsIdle=10
+    server.shadowUsers.tremolo.config.validationQuery=#[OU_JDBC_VALIDATION]
+    server.shadowUsers.tremolo.config.rdn=uid
+    server.shadowUsers.tremolo.config.useSimple=true
+    server.shadowUsers.tremolo.config.addBaseToFilter=false
+    server.shadowUsers.tremolo.config.objectClass=inetOrgPerson
+    server.shadowUsers.tremolo.config.mapping=mail=mail,uid=sub,givenname=firstName,sn=lastName
+    server.shadowUsers.tremolo.config.sql=SELECT mail,sub,firstName,lastName FROM localUsers
+
+    server.shadowGroups.chain=dbgroups,tremolo
+    server.shadowGroups.nameSpace=ou=groups,ou=shadow,o=Tremolo
+    server.shadowGroups.weight=0
+    server.shadowGroups.enabled=true
+    server.shadowGroups.dbgroups.className=net.sourceforge.myvd.inserts.jdbc.DBGroups
+    server.shadowGroups.dbgroups.config.memberAttribute=uniqueMember
+    server.shadowGroups.dbgroups.config.suffix=ou=users,ou=shadow,o=Tremolo
+    server.shadowGroups.dbgroups.config.rdn=uid
+    server.shadowGroups.tremolo.className=net.sourceforge.myvd.inserts.jdbc.JdbcInsert
+    server.shadowGroups.tremolo.config.driver=#[OU_JDBC_DRIVER]
+    server.shadowGroups.tremolo.config.url=#[OU_JDBC_URL]
+    server.shadowGroups.tremolo.config.user=#[OU_JDBC_USER]
+    server.shadowGroups.tremolo.config.password=#[OU_JDBC_PASSWORD]
+    server.shadowGroups.tremolo.config.maxCons=10
+    server.shadowGroups.tremolo.config.maxConsIdle=10
+    server.shadowGroups.tremolo.config.validationQuery=#[OU_JDBC_VALIDATION]
+    server.shadowGroups.tremolo.config.rdn=cn
+    server.shadowGroups.tremolo.config.useSimple=true
+    server.shadowGroups.tremolo.config.addBaseToFilter=false
+    server.shadowGroups.tremolo.config.objectClass=groupOfUniqueNames
+    server.shadowGroups.tremolo.config.mapping=cn=name,uniqueMember=sub
+    server.shadowGroups.tremolo.config.sql=SELECT name,sub FROM localGroups LEFT OUTER JOIN userGroups ON localGroups.groupId=userGroups.groupId LEFT OUTER JOIN localUsers ON userGroups.userId=localUsers.userId
 
     server.activedirectory.chain=objectguid2text,dnmapper,memberofmapper,memberof,objmap,membertrans,ldap
     server.activedirectory.nameSpace=ou=activedirectory,o=Data
