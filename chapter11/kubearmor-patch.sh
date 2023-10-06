@@ -5,6 +5,12 @@ clear
 # Special thanks to Rahul Jadhav from Accuknox for the assistance on the requirements to enable Kubearmor on KinD
 #docker exec -it cluster01-worker bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
 #docker exec -it cluster01-control-plane bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Downloading the latest karmor release from get.kubearmor.io"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
+curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin
 
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
