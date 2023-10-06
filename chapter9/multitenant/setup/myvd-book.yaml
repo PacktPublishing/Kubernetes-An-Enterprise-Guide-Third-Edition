@@ -82,7 +82,7 @@ data:
     server.shadowGroups.tremolo.config.mapping=cn=name,uniqueMember=sub
     server.shadowGroups.tremolo.config.sql=SELECT name,sub FROM localGroups LEFT OUTER JOIN userGroups ON localGroups.groupId=userGroups.groupId LEFT OUTER JOIN localUsers ON userGroups.userId=localUsers.userId
 
-    server.activedirectory.chain=objectguid2text,dnmapper,memberofmapper,memberof,objmap,membertrans,adddn,ldap
+    server.activedirectory.chain=objectguid2text,dnmapper,dnattermapper,memberofmapper,memberof,objmap,membertrans,adddn,ldap
     server.activedirectory.nameSpace=ou=activedirectory,o=Data
     server.activedirectory.weight=0
     server.activedirectory.enabled=true
@@ -98,6 +98,13 @@ data:
     server.activedirectory.dnmapper.config.remoteBase=DC=domain,DC=com
     server.activedirectory.dnmapper.config.localBase=ou=activedirectory,o=Data
     server.activedirectory.dnmapper.config.urlAttribs=
+
+    server.activedirectory.dnattermapper.className=net.sourceforge.myvd.inserts.mapping.DNAttributeMapper
+    server.activedirectory.dnattermapper.config.dnAttribs=distinguishedName
+    server.activedirectory.dnattermapper.config.localBase=DC=domain,DC=com
+    server.activedirectory.dnattermapper.config.remoteBase=ou=activedirectory,o=Data
+    server.activedirectory.dnattermapper.config.urlAttribs=
+
     server.activedirectory.memberof.className=net.sourceforge.myvd.inserts.mapping.VirtualMemberOf
     server.activedirectory.memberof.config.searchBase=ou=activedirectory,o=Data
     server.activedirectory.memberof.config.applyToObjectClass=inetOrgPerson
