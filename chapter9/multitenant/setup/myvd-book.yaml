@@ -94,7 +94,7 @@ data:
     server.activedirectory.memberofmapper.config.localBase=DC=domain,DC=com
     server.activedirectory.memberofmapper.config.urlAttribs=
     server.activedirectory.dnmapper.className=net.sourceforge.myvd.inserts.mapping.DNAttributeMapper
-    server.activedirectory.dnmapper.config.dnAttribs=member,owner,member,distinguishedName,manager
+    server.activedirectory.dnmapper.config.dnAttribs=member,owner,member,manager
     server.activedirectory.dnmapper.config.remoteBase=DC=domain,DC=com
     server.activedirectory.dnmapper.config.localBase=ou=activedirectory,o=Data
     server.activedirectory.dnmapper.config.urlAttribs=
