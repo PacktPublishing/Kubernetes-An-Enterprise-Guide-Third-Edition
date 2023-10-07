@@ -113,6 +113,20 @@ data:
     objectClass: group
     cn: k8s-create-ns
     member: cn=jjackson,ou=Users,DC=domain,DC=com
+
+    dn: cn=vcluster-test-admin,ou=groups,dc=domain,dc=com
+    objectClass: group
+    cn: vcluster-test-admin
+    member: cn=jjackson,ou=Users,DC=domain,DC=com
+    member: cn=mmosley,ou=Users,DC=domain,DC=com
+
+    dn: cn=vcluster-test-view,ou=groups,dc=domain,dc=com
+    objectClass: group
+    cn: vcluster-test-view
+    member: cn=jjackson,ou=Users,DC=domain,DC=com
+    member: cn=mmosley,ou=Users,DC=domain,DC=com
+
+
 ---
 apiVersion: apps/v1
 kind: Deployment
