@@ -1,0 +1,28 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-relay-kubearmor-kubearmor-relay-server-latest-write-etc-dir
+  namespace: kube-system
+spec:
+  action: Block
+  file:
+    matchDirectories:
+    - dir: /etc/
+      readOnly: true
+      recursive: true
+  message: Alert! File creation under /etc/ directory detected.
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-relay
+  severity: 5
+  tags:
+  - NIST_800-53_SI-7
+  - NIST
+  - NIST_800-53_SI-4
+  - NIST_800-53
+  - MITRE_T1562.001_disable_or_modify_tools
+  - MITRE_T1036.005_match_legitimate_name_or_location
+  - MITRE_TA0003_persistence
+  - MITRE
+  - MITRE_T1036_masquerading
+  - MITRE_TA0005_defense_evasion

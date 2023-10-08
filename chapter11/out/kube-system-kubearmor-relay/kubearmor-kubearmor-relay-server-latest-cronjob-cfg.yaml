@@ -1,0 +1,37 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-relay-kubearmor-kubearmor-relay-server-latest-cronjob-cfg
+  namespace: kube-system
+spec:
+  action: Audit
+  file:
+    matchDirectories:
+    - dir: /var/spool/cron/
+      recursive: true
+    - dir: /var/cron/
+      recursive: true
+    - dir: /etc/cron.d/
+      recursive: true
+    - dir: /etc/cron.daily/
+      recursive: true
+    - dir: /etc/cron.hourly/
+      recursive: true
+    - dir: /etc/cron.monthly/
+      recursive: true
+    - dir: /etc/cron.weekly/
+      recursive: true
+    matchPaths:
+    - path: /etc/crontab
+  message: Alert! Access to cron job files/directories detected.
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-relay
+  severity: 5
+  tags:
+  - NIST
+  - SI-4
+  - NIST_800-53_SI-4
+  - CIS
+  - CIS_Linux
+  - CIS_5.1_Configure_Cron

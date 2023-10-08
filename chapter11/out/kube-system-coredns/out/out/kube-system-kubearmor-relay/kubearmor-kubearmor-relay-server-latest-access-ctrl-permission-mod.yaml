@@ -1,0 +1,24 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-relay-kubearmor-kubearmor-relay-server-latest-access-ctrl-permission-mod
+  namespace: kube-system
+spec:
+  action: Block
+  message: Alert! access control permission modification detected
+  process:
+    matchPaths:
+    - path: /usr/bin/chmod
+    - path: /usr/bin/chown
+    - path: /bin/chmod
+    - path: /bin/chown
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-relay
+  severity: 5
+  tags:
+  - CIS
+  - CIS_Linux
+  - CIS_4_Logging_and_Aduditing
+  - CIS_4.1.1_Data_Retention
+  - CIS_4.1.11_system_access_control_permission

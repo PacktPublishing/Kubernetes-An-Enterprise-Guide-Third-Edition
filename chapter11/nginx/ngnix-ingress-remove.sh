@@ -7,9 +7,9 @@ echo -e "\n*********************************************************************
 echo -e "Cleaning up the NGINX resources"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-kubectl delete deployment nginx-web
-kubectl delete svc nginx-web
-kubectl delete ingress nginx-ingress
+kubectl delete deployment nginx-web -n demo
+kubectl delete svc nginx-web -n demo
+kubectl delete ingress nginx-ingress -n demo
 
 tput setaf 7
 echo -e "\n \n*******************************************************************************************************************"

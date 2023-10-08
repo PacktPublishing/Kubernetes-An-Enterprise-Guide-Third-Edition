@@ -1,0 +1,20 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-relay-kubearmor-kubearmor-relay-server-latest-write-in-shm-dir
+  namespace: kube-system
+spec:
+  action: Block
+  file:
+    matchDirectories:
+    - dir: /dev/shm/
+      readOnly: true
+      recursive: true
+  message: Alert! write to /dev/shm folder prevented.
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-relay
+  severity: 5
+  tags:
+  - MITRE_execution
+  - MITRE

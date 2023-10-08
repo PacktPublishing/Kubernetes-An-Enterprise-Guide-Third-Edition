@@ -1,13 +1,21 @@
 #!/bin/bash
 clear
 
+tput setaf 5
+echo -e "\n*******************************************************************************************************************"
+echo -e "Creating the demo namespace"
+echo -e "*******************************************************************************************************************"
+tput setaf 2
+kubectl create ns demo
+
+
 # Create a simple NGINX deployment using kubectl and name it nginx-web
 tput setaf 5
 echo -e "\n*******************************************************************************************************************"
 echo -e "Deploying the NGINX pod"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-kubectl create deployment nginx-web --image bitnami/nginx
+kubectl create deployment nginx-web --image bitnami/nginx -n demo
 
 # Create a service that exposes the Deployment on port 8080 called nginx-web
 tput setaf 5
@@ -15,7 +23,7 @@ echo -e "\n*********************************************************************
 echo -e "Creating the NGINX service"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-kubectl expose deployment nginx-web --port 8080 --target-port 8080
+kubectl expose deployment nginx-web --port 8080 --target-port 8080 -n demo
 
 # Find IP address of Docker Host
 # We need to know the IP of the Host since we use nip.io for name resolution.  Nip.ip names follow the standard <url>.<host ip>.nip.io
@@ -40,7 +48,7 @@ echo -e "Creating the Ingress rule using $hostip"
 echo -e "*******************************************************************************************************************\n"
 tput setaf 2
 sleep 2
-envsubst < ingress.yaml | kubectl create -f - --namespace default
+envsubst < ingress.yaml | kubectl create -f - --namespace demo
 
 # Use the IP found in the previous step:
 # Summarize the KinD deployment and show the user an example of a nip.io address that can be used for Ingress rules.

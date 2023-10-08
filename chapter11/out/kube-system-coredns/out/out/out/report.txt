@@ -1,0 +1,33 @@
+  Container               | bitnami/nginx:latest      
+  OS                      | linux                     
+  Arch                    | amd64                     
+  Distro                  | debian                    
+  Output Directory        | out/bitnami-nginx-latest  
+  policy-template version | v0.2.3                    
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------+
+|               POLICY                |           SHORT DESC           | SEVERITY | ACTION |                    TAGS                     |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------+
+| cronjob-cfg.yaml                    | System and Information         | 5        | Audit  | NIST SI-4                                   |
+|                                     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4                            |
+|                                     | Detect access to cronjob files |          |        | CIS CIS_Linux                               |
+|                                     |                                |          |        | CIS_5.1_Configure_Cron                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------+
+| file-system-mounts.yaml             | Ensure successful file system  | 5        | Audit  | CIS CIS_Linux                               |
+|                                     | mounts are collected           |          |        | CIS_4_Logging_and_Aduditing                 |
+|                                     |                                |          |        | CIS_4.1.1_Data_Retention                    |
+|                                     |                                |          |        | CIS_4.1.14_file_system_mount                |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------+
+| cis-commandline-warning-banner.yaml | Command Line Warning Banners   | 5        | Block  | CIS CIS_Linux CIS_1.7_Warning_Banners       |
+|                                     |                                |          |        | CIS_1.7.1_Command_Line_Warning_Banners      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------+
+| access-ctrl-permission-mod.yaml     | Ensure discretionary           | 5        | Block  | CIS CIS_Linux CIS_4_Logging_and_Aduditing   |
+|                                     | access control permission      |          |        | CIS_4.1.1_Data_Retention                    |
+|                                     | modification events are        |          |        | CIS_4.1.11_system_access_control_permission |
+|                                     | collected                      |          |        |                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------+
+| system-network-env-mod.yaml         | Ensure events that modify the  | 5        | Block  | CIS CIS_Linux                               |
+|                                     | system's network environment   |          |        | CIS_4_Logging_and_Aduditing                 |
+|                                     | are collected                  |          |        | CIS_4.1.1_Data_Retention                    |
+|                                     |                                |          |        | CIS_4.1.7_system_network_environment        |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------+
+

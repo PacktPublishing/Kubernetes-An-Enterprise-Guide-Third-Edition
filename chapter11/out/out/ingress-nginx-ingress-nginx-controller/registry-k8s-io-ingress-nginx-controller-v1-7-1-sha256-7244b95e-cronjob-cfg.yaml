@@ -1,0 +1,41 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: ingress-nginx-controller-registry-k8s-io-ingress-nginx-controller-v1-7-1-sha256-7244b95e-cronjob-cfg
+  namespace: ingress-nginx
+spec:
+  action: Audit
+  file:
+    matchDirectories:
+    - dir: /var/spool/cron/
+      recursive: true
+    - dir: /var/cron/
+      recursive: true
+    - dir: /etc/cron.d/
+      recursive: true
+    - dir: /etc/cron.daily/
+      recursive: true
+    - dir: /etc/cron.hourly/
+      recursive: true
+    - dir: /etc/cron.monthly/
+      recursive: true
+    - dir: /etc/cron.weekly/
+      recursive: true
+    matchPaths:
+    - path: /etc/crontab
+  message: Alert! Access to cron job files/directories detected.
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/instance: ingress-nginx
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/part-of: ingress-nginx
+      app.kubernetes.io/version: 1.7.1
+  severity: 5
+  tags:
+  - NIST
+  - SI-4
+  - NIST_800-53_SI-4
+  - CIS
+  - CIS_Linux
+  - CIS_5.1_Configure_Cron

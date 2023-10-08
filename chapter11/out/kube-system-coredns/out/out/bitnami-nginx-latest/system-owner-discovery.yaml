@@ -1,0 +1,20 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: bitnami-nginx-latest-system-owner-discovery
+spec:
+  action: Block
+  message: System owner discovery command execution denied
+  process:
+    matchPaths:
+    - path: /usr/bin/who
+    - path: /usr/bin/w
+    - path: /usr/bin/id
+    - path: /usr/bin/whoami
+  selector:
+    matchLabels:
+      kubearmor.io/container.name: bitnami/nginx
+  severity: 3
+  tags:
+  - MITRE
+  - MITRE_T1082_system_information_discovery

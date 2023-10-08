@@ -1,0 +1,32 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: ingress-nginx-controller-registry-k8s-io-ingress-nginx-controller-v1-7-1-sha256-7244b95e-system-network-env-mod
+  namespace: ingress-nginx
+spec:
+  action: Block
+  file:
+    matchPaths:
+    - path: /etc/issue
+      readOnly: true
+    - path: /etc/issue.net
+      readOnly: true
+    - path: /etc/hosts
+      readOnly: true
+    - path: /etc/sysconfig/network
+      readOnly: true
+  message: Alert! Modification to system network files detected
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/instance: ingress-nginx
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/part-of: ingress-nginx
+      app.kubernetes.io/version: 1.7.1
+  severity: 5
+  tags:
+  - CIS
+  - CIS_Linux
+  - CIS_4_Logging_and_Aduditing
+  - CIS_4.1.1_Data_Retention
+  - CIS_4.1.7_system_network_environment

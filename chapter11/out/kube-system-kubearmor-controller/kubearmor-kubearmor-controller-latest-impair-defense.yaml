@@ -1,0 +1,24 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-controller-kubearmor-kubearmor-controller-latest-impair-defense
+  namespace: kube-system
+spec:
+  action: Audit
+  file:
+    matchDirectories:
+    - dir: /etc/apparmor.d/
+      recursive: true
+    - dir: /etc/sysconfig/selinux/
+      recursive: true
+    matchPaths:
+    - path: /etc/selinux/semanage.conf
+  message: Selinux Files Accessed by Unknown Process
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-controller
+  severity: 6
+  tags:
+  - MITRE
+  - FGT1562
+  - FIGHT

@@ -1,0 +1,23 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: bitnami-nginx-latest-impair-defense
+spec:
+  action: Audit
+  file:
+    matchDirectories:
+    - dir: /etc/apparmor.d/
+      recursive: true
+    - dir: /etc/sysconfig/selinux/
+      recursive: true
+    matchPaths:
+    - path: /etc/selinux/semanage.conf
+  message: Selinux Files Accessed by Unknown Process
+  selector:
+    matchLabels:
+      kubearmor.io/container.name: bitnami/nginx
+  severity: 6
+  tags:
+  - MITRE
+  - FGT1562
+  - FIGHT

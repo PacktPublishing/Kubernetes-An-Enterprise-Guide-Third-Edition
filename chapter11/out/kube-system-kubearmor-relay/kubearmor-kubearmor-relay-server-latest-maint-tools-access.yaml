@@ -1,0 +1,19 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-relay-kubearmor-kubearmor-relay-server-latest-maint-tools-access
+  namespace: kube-system
+spec:
+  action: Audit
+  message: restricted maintenance tool access attempt detected
+  process:
+    matchDirectories:
+    - dir: /sbin/
+      recursive: true
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-relay
+  severity: 1
+  tags:
+  - PCI_DSS
+  - MITRE

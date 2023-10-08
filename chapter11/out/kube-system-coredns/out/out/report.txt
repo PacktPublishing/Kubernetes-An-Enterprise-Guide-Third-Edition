@@ -1,0 +1,112 @@
+  Container               | bitnami/nginx:latest      
+  OS                      | linux                     
+  Arch                    | amd64                     
+  Distro                  | debian                    
+  Output Directory        | out/bitnami-nginx-latest  
+  policy-template version | v0.2.3                    
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+|               POLICY                |           SHORT DESC           | SEVERITY | ACTION |                       TAGS                        |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| maint-tools-access.yaml             | Restrict access to maintenance | 1        | Audit  | PCI_DSS                                           |
+|                                     | tools (apk, mii-tool, ...)     |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| trusted-cert-mod.yaml               | Restrict access to trusted     | 1        | Block  | MITRE                                             |
+|                                     | certificated bundles in the OS |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     | image                          |          |        | FGT1555 FIGHT                                     |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| system-owner-discovery.yaml         | System Information Discovery   | 3        | Block  | MITRE                                             |
+|                                     | - block system owner discovery |          |        | MITRE_T1082_system_information_discovery          |
+|                                     | commands                       |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| write-under-bin-dir.yaml            | System and Information         | 5        | Block  | NIST NIST_800-53_AU-2                             |
+|                                     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make directory under /bin/     |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| write-under-dev-dir.yaml            | System and Information         | 5        | Audit  | NIST NIST_800-53_AU-2                             |
+|                                     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make files under /dev/         |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| cronjob-cfg.yaml                    | System and Information         | 5        | Audit  | NIST SI-4                                         |
+|                                     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4                                  |
+|                                     | Detect access to cronjob files |          |        | CIS CIS_Linux                                     |
+|                                     |                                |          |        | CIS_5.1_Configure_Cron                            |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| pkg-mngr-exec.yaml                  | System and Information         | 5        | Block  | NIST                                              |
+|                                     | Integrity - Least              |          |        | NIST_800-53_CM-7(4)                               |
+|                                     | Functionality deny execution   |          |        | SI-4 process                                      |
+|                                     | of package manager process in  |          |        | NIST_800-53_SI-4                                  |
+|                                     | container                      |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| k8s-client-tool-exec.yaml           | Adversaries may abuse a        | 5        | Block  | MITRE_T1609_container_administration_command      |
+|                                     | container administration       |          |        | MITRE_TA0002_execution                            |
+|                                     | service to execute commands    |          |        | MITRE_T1610_deploy_container                      |
+|                                     | within a container.            |          |        | MITRE NIST_800-53 NIST_800-53_AU-2                |
+|                                     |                                |          |        | NIST_800-53_SI-4 NIST                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| remote-file-copy.yaml               | The adversary is trying to     | 5        | Block  | MITRE                                             |
+|                                     | steal data.                    |          |        | MITRE_TA0008_lateral_movement                     |
+|                                     |                                |          |        | MITRE_TA0010_exfiltration                         |
+|                                     |                                |          |        | MITRE_TA0006_credential_access                    |
+|                                     |                                |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     |                                |          |        | NIST_800-53_SI-4(18) NIST                         |
+|                                     |                                |          |        | NIST_800-53 NIST_800-53_SC-4                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| write-in-shm-dir.yaml               | The adversary is trying to     | 5        | Block  | MITRE_execution                                   |
+|                                     | write under shm folder         |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| write-etc-dir.yaml                  | The adversary is trying to     | 5        | Block  | NIST_800-53_SI-7 NIST                             |
+|                                     | avoid being detected.          |          |        | NIST_800-53_SI-4 NIST_800-53                      |
+|                                     |                                |          |        | MITRE_T1562.001_disable_or_modify_tools           |
+|                                     |                                |          |        | MITRE_T1036.005_match_legitimate_name_or_location |
+|                                     |                                |          |        | MITRE_TA0003_persistence                          |
+|                                     |                                |          |        | MITRE MITRE_T1036_masquerading                    |
+|                                     |                                |          |        | MITRE_TA0005_defense_evasion                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| shell-history-mod.yaml              | Adversaries may delete or      | 5        | Block  | NIST NIST_800-53 NIST_800-53_CM-5                 |
+|                                     | modify artifacts generated     |          |        | NIST_800-53_AU-6(8)                               |
+|                                     | within systems to remove       |          |        | MITRE_T1070_indicator_removal_on_host             |
+|                                     | evidence.                      |          |        | MITRE MITRE_T1036_masquerading                    |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| file-system-mounts.yaml             | Ensure successful file system  | 5        | Audit  | CIS CIS_Linux                                     |
+|                                     | mounts are collected           |          |        | CIS_4_Logging_and_Aduditing                       |
+|                                     |                                |          |        | CIS_4.1.1_Data_Retention                          |
+|                                     |                                |          |        | CIS_4.1.14_file_system_mount                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| cis-commandline-warning-banner.yaml | Command Line Warning Banners   | 5        | Block  | CIS CIS_Linux CIS_1.7_Warning_Banners             |
+|                                     |                                |          |        | CIS_1.7.1_Command_Line_Warning_Banners            |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| access-ctrl-permission-mod.yaml     | Ensure discretionary           | 5        | Block  | CIS CIS_Linux CIS_4_Logging_and_Aduditing         |
+|                                     | access control permission      |          |        | CIS_4.1.1_Data_Retention                          |
+|                                     | modification events are        |          |        | CIS_4.1.11_system_access_control_permission       |
+|                                     | collected                      |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| system-network-env-mod.yaml         | Ensure events that modify the  | 5        | Block  | CIS CIS_Linux                                     |
+|                                     | system's network environment   |          |        | CIS_4_Logging_and_Aduditing                       |
+|                                     | are collected                  |          |        | CIS_4.1.1_Data_Retention                          |
+|                                     |                                |          |        | CIS_4.1.7_system_network_environment              |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| file-integrity-monitoring.yaml      | File Integrity Monitoring      | 1        | Block  | NIST NIST_800-53_AU-2                             |
+|                                     |                                |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     |                                |          |        | MITRE_T1036_masquerading                          |
+|                                     |                                |          |        | MITRE_T1565_data_manipulation                     |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| impair-defense.yaml                 | Adversaries may maliciously    | 6        | Audit  | MITRE                                             |
+|                                     | modify components of a victim  |          |        | FGT1562                                           |
+|                                     | environment in order to        |          |        | FIGHT                                             |
+|                                     | hinder or disable defensive    |          |        |                                                   |
+|                                     | mechanisms.                    |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| network-service-scanning.yaml       | Adversaries may attempt to     | 5        | Audit  | MITRE                                             |
+|                                     | get a listing of services      |          |        | FGT1046                                           |
+|                                     | running on remote hosts,       |          |        | FIGHT                                             |
+|                                     | including those that may be    |          |        |                                                   |
+|                                     | vulnerable to remote software  |          |        |                                                   |
+|                                     | exploitation.                  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| remote-services.yaml                | Adversaries may use Valid      | 3        | Audit  | MITRE                                             |
+|                                     | Accounts to log into a service |          |        | FIGHT                                             |
+|                                     | specifically designed to       |          |        | FGT1021                                           |
+|                                     | accept remote connections,     |          |        |                                                   |
+|                                     | such as telnet, SSH, and VNC.  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+

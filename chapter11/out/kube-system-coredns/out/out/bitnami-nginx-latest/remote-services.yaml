@@ -1,0 +1,24 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: bitnami-nginx-latest-remote-services
+spec:
+  action: Audit
+  file:
+    matchDirectories:
+    - dir: /etc/ssh/
+    matchPaths:
+    - path: /var/log/wtmp
+    - path: /var/run/utmp
+    - path: /var/log/auth.log
+    - path: /etc/passwd
+    - path: /etc/shadow
+  message: Warning! access sensitive files detected
+  selector:
+    matchLabels:
+      kubearmor.io/container.name: bitnami/nginx
+  severity: 3
+  tags:
+  - MITRE
+  - FIGHT
+  - FGT1021

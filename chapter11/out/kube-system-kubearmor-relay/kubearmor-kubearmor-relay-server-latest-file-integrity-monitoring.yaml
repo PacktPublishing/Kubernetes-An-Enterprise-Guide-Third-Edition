@@ -1,0 +1,39 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-relay-kubearmor-kubearmor-relay-server-latest-file-integrity-monitoring
+  namespace: kube-system
+spec:
+  action: Block
+  file:
+    matchDirectories:
+    - dir: /sbin/
+      readOnly: true
+      recursive: true
+    - dir: /usr/bin/
+      readOnly: true
+      recursive: true
+    - dir: /usr/lib/
+      readOnly: true
+      recursive: true
+    - dir: /usr/sbin/
+      readOnly: true
+      recursive: true
+    - dir: /bin/
+      readOnly: true
+      recursive: true
+    - dir: /boot/
+      readOnly: true
+      recursive: true
+  message: Detected and prevented compromise to File integrity
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-relay
+  severity: 1
+  tags:
+  - NIST
+  - NIST_800-53_AU-2
+  - NIST_800-53_SI-4
+  - MITRE
+  - MITRE_T1036_masquerading
+  - MITRE_T1565_data_manipulation

@@ -1,0 +1,28 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-relay-kubearmor-kubearmor-relay-server-latest-system-network-env-mod
+  namespace: kube-system
+spec:
+  action: Block
+  file:
+    matchPaths:
+    - path: /etc/issue
+      readOnly: true
+    - path: /etc/issue.net
+      readOnly: true
+    - path: /etc/hosts
+      readOnly: true
+    - path: /etc/sysconfig/network
+      readOnly: true
+  message: Alert! Modification to system network files detected
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-relay
+  severity: 5
+  tags:
+  - CIS
+  - CIS_Linux
+  - CIS_4_Logging_and_Aduditing
+  - CIS_4.1.1_Data_Retention
+  - CIS_4.1.7_system_network_environment

@@ -1,0 +1,25 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: kubearmor-relay-kubearmor-kubearmor-relay-server-latest-cis-commandline-warning-banner
+  namespace: kube-system
+spec:
+  action: Block
+  file:
+    matchPaths:
+    - path: /etc/motd
+      readOnly: true
+    - path: /etc/issue
+      readOnly: true
+    - path: /etc/issue.net
+      readOnly: true
+  message: Alert! write to warning banner file for standard command line login detected
+  selector:
+    matchLabels:
+      kubearmor-app: kubearmor-relay
+  severity: 5
+  tags:
+  - CIS
+  - CIS_Linux
+  - CIS_1.7_Warning_Banners
+  - CIS_1.7.1_Command_Line_Warning_Banners

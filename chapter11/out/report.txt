@@ -1,0 +1,427 @@
+  Deployment              | kube-system/coredns                      
+  Container               | registry.k8s.io/coredns/coredns:v1.10.1  
+  OS                      | linux                                    
+  Arch                    | amd64                                    
+  Distro                  |                                          
+  Output Directory        | out/kube-system-coredns                  
+  policy-template version | v0.2.3                                   
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+|               POLICY                |           SHORT DESC           | SEVERITY | ACTION |                       TAGS                        |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | Restrict access to maintenance | 1        | Audit  | PCI_DSS                                           |
+| 10-1-maint-tools-access.yaml        | tools (apk, mii-tool, ...)     |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | Restrict access to trusted     | 1        | Block  | MITRE                                             |
+| 10-1-trusted-cert-mod.yaml          | certificated bundles in the OS |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     | image                          |          |        | FGT1555 FIGHT                                     |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | System Information Discovery   | 3        | Block  | MITRE                                             |
+| 10-1-system-owner-discovery.yaml    | - block system owner discovery |          |        | MITRE_T1082_system_information_discovery          |
+|                                     | commands                       |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | System and Information         | 5        | Block  | NIST NIST_800-53_AU-2                             |
+| 10-1-write-under-bin-dir.yaml       | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make directory under /bin/     |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | System and Information         | 5        | Audit  | NIST NIST_800-53_AU-2                             |
+| 10-1-write-under-dev-dir.yaml       | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make files under /dev/         |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | System and Information         | 5        | Audit  | NIST SI-4                                         |
+| 10-1-cronjob-cfg.yaml               | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4                                  |
+|                                     | Detect access to cronjob files |          |        | CIS CIS_Linux                                     |
+|                                     |                                |          |        | CIS_5.1_Configure_Cron                            |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | System and Information         | 5        | Block  | NIST                                              |
+| 10-1-pkg-mngr-exec.yaml             | Integrity - Least              |          |        | NIST_800-53_CM-7(4)                               |
+|                                     | Functionality deny execution   |          |        | SI-4 process                                      |
+|                                     | of package manager process in  |          |        | NIST_800-53_SI-4                                  |
+|                                     | container                      |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | Adversaries may abuse a        | 5        | Block  | MITRE_T1609_container_administration_command      |
+| 10-1-k8s-client-tool-exec.yaml      | container administration       |          |        | MITRE_TA0002_execution                            |
+|                                     | service to execute commands    |          |        | MITRE_T1610_deploy_container                      |
+|                                     | within a container.            |          |        | MITRE NIST_800-53 NIST_800-53_AU-2                |
+|                                     |                                |          |        | NIST_800-53_SI-4 NIST                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | The adversary is trying to     | 5        | Block  | MITRE                                             |
+| 10-1-remote-file-copy.yaml          | steal data.                    |          |        | MITRE_TA0008_lateral_movement                     |
+|                                     |                                |          |        | MITRE_TA0010_exfiltration                         |
+|                                     |                                |          |        | MITRE_TA0006_credential_access                    |
+|                                     |                                |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     |                                |          |        | NIST_800-53_SI-4(18) NIST                         |
+|                                     |                                |          |        | NIST_800-53 NIST_800-53_SC-4                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | The adversary is trying to     | 5        | Block  | MITRE_execution                                   |
+| 10-1-write-in-shm-dir.yaml          | write under shm folder         |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | The adversary is trying to     | 5        | Block  | NIST_800-53_SI-7 NIST                             |
+| 10-1-write-etc-dir.yaml             | avoid being detected.          |          |        | NIST_800-53_SI-4 NIST_800-53                      |
+|                                     |                                |          |        | MITRE_T1562.001_disable_or_modify_tools           |
+|                                     |                                |          |        | MITRE_T1036.005_match_legitimate_name_or_location |
+|                                     |                                |          |        | MITRE_TA0003_persistence                          |
+|                                     |                                |          |        | MITRE MITRE_T1036_masquerading                    |
+|                                     |                                |          |        | MITRE_TA0005_defense_evasion                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | Adversaries may delete or      | 5        | Block  | NIST NIST_800-53 NIST_800-53_CM-5                 |
+| 10-1-shell-history-mod.yaml         | modify artifacts generated     |          |        | NIST_800-53_AU-6(8)                               |
+|                                     | within systems to remove       |          |        | MITRE_T1070_indicator_removal_on_host             |
+|                                     | evidence.                      |          |        | MITRE MITRE_T1036_masquerading                    |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | File Integrity Monitoring      | 1        | Block  | NIST NIST_800-53_AU-2                             |
+| 10-1-file-integrity-monitoring.yaml |                                |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     |                                |          |        | MITRE_T1036_masquerading                          |
+|                                     |                                |          |        | MITRE_T1565_data_manipulation                     |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | Adversaries may maliciously    | 6        | Audit  | MITRE                                             |
+| 10-1-impair-defense.yaml            | modify components of a victim  |          |        | FGT1562                                           |
+|                                     | environment in order to        |          |        | FIGHT                                             |
+|                                     | hinder or disable defensive    |          |        |                                                   |
+|                                     | mechanisms.                    |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | Adversaries may attempt to     | 5        | Audit  | MITRE                                             |
+| 10-1-network-service-scanning.yaml  | get a listing of services      |          |        | FGT1046                                           |
+|                                     | running on remote hosts,       |          |        | FIGHT                                             |
+|                                     | including those that may be    |          |        |                                                   |
+|                                     | vulnerable to remote software  |          |        |                                                   |
+|                                     | exploitation.                  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| registry-k8s-io-coredns-coredns-v1- | Adversaries may use Valid      | 3        | Audit  | MITRE                                             |
+| 10-1-remote-services.yaml           | Accounts to log into a service |          |        | FIGHT                                             |
+|                                     | specifically designed to       |          |        | FGT1021                                           |
+|                                     | accept remote connections,     |          |        |                                                   |
+|                                     | such as telnet, SSH, and VNC.  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+
+  Deployment              | kube-system/kubearmor-controller           
+  Container               | gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0  
+  OS                      | linux                                      
+  Arch                    | amd64                                      
+  Distro                  | debian                                     
+  Output Directory        | out/kube-system-kubearmor-controller       
+  policy-template version | v0.2.3                                     
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+|               POLICY                |           SHORT DESC           | SEVERITY | ACTION |                       TAGS                        |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | Restrict access to maintenance | 1        | Audit  | PCI_DSS                                           |
+| v0-8-0-maint-tools-access.yaml      | tools (apk, mii-tool, ...)     |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | Restrict access to trusted     | 1        | Block  | MITRE                                             |
+| v0-8-0-trusted-cert-mod.yaml        | certificated bundles in the OS |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     | image                          |          |        | FGT1555 FIGHT                                     |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | System Information Discovery   | 3        | Block  | MITRE                                             |
+| v0-8-0-system-owner-discovery.yaml  | - block system owner discovery |          |        | MITRE_T1082_system_information_discovery          |
+|                                     | commands                       |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | System and Information         | 5        | Block  | NIST NIST_800-53_AU-2                             |
+| v0-8-0-write-under-bin-dir.yaml     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make directory under /bin/     |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | System and Information         | 5        | Audit  | NIST NIST_800-53_AU-2                             |
+| v0-8-0-write-under-dev-dir.yaml     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make files under /dev/         |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | System and Information         | 5        | Audit  | NIST SI-4                                         |
+| v0-8-0-cronjob-cfg.yaml             | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4                                  |
+|                                     | Detect access to cronjob files |          |        | CIS CIS_Linux                                     |
+|                                     |                                |          |        | CIS_5.1_Configure_Cron                            |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | System and Information         | 5        | Block  | NIST                                              |
+| v0-8-0-pkg-mngr-exec.yaml           | Integrity - Least              |          |        | NIST_800-53_CM-7(4)                               |
+|                                     | Functionality deny execution   |          |        | SI-4 process                                      |
+|                                     | of package manager process in  |          |        | NIST_800-53_SI-4                                  |
+|                                     | container                      |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | Adversaries may abuse a        | 5        | Block  | MITRE_T1609_container_administration_command      |
+| v0-8-0-k8s-client-tool-exec.yaml    | container administration       |          |        | MITRE_TA0002_execution                            |
+|                                     | service to execute commands    |          |        | MITRE_T1610_deploy_container                      |
+|                                     | within a container.            |          |        | MITRE NIST_800-53 NIST_800-53_AU-2                |
+|                                     |                                |          |        | NIST_800-53_SI-4 NIST                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | The adversary is trying to     | 5        | Block  | MITRE                                             |
+| v0-8-0-remote-file-copy.yaml        | steal data.                    |          |        | MITRE_TA0008_lateral_movement                     |
+|                                     |                                |          |        | MITRE_TA0010_exfiltration                         |
+|                                     |                                |          |        | MITRE_TA0006_credential_access                    |
+|                                     |                                |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     |                                |          |        | NIST_800-53_SI-4(18) NIST                         |
+|                                     |                                |          |        | NIST_800-53 NIST_800-53_SC-4                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | The adversary is trying to     | 5        | Block  | MITRE_execution                                   |
+| v0-8-0-write-in-shm-dir.yaml        | write under shm folder         |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | The adversary is trying to     | 5        | Block  | NIST_800-53_SI-7 NIST                             |
+| v0-8-0-write-etc-dir.yaml           | avoid being detected.          |          |        | NIST_800-53_SI-4 NIST_800-53                      |
+|                                     |                                |          |        | MITRE_T1562.001_disable_or_modify_tools           |
+|                                     |                                |          |        | MITRE_T1036.005_match_legitimate_name_or_location |
+|                                     |                                |          |        | MITRE_TA0003_persistence                          |
+|                                     |                                |          |        | MITRE MITRE_T1036_masquerading                    |
+|                                     |                                |          |        | MITRE_TA0005_defense_evasion                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | Adversaries may delete or      | 5        | Block  | NIST NIST_800-53 NIST_800-53_CM-5                 |
+| v0-8-0-shell-history-mod.yaml       | modify artifacts generated     |          |        | NIST_800-53_AU-6(8)                               |
+|                                     | within systems to remove       |          |        | MITRE_T1070_indicator_removal_on_host             |
+|                                     | evidence.                      |          |        | MITRE MITRE_T1036_masquerading                    |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | Ensure events that modify the  | 5        | Block  | CIS CIS_Linux                                     |
+| v0-8-0-system-network-env-mod.yaml  | system's network environment   |          |        | CIS_4_Logging_and_Aduditing                       |
+|                                     | are collected                  |          |        | CIS_4.1.1_Data_Retention                          |
+|                                     |                                |          |        | CIS_4.1.7_system_network_environment              |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | File Integrity Monitoring      | 1        | Block  | NIST NIST_800-53_AU-2                             |
+| v0-8-0-file-integrity-              |                                |          |        | NIST_800-53_SI-4 MITRE                            |
+| monitoring.yaml                     |                                |          |        | MITRE_T1036_masquerading                          |
+|                                     |                                |          |        | MITRE_T1565_data_manipulation                     |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | Adversaries may maliciously    | 6        | Audit  | MITRE                                             |
+| v0-8-0-impair-defense.yaml          | modify components of a victim  |          |        | FGT1562                                           |
+|                                     | environment in order to        |          |        | FIGHT                                             |
+|                                     | hinder or disable defensive    |          |        |                                                   |
+|                                     | mechanisms.                    |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | Adversaries may attempt to     | 5        | Audit  | MITRE                                             |
+| v0-8-0-network-service-             | get a listing of services      |          |        | FGT1046                                           |
+| scanning.yaml                       | running on remote hosts,       |          |        | FIGHT                                             |
+|                                     | including those that may be    |          |        |                                                   |
+|                                     | vulnerable to remote software  |          |        |                                                   |
+|                                     | exploitation.                  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| gcr-io-kubebuilder-kube-rbac-proxy- | Adversaries may use Valid      | 3        | Audit  | MITRE                                             |
+| v0-8-0-remote-services.yaml         | Accounts to log into a service |          |        | FIGHT                                             |
+|                                     | specifically designed to       |          |        | FGT1021                                           |
+|                                     | accept remote connections,     |          |        |                                                   |
+|                                     | such as telnet, SSH, and VNC.  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+
+  Deployment              | kube-system/kubearmor-controller       
+  Container               | kubearmor/kubearmor-controller:latest  
+  OS                      | linux                                  
+  Arch                    | amd64                                  
+  Distro                  |                                        
+  Output Directory        | out/kube-system-kubearmor-controller   
+  policy-template version | v0.2.3                                 
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+|               POLICY                |           SHORT DESC           | SEVERITY | ACTION |                       TAGS                        |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Restrict access to maintenance | 1        | Audit  | PCI_DSS                                           |
+| latest-maint-tools-access.yaml      | tools (apk, mii-tool, ...)     |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Restrict access to trusted     | 1        | Block  | MITRE                                             |
+| latest-trusted-cert-mod.yaml        | certificated bundles in the OS |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     | image                          |          |        | FGT1555 FIGHT                                     |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | System Information Discovery   | 3        | Block  | MITRE                                             |
+| latest-system-owner-discovery.yaml  | - block system owner discovery |          |        | MITRE_T1082_system_information_discovery          |
+|                                     | commands                       |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | System and Information         | 5        | Block  | NIST NIST_800-53_AU-2                             |
+| latest-write-under-bin-dir.yaml     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make directory under /bin/     |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | System and Information         | 5        | Audit  | NIST NIST_800-53_AU-2                             |
+| latest-write-under-dev-dir.yaml     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make files under /dev/         |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | System and Information         | 5        | Audit  | NIST SI-4                                         |
+| latest-cronjob-cfg.yaml             | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4                                  |
+|                                     | Detect access to cronjob files |          |        | CIS CIS_Linux                                     |
+|                                     |                                |          |        | CIS_5.1_Configure_Cron                            |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | System and Information         | 5        | Block  | NIST                                              |
+| latest-pkg-mngr-exec.yaml           | Integrity - Least              |          |        | NIST_800-53_CM-7(4)                               |
+|                                     | Functionality deny execution   |          |        | SI-4 process                                      |
+|                                     | of package manager process in  |          |        | NIST_800-53_SI-4                                  |
+|                                     | container                      |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Adversaries may abuse a        | 5        | Block  | MITRE_T1609_container_administration_command      |
+| latest-k8s-client-tool-exec.yaml    | container administration       |          |        | MITRE_TA0002_execution                            |
+|                                     | service to execute commands    |          |        | MITRE_T1610_deploy_container                      |
+|                                     | within a container.            |          |        | MITRE NIST_800-53 NIST_800-53_AU-2                |
+|                                     |                                |          |        | NIST_800-53_SI-4 NIST                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | The adversary is trying to     | 5        | Block  | MITRE                                             |
+| latest-remote-file-copy.yaml        | steal data.                    |          |        | MITRE_TA0008_lateral_movement                     |
+|                                     |                                |          |        | MITRE_TA0010_exfiltration                         |
+|                                     |                                |          |        | MITRE_TA0006_credential_access                    |
+|                                     |                                |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     |                                |          |        | NIST_800-53_SI-4(18) NIST                         |
+|                                     |                                |          |        | NIST_800-53 NIST_800-53_SC-4                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | The adversary is trying to     | 5        | Block  | MITRE_execution                                   |
+| latest-write-in-shm-dir.yaml        | write under shm folder         |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | The adversary is trying to     | 5        | Block  | NIST_800-53_SI-7 NIST                             |
+| latest-write-etc-dir.yaml           | avoid being detected.          |          |        | NIST_800-53_SI-4 NIST_800-53                      |
+|                                     |                                |          |        | MITRE_T1562.001_disable_or_modify_tools           |
+|                                     |                                |          |        | MITRE_T1036.005_match_legitimate_name_or_location |
+|                                     |                                |          |        | MITRE_TA0003_persistence                          |
+|                                     |                                |          |        | MITRE MITRE_T1036_masquerading                    |
+|                                     |                                |          |        | MITRE_TA0005_defense_evasion                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Adversaries may delete or      | 5        | Block  | NIST NIST_800-53 NIST_800-53_CM-5                 |
+| latest-shell-history-mod.yaml       | modify artifacts generated     |          |        | NIST_800-53_AU-6(8)                               |
+|                                     | within systems to remove       |          |        | MITRE_T1070_indicator_removal_on_host             |
+|                                     | evidence.                      |          |        | MITRE MITRE_T1036_masquerading                    |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Command Line Warning Banners   | 5        | Block  | CIS CIS_Linux CIS_1.7_Warning_Banners             |
+| latest-cis-commandline-warning-     |                                |          |        | CIS_1.7.1_Command_Line_Warning_Banners            |
+| banner.yaml                         |                                |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Ensure discretionary           | 5        | Block  | CIS CIS_Linux CIS_4_Logging_and_Aduditing         |
+| latest-access-ctrl-permission-      | access control permission      |          |        | CIS_4.1.1_Data_Retention                          |
+| mod.yaml                            | modification events are        |          |        | CIS_4.1.11_system_access_control_permission       |
+|                                     | collected                      |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Ensure events that modify the  | 5        | Block  | CIS CIS_Linux                                     |
+| latest-system-network-env-mod.yaml  | system's network environment   |          |        | CIS_4_Logging_and_Aduditing                       |
+|                                     | are collected                  |          |        | CIS_4.1.1_Data_Retention                          |
+|                                     |                                |          |        | CIS_4.1.7_system_network_environment              |
+|                                     |                                |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | File Integrity Monitoring      | 1        | Block  | NIST NIST_800-53_AU-2                             |
+| latest-file-integrity-              |                                |          |        | NIST_800-53_SI-4 MITRE                            |
+| monitoring.yaml                     |                                |          |        | MITRE_T1036_masquerading                          |
+|                                     |                                |          |        | MITRE_T1565_data_manipulation                     |
+|                                     |                                |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Adversaries may maliciously    | 6        | Audit  | MITRE                                             |
+| latest-impair-defense.yaml          | modify components of a victim  |          |        | FGT1562                                           |
+|                                     | environment in order to        |          |        | FIGHT                                             |
+|                                     | hinder or disable defensive    |          |        |                                                   |
+|                                     | mechanisms.                    |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Adversaries may attempt to     | 5        | Audit  | MITRE                                             |
+| latest-network-service-             | get a listing of services      |          |        | FGT1046                                           |
+| scanning.yaml                       | running on remote hosts,       |          |        | FIGHT                                             |
+|                                     | including those that may be    |          |        |                                                   |
+|                                     | vulnerable to remote software  |          |        |                                                   |
+|                                     | exploitation.                  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-controller-     | Adversaries may use Valid      | 3        | Audit  | MITRE                                             |
+| latest-remote-services.yaml         | Accounts to log into a service |          |        | FIGHT                                             |
+|                                     | specifically designed to       |          |        | FGT1021                                           |
+|                                     | accept remote connections,     |          |        |                                                   |
+|                                     | such as telnet, SSH, and VNC.  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+
+  Deployment              | kube-system/kubearmor-relay              
+  Container               | kubearmor/kubearmor-relay-server:latest  
+  OS                      | linux                                    
+  Arch                    | amd64                                    
+  Distro                  |                                          
+  Output Directory        | out/kube-system-kubearmor-relay          
+  policy-template version | v0.2.3                                   
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+|               POLICY                |           SHORT DESC           | SEVERITY | ACTION |                       TAGS                        |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Restrict access to maintenance | 1        | Audit  | PCI_DSS                                           |
+| latest-maint-tools-access.yaml      | tools (apk, mii-tool, ...)     |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Restrict access to trusted     | 1        | Block  | MITRE                                             |
+| latest-trusted-cert-mod.yaml        | certificated bundles in the OS |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     | image                          |          |        | FGT1555 FIGHT                                     |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | System Information Discovery   | 3        | Block  | MITRE                                             |
+| latest-system-owner-discovery.yaml  | - block system owner discovery |          |        | MITRE_T1082_system_information_discovery          |
+|                                     | commands                       |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | System and Information         | 5        | Block  | NIST NIST_800-53_AU-2                             |
+| latest-write-under-bin-dir.yaml     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make directory under /bin/     |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | System and Information         | 5        | Audit  | NIST NIST_800-53_AU-2                             |
+| latest-write-under-dev-dir.yaml     | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4 MITRE                            |
+|                                     | make files under /dev/         |          |        | MITRE_T1036_masquerading                          |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | System and Information         | 5        | Audit  | NIST SI-4                                         |
+| latest-cronjob-cfg.yaml             | Integrity - System Monitoring  |          |        | NIST_800-53_SI-4                                  |
+|                                     | Detect access to cronjob files |          |        | CIS CIS_Linux                                     |
+|                                     |                                |          |        | CIS_5.1_Configure_Cron                            |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | System and Information         | 5        | Block  | NIST                                              |
+| latest-pkg-mngr-exec.yaml           | Integrity - Least              |          |        | NIST_800-53_CM-7(4)                               |
+|                                     | Functionality deny execution   |          |        | SI-4 process                                      |
+|                                     | of package manager process in  |          |        | NIST_800-53_SI-4                                  |
+|                                     | container                      |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Adversaries may abuse a        | 5        | Block  | MITRE_T1609_container_administration_command      |
+| latest-k8s-client-tool-exec.yaml    | container administration       |          |        | MITRE_TA0002_execution                            |
+|                                     | service to execute commands    |          |        | MITRE_T1610_deploy_container                      |
+|                                     | within a container.            |          |        | MITRE NIST_800-53 NIST_800-53_AU-2                |
+|                                     |                                |          |        | NIST_800-53_SI-4 NIST                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | The adversary is trying to     | 5        | Block  | MITRE                                             |
+| latest-remote-file-copy.yaml        | steal data.                    |          |        | MITRE_TA0008_lateral_movement                     |
+|                                     |                                |          |        | MITRE_TA0010_exfiltration                         |
+|                                     |                                |          |        | MITRE_TA0006_credential_access                    |
+|                                     |                                |          |        | MITRE_T1552_unsecured_credentials                 |
+|                                     |                                |          |        | NIST_800-53_SI-4(18) NIST                         |
+|                                     |                                |          |        | NIST_800-53 NIST_800-53_SC-4                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | The adversary is trying to     | 5        | Block  | MITRE_execution                                   |
+| latest-write-in-shm-dir.yaml        | write under shm folder         |          |        | MITRE                                             |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | The adversary is trying to     | 5        | Block  | NIST_800-53_SI-7 NIST                             |
+| latest-write-etc-dir.yaml           | avoid being detected.          |          |        | NIST_800-53_SI-4 NIST_800-53                      |
+|                                     |                                |          |        | MITRE_T1562.001_disable_or_modify_tools           |
+|                                     |                                |          |        | MITRE_T1036.005_match_legitimate_name_or_location |
+|                                     |                                |          |        | MITRE_TA0003_persistence                          |
+|                                     |                                |          |        | MITRE MITRE_T1036_masquerading                    |
+|                                     |                                |          |        | MITRE_TA0005_defense_evasion                      |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Adversaries may delete or      | 5        | Block  | NIST NIST_800-53 NIST_800-53_CM-5                 |
+| latest-shell-history-mod.yaml       | modify artifacts generated     |          |        | NIST_800-53_AU-6(8)                               |
+|                                     | within systems to remove       |          |        | MITRE_T1070_indicator_removal_on_host             |
+|                                     | evidence.                      |          |        | MITRE MITRE_T1036_masquerading                    |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Command Line Warning Banners   | 5        | Block  | CIS CIS_Linux CIS_1.7_Warning_Banners             |
+| latest-cis-commandline-warning-     |                                |          |        | CIS_1.7.1_Command_Line_Warning_Banners            |
+| banner.yaml                         |                                |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Ensure discretionary           | 5        | Block  | CIS CIS_Linux CIS_4_Logging_and_Aduditing         |
+| latest-access-ctrl-permission-      | access control permission      |          |        | CIS_4.1.1_Data_Retention                          |
+| mod.yaml                            | modification events are        |          |        | CIS_4.1.11_system_access_control_permission       |
+|                                     | collected                      |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Ensure events that modify the  | 5        | Block  | CIS CIS_Linux                                     |
+| latest-system-network-env-mod.yaml  | system's network environment   |          |        | CIS_4_Logging_and_Aduditing                       |
+|                                     | are collected                  |          |        | CIS_4.1.1_Data_Retention                          |
+|                                     |                                |          |        | CIS_4.1.7_system_network_environment              |
+|                                     |                                |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | File Integrity Monitoring      | 1        | Block  | NIST NIST_800-53_AU-2                             |
+| latest-file-integrity-              |                                |          |        | NIST_800-53_SI-4 MITRE                            |
+| monitoring.yaml                     |                                |          |        | MITRE_T1036_masquerading                          |
+|                                     |                                |          |        | MITRE_T1565_data_manipulation                     |
+|                                     |                                |          |        |                                                   |
+|                                     |                                |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Adversaries may maliciously    | 6        | Audit  | MITRE                                             |
+| latest-impair-defense.yaml          | modify components of a victim  |          |        | FGT1562                                           |
+|                                     | environment in order to        |          |        | FIGHT                                             |
+|                                     | hinder or disable defensive    |          |        |                                                   |
+|                                     | mechanisms.                    |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Adversaries may attempt to     | 5        | Audit  | MITRE                                             |
+| latest-network-service-             | get a listing of services      |          |        | FGT1046                                           |
+| scanning.yaml                       | running on remote hosts,       |          |        | FIGHT                                             |
+|                                     | including those that may be    |          |        |                                                   |
+|                                     | vulnerable to remote software  |          |        |                                                   |
+|                                     | exploitation.                  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+| kubearmor-kubearmor-relay-server-   | Adversaries may use Valid      | 3        | Audit  | MITRE                                             |
+| latest-remote-services.yaml         | Accounts to log into a service |          |        | FIGHT                                             |
+|                                     | specifically designed to       |          |        | FGT1021                                           |
+|                                     | accept remote connections,     |          |        |                                                   |
+|                                     | such as telnet, SSH, and VNC.  |          |        |                                                   |
++-------------------------------------+--------------------------------+----------+--------+---------------------------------------------------+
+
