@@ -1,4 +1,3 @@
-tee admin-policy.hcl <<EOF
 # Read system health check
 path "sys/health"
 {
