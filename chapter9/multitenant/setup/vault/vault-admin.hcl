@@ -29,7 +29,7 @@ path "auth/*"
 # Create, update, and delete auth methods
 path "sys/auth/*"
 {
-  capabilities = ["create", "update", "delete", "sudo"]
+  capabilities = ["create", "update", "delete", "sudo", "read"]
 }
 
 # List auth methods
