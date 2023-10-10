@@ -44,9 +44,9 @@ vault write auth/kubernetes/config \
 
 
 # allow openunison:orchestra SA to configure vault
-
-vault write auth/kubernetes/role/extsecret \
-     bound_service_account_names=orchestra \
+vault policy write openunison-admin ./vault-admin.hcl
+vault write auth/kubernetes/role/openunison-admin \
+     bound_service_account_names=openunison-orchestra \
      bound_service_account_namespaces=openunison \
-     policies=root \
+     policies=openunison-admin \
      ttl=24h
