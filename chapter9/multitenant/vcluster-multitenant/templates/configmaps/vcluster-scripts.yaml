@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vcluster-scripts
+  namespace: {{ .Release.Namespace }}
+data:
+  deploy-vcluster.sh: |-
+    vcluster create $VCLUSTER_NAME --upgrade -f  /etc/openunison/vcluster-values.yaml  -n $VCLUSTER_NAME --connect=false
+    while [[ $(kubectl get pods -l vcluster.loft.sh/namespace=kube-system -n $VCLUSTER_NAME -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for vcluster clusterdns pod" && sleep 1; done
+    sleep 60
+    kubectl create configmap deploymentcomplete -n $VCLUSTER_NAME
