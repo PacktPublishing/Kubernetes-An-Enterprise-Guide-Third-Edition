@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vcluster-vault-policy-template
+  namespace: {{ .Release.Namespace }}
+data:
+  template.hcl: |-
+    path "secret/data/vclusters/$nsName$/ns/{{ "{{" }}identity.entity.aliases.$authMount$.metadata.service_account_namespace{{ "}}" }}" {
+      capabilities = ["read"]
+    }
+
+    path "secret/data/vclusters/$nsName$/ns/{{ "{{" }}identity.entity.aliases.$authMount$.metadata.service_account_namespace{{ "}}" }}/*" {
+      capabilities = ["read"]
+    }

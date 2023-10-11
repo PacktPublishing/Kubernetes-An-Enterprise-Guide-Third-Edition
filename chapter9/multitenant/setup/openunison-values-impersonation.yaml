@@ -55,7 +55,7 @@ active_directory:
   srv_dns: "false"
        
 network_policies:
-  enabled: true
+  enabled: false
   ingress:
     enabled: true
     labels:
@@ -101,6 +101,9 @@ openunison:
   enable_provisioning: true
   use_standard_jit_workflow: false
   naas:
+    workflows:
+      new_namespace:
+        post_namespace_create_workflow: onboard-vcluster
     groups:
       internal:
         enabled: false

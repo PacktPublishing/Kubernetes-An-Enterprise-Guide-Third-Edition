@@ -10,17 +10,17 @@ spec:
   label: Create vCluster
   orgId: org-cluster-control-plane
   tasks: |-
-    - taskType: addAttribute
-      name: nameSpace
-      value: test
-      remove: false
-      addToRequest: true
+    # - taskType: addAttribute
+    #   name: nameSpace
+    #   value: test
+    #   remove: false
+    #   addToRequest: true
     
-    - taskType: addAttribute
-      name: nsName
-      value: test
-      remove: false
-      addToRequest: true
+    # - taskType: addAttribute
+    #   name: nsName
+    #   value: test
+    #   remove: false
+    #   addToRequest: true
 
     - taskType: callWorkflow
       name: create-vcluster-db
@@ -30,3 +30,6 @@ spec:
 
     - taskType: callWorkflow
       name: deploy-openunison-to-vcluster
+
+    - taskType: callWorkflow
+      name: integrate-vault-vcluster

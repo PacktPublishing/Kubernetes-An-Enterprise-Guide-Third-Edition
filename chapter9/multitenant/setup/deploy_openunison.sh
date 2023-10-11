@@ -114,5 +114,8 @@ echo "Deploying Orchestra"
 echo -n 'start123' > /tmp/ldaps
 echo -n 'start123' > /tmp/smtp
 echo -n 'start123' > /tmp/db
-/tmp/ouctl install-auth-portal -s /tmp/ldaps  -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal -m $REPO_NAME/openunison-k8s-cluster-management -b /tmp/db -t /tmp/smtp  /tmp/openunison-values.yaml
+/tmp/ouctl install-auth-portal -s /tmp/ldaps  -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal -m $REPO_NAME/openunison-k8s-cluster-management -b /tmp/db -t /tmp/smtp  --additional-helm-charts=multitenant=../vcluster-multitenant  /tmp/openunison-values.yaml
 
+cd vault
+./deploy_vault.sh
+./integrate_cp.sh
