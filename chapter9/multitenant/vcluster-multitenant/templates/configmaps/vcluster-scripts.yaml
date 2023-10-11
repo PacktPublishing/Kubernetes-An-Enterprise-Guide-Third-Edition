@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vcluster-scripts
+  namespace: {{ .Release.Namespace }}
+data:
+  deploy-vcluster.sh: |-
+    vcluster create $VCLUSTER_NAME --upgrade -f  /etc/openunison/vcluster-values.yaml  -n $VCLUSTER_NAME --connect=false
+    while [[ $(kubectl get pods -l vcluster.loft.sh/namespace=kube-system -n $VCLUSTER_NAME -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for vcluster clusterdns pod" && sleep 1; done
+    sleep 60
+    kubectl create configmap deploymentcomplete -n $VCLUSTER_NAME
+
+  run-helm.sh: |-
+    kubectl create ns vault
+    helm install vault hashicorp/vault --namespace vault --set global.externalVaultAddr=https://vault.apps.{{ .Values.vcluster.ip }}.nip.io/ --set injector.enabled=true
+
+  deploy-vault-client.sh: |-
+    export PATH=$PATH:~/.krew/bin
+    helm repo add hashicorp https://helm.releases.hashicorp.com 
+    helm repo update
+
+
+    kubectl config set-cluster controlplane --server=https://kubernetes.default.svc:443 --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    kubectl config set-credentials controlplane --token=/var/run/secrets/kubernetes.io/serviceaccount/token
+    kubectl config set-context controlplane --user=controlplane --user=controlplane
+
+    vcluster connect $VCLUSTER_NAME  -n $VCLUSTER_NAME -- bash /scripts/run-helm.sh

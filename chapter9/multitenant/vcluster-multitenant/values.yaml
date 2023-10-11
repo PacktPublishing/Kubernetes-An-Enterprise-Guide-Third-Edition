@@ -1,0 +1,2 @@
+vcluster:
+  job_image: ghcr.io/tremolosecurity/vcluster-onboard:1.0.0

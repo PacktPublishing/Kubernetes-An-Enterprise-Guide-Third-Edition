@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: watch-env
+  name: virtual-pod
+  namespace: default
+spec:
+  containers:
+  - image: ubuntu:22.04
+    name: test
+    resources: {}
+    command:
+    - bash
+    - -c
+    - 'while [[ 1 == 1 ]]; do date && env && cat /etc/resolv.conf && sleep 1; done'
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never

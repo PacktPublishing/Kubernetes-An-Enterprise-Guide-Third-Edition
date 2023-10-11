@@ -1,0 +1,107 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: create-vcluster-db
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: Creates the vCluster MySQL DB
+  inList: false
+  label: Create vCluster DB
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+      params:
+        javaScript: |-
+          function init(task,params) {
+            // nothing to do
+          }
+
+          function reInit(task) {
+            // do nothing
+          }
+
+          function doTask(user,request) {
+            System = Java.type("java.lang.System");
+            ActionType = Java.type("com.tremolosecurity.provisioning.core.ProvisioningUtil.ActionType");
+            var nsName = request.get("nameSpace").toLowerCase();
+            request.put("nsName",nsName);
+            var approvalID = 0;
+            if (request.containsKey("APPROVAL_ID")) {
+              approvalID = request.get("APPROVAL_ID");
+            }
+
+            System.out.println("nsName: " + nsName);
+
+            sql = task.getConfigManager().getProvisioningEngine().getTarget("jitdb").getProvider().getDS().getConnection();
+            try {
+              var createdb = 'CREATE DATABASE vcluster_' + nsName;
+              var createuser = "CREATE USER 'vcluster_" + nsName + "'@'%' REQUIRE SUBJECT '/O=k8s-enterprise-guide/CN=vcluster_" + nsName + "' AND ISSUER '/CN=enterprise-ca'";
+              var grantaccess = "GRANT ALL PRIVILEGES ON vcluster_" + nsName + ".* TO 'vcluster_" + nsName + "'@'%'";
+
+              var stmt = sql.createStatement();
+
+              stmt.executeUpdate(createdb);
+
+              task.getConfigManager().getProvisioningEngine().logAction("jitdb",true,ActionType.Add,approvalID, task.getWorkflow(),"mysql-db",'vcluster_' + nsName);
+
+              stmt.executeUpdate(createuser);
+
+              task.getConfigManager().getProvisioningEngine().logAction("jitdb",true,ActionType.Add,approvalID, task.getWorkflow(),"mysql-user",'vcluster_' + nsName);
+
+              stmt.executeUpdate(grantaccess);
+
+              task.getConfigManager().getProvisioningEngine().logAction("jitdb",false,ActionType.Add,approvalID, task.getWorkflow(),"mysql-user-access",'vcluster_' + nsName);
+              
+            } finally {
+              sql.close();
+            }
+
+            return true;
+          }
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: k8s
+        template: |-
+            apiVersion: cert-manager.io/v1
+            kind: Certificate
+            metadata:
+              name: vcluster-$nsName$
+              namespace: $nameSpace$
+            labels:
+              name: vcluster-$nsName$
+              app.kubernetes.io/name: openunison
+              app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+              app.kubernetes.io/component: openunison-vcluster
+              app.kubernetes.io/part-of: openunison
+            annotations:
+              tremolo.io/managedByGit: "$useGit$"
+            spec:
+              secretName: vcluster-client-tls
+              duration: 2160h
+              renewBefore: 360h
+              subject:
+                organizations:
+                  - k8s-enterprise-guide
+              commonName: vcluster_$nsName$
+              isCA: false
+              privateKey:
+                algorithm: RSA
+                encoding: PKCS1
+                size: 2048
+              usages:
+                - server auth
+                - client auth
+              issuerRef:
+                name: selfsigned-issuer
+                kind: ClusterIssuer
+                group: cert-manager.io
+
+        kind: Certificate
+        url: /apis/cert-manager.io/v1/namespaces/$nameSpace$/certificates
+        srcType: yaml
+        writeToRequest: "$useGit$"
+        requestAttribute: git-secret-cluster-k8s-$nameSpace$
+        path: /yaml/ns/$nameSpace$/certificates/vcluster-$nsName$.yaml

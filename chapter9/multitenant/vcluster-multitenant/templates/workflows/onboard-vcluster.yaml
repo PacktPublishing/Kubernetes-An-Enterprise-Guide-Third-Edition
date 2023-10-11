@@ -1,0 +1,35 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: onboard-vcluster
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: Creates a vCluster in an onboarded namespace
+  inList: true
+  label: Create vCluster
+  orgId: org-cluster-control-plane
+  tasks: |-
+    # - taskType: addAttribute
+    #   name: nameSpace
+    #   value: test
+    #   remove: false
+    #   addToRequest: true
+    
+    # - taskType: addAttribute
+    #   name: nsName
+    #   value: test
+    #   remove: false
+    #   addToRequest: true
+
+    - taskType: callWorkflow
+      name: create-vcluster-db
+
+    - taskType: callWorkflow
+      name: deploy-vcluster
+
+    - taskType: callWorkflow
+      name: deploy-openunison-to-vcluster
+
+    - taskType: callWorkflow
+      name: integrate-vault-vcluster

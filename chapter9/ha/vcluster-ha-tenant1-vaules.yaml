@@ -1,0 +1,35 @@
+# Enable HA mode
+enableHA: true
+
+# Scale up k3s replicas
+replicas: 2
+
+# Set external datastore endpoint
+vcluster:
+  image: rancher/k3s:v1.26.9-k3s1
+  env:
+    - name: K3S_DATASTORE_ENDPOINT
+      value: mysql://vcluster_tenant1@tcp(mysql.mysql.svc:3306)/vcluster_tenant1
+    - name: K3S_DATASTORE_CERTFILE
+      value: /etc/mysql-tls/tls.crt
+    - name: K3S_DATASTORE_KEYFILE
+      value: /etc/mysql-tls/tls.key
+    - name: K3S_DATASTORE_CAFILE
+      value: /etc/mysql-tls/ca.crt
+  volumeMounts:
+  - mountPath: /etc/mysql-tls
+    name: mysql-tls
+  - mountPath: /data
+    name: data
+volumes:
+- name: mysql-tls
+  secret:
+    secretName: vcluster-client-tls
+
+# Disable persistent storage as all data (including bootstrap data) is stored in external datastore
+storage:
+  persistence: false
+
+# Scale up CoreDNS replicas
+coredns:
+  replicas: 2

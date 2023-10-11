@@ -1,0 +1,150 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  ca:
+    secretName: root-ca
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postgresql
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: postgresql
+  namespace: postgresql
+spec:
+  # Secret names are always required.
+  secretName: postgresql-tls
+
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  subject:
+    organizations:
+      - k8s-enterprise-guide
+  # The use of the common name field has been deprecated since 2000 and is
+  # discouraged from being used.
+  commonName: postgres
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  usages:
+    - server auth
+    - client auth
+  # At least one of a DNS Name, URI, or IP address is required.
+  dnsNames:
+    - postgresql.postgresql.svc
+  # Issuer references are always required.
+  issuerRef:
+    name: selfsigned-issuer
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: ClusterIssuer
+    # This is optional since cert-manager will default to this value however
+    # if you are using an external issuer, change this to that issuer group.
+    group: cert-manager.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-config
+  namespace: postgresql
+data:
+  postgresql.conf: |-
+    listen_addresses = '*'
+    ssl = on
+    ssl_ca_file = '/etc/postgresql-tls/ca.crt'
+    ssl_cert_file = '/etc/postgresql-tls/tls.crt'
+    ssl_key_file = '/etc/postgresql-tls/tls.key'
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: postgresql
+  name: postgresql
+  namespace: postgresql
+spec:
+  serviceName: postgresql
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_USER
+          value: admin
+        - name: POSTGRES_PASSWORD
+          value: start123
+        image: postgres
+        imagePullPolicy: Always
+        name: postgresql
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgresql-data
+        - mountPath: /etc/postgresql-tls
+          name: postgresql-tls
+          readOnly: true
+        - mountPath: /etc/postgresql
+          name: postgresql-config
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: postgresql-tls
+        secret:
+          secretName: postgresql-tls
+          items:
+          - key: ca.crt
+            path: ca.crt
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+            mode: 600
+      - name: postgresql-config
+        configMap:
+          name: postgresql-config
+  volumeClaimTemplates:
+  - metadata:
+      name: postgresql-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: postgresql
+  name: postgresql
+  namespace: postgresql
+spec:
+  ports:
+  - port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: postgresql
+  sessionAffinity: None
+  type: ClusterIP
