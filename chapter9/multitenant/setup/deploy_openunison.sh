@@ -71,25 +71,6 @@ echo "Creating openunison namespace"
 
 kubectl create ns openunison
 
-echo "Adding a NetworkPolicy to explicitly allow access from the API server to our OpenUnison pods by IP"
-kubectl create -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-from-apiserver-by-ip
-  namespace: openunison
-  
-spec:
-  ingress:
-  - from:
-    - ipBlock:
-        cidr: $(docker inspect cluster01-control-plane | jq -r '.[0].NetworkSettings.Networks.kind.IPAddress')/32
-  podSelector:
-    matchLabels:
-      application: openunison-orchestra
-  policyTypes:
-  - Ingress
-EOF
 
 
 echo "Pre-configuring OpenUnison LDAP"
