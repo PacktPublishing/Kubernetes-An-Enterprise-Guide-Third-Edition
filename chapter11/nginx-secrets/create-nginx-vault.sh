@@ -15,10 +15,10 @@ echo -e "Creating Vault secret and capabilities"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 
-
-./vault_cli.sh
+. ../vault/vault_cli.sh
 
 vault kv put secret/data/extsecret/config some-password=mysupersecretp@ssw0rd
+
 vault policy write extsecret - <<EOF
 path "secret/data/extsecret/config" {
   capabilities = ["read"]
@@ -35,6 +35,7 @@ vault write auth/kubernetes/role/extsecret \
      bound_service_account_namespaces=my-ext-secret \
      policies=extsecret \
      ttl=24h
+
 
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
