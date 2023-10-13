@@ -15,7 +15,7 @@ echo -e "Creating Vault secret and capabilities"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 
-. ../vault/vault_cli.sh
+. ../vault_cli.sh
 
 vault kv put secret/data/extsecret/config some-password=mysupersecretp@ssw0rd
 
