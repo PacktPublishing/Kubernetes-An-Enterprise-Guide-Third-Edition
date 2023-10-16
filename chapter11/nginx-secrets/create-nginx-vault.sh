@@ -29,13 +29,11 @@ path "secret/data/extsecret/config/*" {
 }
 EOF
 
-
 vault write auth/kubernetes/role/extsecret \
      bound_service_account_names=ext-secret-vault \
      bound_service_account_namespaces=my-ext-secret \
      policies=extsecret \
      ttl=24h
-
 
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
@@ -45,4 +43,14 @@ tput setaf 3
 export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
 sed "s/IPADDR/$hostip/g" < ./nginx-secrets.yaml  > /tmp/nginx-secrets.yaml
 kubectl apply -f /tmp/nginx-secrets.yaml
-echo -e "\n\n"
+
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Deploying Ingress Rule"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
+export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
+sed "s/IPADDR/$hostip/g" < ./nginx-ingress.yaml  > /tmp/nginx-ingress.yaml
+kubectl create -f /tmp/nginx-ingress.yaml
+
+echo -e "\nIngress created: secret.$hostip.nip.io\n\n"
