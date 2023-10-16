@@ -87,6 +87,6 @@ echo -e "\n \n******************************************************************
 echo -e "Integrating Vault with the cluster"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-vault_integrate_cluster.sh
+./vault_integrate_cluster.sh
 
 echo -n "\n\n"

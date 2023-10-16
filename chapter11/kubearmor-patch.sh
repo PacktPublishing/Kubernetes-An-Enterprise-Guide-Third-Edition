@@ -3,8 +3,6 @@ clear
 
 # Install apparmor utilites in the kind cluster nodes
 # Special thanks to Rahul Jadhav from Accuknox for the assistance on the requirements to enable Kubearmor on KinD
-#docker exec -it cluster01-worker bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
-#docker exec -it cluster01-control-plane bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
 echo -e "Downloading the latest karmor release from get.kubearmor.io"
@@ -38,6 +36,7 @@ karmor install
 sleep 10
 
 # Add Kubearmor-relay to Apparmor unconfined mode 
+# This is required for kubearmor-relay to function in a KinD cluster - this is not required for standard K8s clusters
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
 echo -e "Patching the kubearmor-relay Deployment"
