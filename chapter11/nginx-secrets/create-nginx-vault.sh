@@ -51,6 +51,6 @@ echo -e "***********************************************************************
 tput setaf 3
 export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
 sed "s/IPADDR/$hostip/g" < ./nginx-ingress.yaml  > /tmp/nginx-ingress.yaml
-kubectl create -f /tmp/nginx-ingress.yaml
+kubectl apply -f /tmp/nginx-ingress.yaml
 
 echo -e "\nIngress created: secret.$hostip.nip.io\n\n"

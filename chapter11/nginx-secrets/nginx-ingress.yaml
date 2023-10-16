@@ -9,9 +9,9 @@ spec:
       paths:
       - backend:
           service:
-            name: nginx-svc
+            name: nginx-web
             port: 
-              number: 8080
+              number: 80
         path: "/"
         pathType: Prefix
     host: secret.IPADDR.nip.io
