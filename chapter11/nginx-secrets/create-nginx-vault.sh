@@ -54,3 +54,10 @@ sed "s/IPADDR/$hostip/g" < ./nginx-ingress.yaml  > /tmp/nginx-ingress.yaml
 kubectl apply -f /tmp/nginx-ingress.yaml
 
 echo -e "\nIngress created: secret.$hostip.nip.io\n\n"
+
+tput setaf 7
+echo -e "*******************************************************************************************************************"
+echo -e "NGINX Deployment coomplete"
+echo -e "*******************************************************************************************************************\n\n"
+tput setaf 2
+
