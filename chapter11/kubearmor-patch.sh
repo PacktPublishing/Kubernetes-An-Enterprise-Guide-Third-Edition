@@ -51,3 +51,12 @@ echo -e "Installing the Accuknox Discovery Engine"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 kubectl apply -f https://raw.githubusercontent.com/accuknox/discovery-engine/dev/deployments/k8s/deployment.yaml
+
+tput setaf 7
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Kubearmor deployment complete - It will take a few minutes for the pods to restart for some workloads"
+echo -e "Patching some deployments is required due to the K8s nodes running in containers and sharing a kernel"
+echo -e "This is not required when using standard nodes running on VMs / Physical Servers"
+echo -e "*******************************************************************************************************************\n\n"
+tput setaf 2
+
