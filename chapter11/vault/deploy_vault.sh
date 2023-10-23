@@ -1,5 +1,4 @@
 #!/bin/bash
-clear
 
 # deploy cert-manager
 tput setaf 5
@@ -82,5 +81,12 @@ echo -e "Installing the Vault CLI"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 ./install_vault.sh
+
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Integrating Vault with the cluster"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
+./vault_integrate_cluster.sh
 
 echo -n "\n\n"
