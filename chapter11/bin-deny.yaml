@@ -1,0 +1,14 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: block-write-bin
+  namespace: demo
+spec:
+  action: Block
+  file:
+    matchDirectories:
+    - dir: /bin/
+      readOnly: true
+      recursive: true
+  message: Alert! An attempt to write to the /bin directory denied.
+

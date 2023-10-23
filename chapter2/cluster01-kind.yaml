@@ -10,6 +10,9 @@ networking:
   serviceSubnet: "10.96.0.0/16"
 nodes:
 - role: control-plane
+  extraMounts:
+  - hostPath: /sys/kernel/security
+    containerPath: /sys/kernel/security
 - role: worker
   extraPortMappings:
   - containerPort: 80
@@ -18,3 +21,6 @@ nodes:
     hostPort: 443
   - containerPort: 2222
     hostPort: 2222
+  extraMounts:
+  - hostPath: /sys/kernel/security
+    containerPath: /sys/kernel/security

@@ -110,7 +110,7 @@ kubectl create -f nginx-ingress/nginx-deploy.yaml
 tput setaf 3
 hostip=$(hostname  -I | cut -f1 -d' ')
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Cluster Creation Complete.  Please see the summary beloq for key information that will be used in later chapters"
+echo -e "Cluster Creation Complete.  Please see the summary below for key information that will be used in later chapters"
 echo -e "*******************************************************************************************************************"
 
 # Use the IP found in the previous step:
