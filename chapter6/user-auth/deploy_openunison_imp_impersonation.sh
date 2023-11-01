@@ -1,4 +1,11 @@
 #!/bin/bash
+clear
+
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Setting up Helm repo"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
 if [[ -z "${TS_REPO_NAME}" ]]; then
 	REPO_NAME="tremolo"
@@ -16,31 +23,47 @@ fi
 
 echo "Helm Repo URL $REPO_URL"
 
-
-
-
-
-echo "Deploying the Kubernetes Dashboard"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Deploying the Kubernetes Dashboard"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
 
-echo "Deploying ActiveDirectory (ApacheDS)"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Deploying ActiveDirectory (ApacheDS)"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
 kubectl apply -f ./apacheds.yaml
 
 while [[ $(kubectl get pods -l app=apacheds -n activedirectory -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for apacheds to be running" && sleep 1; done
 
-echo "Adding helm repo"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Adding additional Helm repo"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
 helm repo add $REPO_NAME $REPO_URL
 helm repo update
 
-
-echo "Creating openunison namespace"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Creating openunison namespace"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
 kubectl create ns openunison
 
-echo "Adding a NetworkPolicy to explicitly allow access from the API server to our OpenUnison pods by IP"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Adding a NetworkPolicy to explicitly allow access from the API server to our OpenUnison pods by IP"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
+
 kubectl create -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -60,26 +83,40 @@ spec:
   - Ingress
 EOF
 
-
-echo "Pre-configuring OpenUnison LDAP"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Adding pre-configured OpenUnison LDAP"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
 kubectl create -f ./myvd-book.yaml
 
-
-echo "Downloading the ouctl utility to /tmp/ouctl"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Downloading ouctl utility and moving it to /tmp/ouctl"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
 wget https://nexus.tremolo.io/repository/ouctl/ouctl-0.0.11-linux -O /tmp/ouctl
 chmod +x /tmp/ouctl
 
-
-echo "Generating helm chart values to /tmp/openunison-values.yaml"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Generating Helm chart values in /tmp/openunison-values.yaml"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
 export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
 
 
 sed "s/IPADDR/$hostip/g" < ./openunison-values-impersonation.yaml  > /tmp/openunison-values.yaml
 
-echo "Deploying Orchestra"
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Deploying Orchestra"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
+
 echo -n 'start123' > /tmp/ldaps
 /tmp/ouctl install-auth-portal -s /tmp/ldaps  -o $REPO_NAME/openunison-operator -c $REPO_NAME/orchestra -l $REPO_NAME/orchestra-login-portal /tmp/openunison-values.yaml
 
@@ -98,8 +135,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 EOF
 
+tput setaf 7
+echo -e "\n\n*******************************************************************************************************************"
+echo -e "Openunison has been deployed"
+echo -e "*******************************************************************************************************************\n\n"
+tput setaf 2
 
-
-echo "OpenUnison is deployed!"
 
 

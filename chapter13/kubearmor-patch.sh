@@ -3,8 +3,6 @@ clear
 
 # Install apparmor utilites in the kind cluster nodes
 # Special thanks to Rahul Jadhav from Accuknox for the assistance on the requirements to enable Kubearmor on KinD
-#docker exec -it cluster01-worker bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
-#docker exec -it cluster01-control-plane bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
 echo -e "Downloading the latest karmor release from get.kubearmor.io"
@@ -38,6 +36,7 @@ karmor install
 sleep 10
 
 # Add Kubearmor-relay to Apparmor unconfined mode 
+# This is required for kubearmor-relay to function in a KinD cluster - this is not required for standard K8s clusters
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
 echo -e "Patching the kubearmor-relay Deployment"
@@ -52,3 +51,12 @@ echo -e "Installing the Accuknox Discovery Engine"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 kubectl apply -f https://raw.githubusercontent.com/accuknox/discovery-engine/dev/deployments/k8s/deployment.yaml
+
+tput setaf 7
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Kubearmor deployment complete - It will take a few minutes for the pods to restart for some workloads"
+echo -e "Patching some deployments is required due to the K8s nodes running in containers and sharing a kernel"
+echo -e "This is not required when using standard nodes running on VMs / Physical Servers"
+echo -e "*******************************************************************************************************************\n\n"
+tput setaf 2
+
