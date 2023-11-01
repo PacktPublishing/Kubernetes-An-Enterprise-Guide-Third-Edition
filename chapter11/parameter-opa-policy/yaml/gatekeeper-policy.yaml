@@ -14,6 +14,6 @@ spec:
       - apiGroups: ["batch"]
         kinds:
         - CronJob
-    namespaces: ["openunison"]
+    namespaces: ["testpolicy"]
   parameters:
-    registries: ["docker.io/tremolosecurity/"]
+    registries: ["docker.io/nginx/"]
