@@ -14,4 +14,4 @@ spec:
       - apiGroups: ["batch"]
         kinds:
         - CronJob
-    namespaces: ["openunison"]
+    namespaces: ["testpolicy"]
