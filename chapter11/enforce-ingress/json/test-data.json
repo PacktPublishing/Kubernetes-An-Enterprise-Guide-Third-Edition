@@ -2,7 +2,7 @@
  "cluster": {
     "v1": {
         "Namespace": {
-            "v1": {
+            
                 "ns-with-ingress": {
                     "metadata": {
                         "labels": {
@@ -14,7 +14,7 @@
                     "metadata": {
                     }
                 }
-            }
+            
         }
     }
  }   

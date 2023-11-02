@@ -22,4 +22,8 @@ spec:
             data.inventory.cluster["v1"].Namespace[input.review.object.metadata.namespace].metadata.labels["allowingress"] != "true"
         }
 
+        missingIngressLabel {
+            not data.inventory.cluster["v1"].Namespace[input.review.object.metadata.namespace].metadata.labels["allowingress"]
+        }
+
 

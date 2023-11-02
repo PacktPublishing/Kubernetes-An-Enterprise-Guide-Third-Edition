@@ -6,5 +6,9 @@ violation[{"msg":msg,"details":{}}] {
 }
 
 missingIngressLabel {
-    data.inventory.cluster["v1"].Namespace["v1"][input.review.object.metadata.namespace].metadata.labels["allowingress"] != "true"
+    data.inventory.cluster["v1"].Namespace[input.review.object.metadata.namespace].metadata.labels["allowingress"] != "true"
+}
+
+missingIngressLabel {
+    not data.inventory.cluster["v1"].Namespace[input.review.object.metadata.namespace].metadata.labels["allowingress"]
 }
