@@ -1,0 +1,15 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: "vap-ingress"
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:   ["networking.k8s.io"]
+      apiVersions: ["v1"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["ingresses"]
+  validations:
+    - expression: |-
+        namespaceObject.metadata.labels.allowingress == "true"
