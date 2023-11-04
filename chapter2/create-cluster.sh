@@ -62,10 +62,10 @@ tput setaf 5
 # KinD will deploy a cluster using the v1.27.1 Image - This has been tested with all of the book exercises and any K8s version
 # other than 1.27.1 may not work with all the book scripts due to any changes in K8s.
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the v.127.1 Image"
+echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the v.1.28.0 Image"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.27.3
+kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31
 
 # Add a label to the worker node, ingress-ready=true.  The NGINX deployment will only deploy to nodes that have this label.
 
