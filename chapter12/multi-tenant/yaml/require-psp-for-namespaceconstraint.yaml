@@ -1,0 +1,24 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequirePSPForNamespace
+metadata:
+  name: k8srequirepspfornamespace
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    excludedNamespaces:
+    - calico-system
+    - gatekeeper-system
+    - ingress-nginx
+    - kube-node-lease
+    - kube-public
+    - kube-system
+    - kubernetes-dashboard
+    - local-path-storage
+    - tigera-operator
+    - activedirectory
+    - cert-manager
+    - docker-registry
+    - gitlab
+    - docker-registry

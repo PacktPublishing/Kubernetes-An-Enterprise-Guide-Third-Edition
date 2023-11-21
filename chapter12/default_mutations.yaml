@@ -1,0 +1,294 @@
+
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spspdefaultallowprivilegeescalation
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+  location: "spec.containers[name:*].securityContext.allowPrivilegeEscalation"
+  parameters:
+    pathTests:
+    - subPath: "spec.containers[name:*].securityContext.allowPrivilegeEscalation"
+      condition: MustNotExist
+    assign:
+      value: false
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spspdefaultallowprivilegeescalationinit
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  location: "spec.initContainers[name:*].securityContext.allowPrivilegeEscalation"
+  parameters:
+    pathTests:
+    - subPath: "spec.initContainers[name:*].securityContext.allowPrivilegeEscalation"
+      condition: MustNotExist
+    assign:
+      value: false
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spspfsgroup
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  location: "spec.securityContext.fsGroup"
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  parameters:
+    pathTests:
+    - subPath: "spec.securityContext.fsGroup"
+      condition: MustNotExist
+    assign:
+      value: 3000
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spsprunasnonroot
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  location: "spec.containers[name:*].securityContext.runAsNonRoot"
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  parameters:
+    pathTests:
+      - subPath: "spec.containers[name:*].securityContext.runAsNonRoot"
+        condition: MustNotExist
+    assign:
+      value: true
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spsprunasnonrootinit
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  location: "spec.initContainers[name:*].securityContext.runAsNonRoot"
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  parameters:
+    pathTests:
+      - subPath: "spec.initContainers[name:*].securityContext.runAsNonRoot"
+        condition: MustNotExist
+    assign:
+      value: true
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spsprunasgroup
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  location: "spec.containers[name:*].securityContext.runAsGroup"
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  parameters:
+    pathTests:
+    - subPath: "spec.containers[name:*].securityContext.runAsGroup"
+      condition: MustNotExist
+    assign:
+      value: 2000
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spsprunasgroupinit
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  location: "spec.initContainers[name:*].securityContext.runAsGroup"
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  parameters:
+    pathTests:
+    - subPath: "spec.initContainers[name:*].securityContext.runAsGroup"
+      condition: MustNotExist
+    assign:
+      value: 2000
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spsprunasuser
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  location: "spec.containers[name:*].securityContext.runAsUser"
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  parameters:
+    pathTests:
+    - subPath: "spec.containers[name:*].securityContext.runAsUser"
+      condition: MustNotExist
+    assign:
+      value: 1000
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spsprunasuserinit
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  location: "spec.initContainers[name:*].securityContext.runAsUser"
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  parameters:
+    pathTests:
+    - subPath: "spec.initContainers[name:*].securityContext.runAsUser"
+      condition: MustNotExist
+    assign:
+      value: 1000
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spspsupplementalgroups
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  location: "spec.securityContext.supplementalGroups"
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  parameters:
+    pathTests:
+    - subPath: "spec.securityContext.supplementalGroups"
+      condition: MustNotExist
+    assign:
+      value: [3000]
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spspcapabilities
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  location: "spec.containers[name:*].securityContext.capabilities.drop"
+  parameters:
+    assign:
+      value: ["all"] # drop all capabilities by default
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: k8spspcapabilitiesinit
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Pod"]
+    versions: ["v1"]
+  match:
+    excludedNamespaces:
+    - kube-system
+    - calico-system
+    - tigera-operator
+    - gitlab
+    - docker-registry
+    
+  location: "spec.initContainers[name:*].securityContext.capabilities.drop"
+  parameters:
+    assign:
+      value: ["all"] # drop all capabilities by default
