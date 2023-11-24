@@ -13,6 +13,9 @@ networking:
   serviceSubnet: "10.96.0.0/16"
 nodes:
 - role: control-plane
+  extraPortMappings:
+  - containerPort: 2379
+    hostPort: 2379
   extraMounts:
   - hostPath: /sys/kernel/security
     containerPath: /sys/kernel/security
