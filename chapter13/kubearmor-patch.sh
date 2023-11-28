@@ -44,13 +44,13 @@ echo -e "***********************************************************************
 tput setaf 3
 kubectl patch deploy -n $(kubectl get deploy -l kubearmor-app=kubearmor-relay -A -o custom-columns=:'{.metadata.namespace}',:'{.metadata.name}') --type=json -p='[{"op": "add", "path": "/spec/template/metadata/annotations/container.apparmor.security.beta.kubernetes.io~1kubearmor-relay-server", "value": "unconfined"}]'
 
-# Download and Deploy the Discovery Engine from Accuknos's site
+# To enable logging we need to add two environment variables to enable STDOUT logging for Kubearmor policies
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Installing the Accuknox Discovery Engine"
+echo -e "Patching the kubearmor-relay Deployment"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-kubectl apply -f https://raw.githubusercontent.com/accuknox/discovery-engine/dev/deployments/k8s/deployment.yaml
+kubectl patch deploy kubearmor-relay -n kubearmor --patch-file patch-relay.yaml
 
 tput setaf 7
 echo -e "\n \n*******************************************************************************************************************"
