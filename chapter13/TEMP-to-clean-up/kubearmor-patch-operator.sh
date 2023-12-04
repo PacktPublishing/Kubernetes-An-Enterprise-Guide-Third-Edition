@@ -26,20 +26,45 @@ echo -e "***********************************************************************
 tput setaf 3
 kubectl patch deploy -n calico-system calico-typha --type=json -p='[{"op": "add", "path": "/spec/template/metadata/annotations/container.apparmor.security.beta.kubernetes.io~1calico-typha", "value": "unconfined"}]'
 
-# Install Kubearmor using the karmor utility
+echo -e "\nWaiting for the calico-typha deployment to be in a ready state:"
+tput setaf 3
+kubectl wait deploy/calico-typha --for condition=available -n calico-system
+tput setaf 7
+echo -e "\nCalico-typha restart is complete - Moving on to deploying the Kubearmor operator\n"
+
+# Install Kubearmor using Helm
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Install Kubearmor"
+echo -e "Installing Kubearmor operator using Helm and patching it to work with KinD"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-karmor install
+helm repo add kubearmor https://kubearmor.github.io/charts
+helm repo update kubearmor
+helm upgrade --install kubearmor-operator kubearmor/kubearmor-operator -n kubearmor --create-namespace
+kubectl patch deployment kubearmor-operator -n kubearmor --patch-file kubearmor-operator-patch.yaml
+
+# Wait for the operator to deploy before we try to use the Kubearmor CRD
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Installing Kubearmor with default settings using the Kubearmor CRD"
+echo -e "*******************************************************************************************************************"
+tput setaf 7
+echo -e "\nWaiting for the operator to be in a ready state:"
+tput setaf 3
+kubectl wait deploy/kubearmor-operator --for condition=available -n kubearmor
+tput setaf 7
+echo -e "\nOperator is running - deploying Kubearmor to the cluster\n"
+tput setaf 3
+kubectl apply -f https://raw.githubusercontent.com/kubearmor/KubeArmor/main/pkg/KubeArmorOperator/config/samples/sample-config.yml
+
+#karmor install
 sleep 10
 
 # Add Kubearmor-relay to Apparmor unconfined mode 
 # This is required for kubearmor-relay to function in a KinD cluster - this is not required for standard K8s clusters
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Patching the kubearmor-relay Deployment - Apparmor unconfined mode"
+echo -e "Patching the kubearmor-relay Deployment"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 kubectl patch deploy -n $(kubectl get deploy -l kubearmor-app=kubearmor-relay -A -o custom-columns=:'{.metadata.namespace}',:'{.metadata.name}') --type=json -p='[{"op": "add", "path": "/spec/template/metadata/annotations/container.apparmor.security.beta.kubernetes.io~1kubearmor-relay-server", "value": "unconfined"}]'
@@ -47,7 +72,7 @@ kubectl patch deploy -n $(kubectl get deploy -l kubearmor-app=kubearmor-relay -A
 # To enable logging we need to add two environment variables to enable STDOUT logging for Kubearmor policies
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Patching the kubearmor-relay Deployment to enable Logging"
+echo -e "Patching the kubearmor-relay Deployment"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 kubectl patch deploy kubearmor-relay -n kubearmor --patch-file patch-relay.yaml
@@ -59,4 +84,3 @@ echo -e "Patching some deployments is required due to the K8s nodes running in c
 echo -e "This is not required when using standard nodes running on VMs / Physical Servers"
 echo -e "*******************************************************************************************************************\n\n"
 tput setaf 2
-
