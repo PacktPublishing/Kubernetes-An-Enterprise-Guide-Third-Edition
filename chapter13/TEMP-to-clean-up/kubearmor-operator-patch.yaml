@@ -1,5 +1,0 @@
-spec:
-  template:
-    metadata:
-      annotations:
-        container.apparmor.security.beta.kubernetes.io/kubearmor-operator: unconfined
