@@ -12,7 +12,7 @@ echo -e "***********************************************************************
 # with the exercies in the book due to breaking changes and compatibility with the Kubernetes versions.
 tput setaf 5
 echo -e "\n*******************************************************************************************************************"
-echo -e "Downloading the KinD v0.19.0 Binary"
+echo -e "Downloading the KinD v0.20.0 Binary"
 echo -e "All of the exercises in the book have been tested against KinD v0.20.0.  We cannot guarantee that the scripts will"
 echo -e "will work on any other KinD release."
 echo -e "*******************************************************************************************************************"
