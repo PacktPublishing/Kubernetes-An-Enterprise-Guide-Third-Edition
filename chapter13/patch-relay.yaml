@@ -1,0 +1,11 @@
+spec:
+  template:
+    spec:
+      containers:
+      - name: kubearmor-relay-server
+        env:
+        - name: ENABLE_STDOUT_LOGS
+          value: "true"
+        - name: ENABLE_STDOUT_ALERTS
+          value: "true"
+

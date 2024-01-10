@@ -1,0 +1,49 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: demo
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-claim
+  namespace: demo
+  annotations:
+    volumeType: local
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-pvc
+  namespace: demo
+spec:
+  selector:
+    matchLabels:
+      app: busybox-pvc
+  template:
+    metadata:
+      labels:
+        app: busybox-pvc
+    spec:
+      containers:
+      - name: busybox-pvc
+        image: busybox
+        command:
+          - "/bin/sh"
+        args:
+          - "-c"
+          - "touch /mnt/original-data && sleep 20000"
+        volumeMounts:
+        - name: test-pvc
+          mountPath: "/mnt"
+      volumes:
+        - name: test-pvc
+          persistentVolumeClaim:
+            claimName: test-claim
+
