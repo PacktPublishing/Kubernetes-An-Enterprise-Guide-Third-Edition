@@ -8,7 +8,7 @@ echo -e "\n \n******************************************************************
 echo -e "Downloading the latest karmor release from get.kubearmor.io"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin
+./get-kubearmor-bin.sh v0.14.3
 
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
