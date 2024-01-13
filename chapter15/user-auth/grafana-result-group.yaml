@@ -1,0 +1,17 @@
+apiVersion: openunison.tremolo.io/v1
+kind: ResultGroup
+metadata:
+  labels:
+    app.kubernetes.io/component: openunison-resultgroups
+    app.kubernetes.io/instance: openunison-orchestra-login-portal
+    app.kubernetes.io/name: openunison
+    app.kubernetes.io/part-of: openunison
+  name: grafana
+  namespace: openunison
+spec:
+- resultType: header
+  source: static
+  value: X-WEBAUTH-GROUPS=Admin
+- resultType: header
+  source: user
+  value: X-WEBAUTH-USER=uid

@@ -3,6 +3,17 @@ clear
 
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
+echo -e "Cleaning up kube-prometheus"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
+
+kubectl delete ingress -n monitoring --all
+
+helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring -f ./prom-openunison-values.yaml
+
+
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
 echo -e "Setting up Helm repo"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
@@ -170,6 +181,9 @@ roleRef:
   name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
 EOF
+
+
+kubectl create -f ./grafana-result-group.yaml
 
 tput setaf 7
 echo -e "\n\n*******************************************************************************************************************"

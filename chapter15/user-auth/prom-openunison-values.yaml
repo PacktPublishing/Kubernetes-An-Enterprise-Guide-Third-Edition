@@ -1,0 +1,7 @@
+grafana:
+  grafana.ini:
+    auth.proxy:
+      enabled: true
+      header_name: X-WEBAUTH-USER
+      auto_sign_up: true
+      headers: "Groups:X-WEBAUTH-GROUPS"
