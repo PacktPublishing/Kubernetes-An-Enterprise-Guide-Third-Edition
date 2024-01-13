@@ -5,10 +5,11 @@ clear
 # Special thanks to Rahul Jadhav from Accuknox for the assistance on the requirements to enable Kubearmor on KinD
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Downloading the latest karmor release from get.kubearmor.io"
+echo -e "Downloading karmor release from get.kubearmor.io and moving it to /usr/bin"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 ./get-kubearmor-bin.sh v0.14.3
+sudo mv ./bin/karmor /usr/bin
 
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
