@@ -43,7 +43,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    release: prometheus-operator
+    release: prometheus
   name: orchestra
   namespace: monitoring
 spec:
