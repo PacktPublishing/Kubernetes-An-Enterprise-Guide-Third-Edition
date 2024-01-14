@@ -45,7 +45,7 @@ metadata:
   labels:
     release: prometheus-operator
   name: orchestra
-  namespace: monitoring
+  namespace: prometheus
 spec:
   endpoints:
   - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
