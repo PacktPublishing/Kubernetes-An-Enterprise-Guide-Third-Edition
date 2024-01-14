@@ -37,7 +37,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus-kube-prometheus-prometheus
-  namespace: monitoring
+  namespace: openunison
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
