@@ -61,3 +61,23 @@ spec:
   selector:
     matchLabels:
       app: openunison-orchestra
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  creationTimestamp: null
+  labels:
+    release: prometheus
+  name: openunison-has-activesessions
+spec:
+  groups:
+  - name: openunison.rules
+    rules:
+    - alert: no-sessions
+      annotations:
+        description: Fires when there are no OpenUnison sessions
+      expr: absent(active_sessions)
+      for: 1m
+      labels:
+        severity: openunison-critical
+        source: openunison
