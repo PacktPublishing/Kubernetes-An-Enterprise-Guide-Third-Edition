@@ -192,7 +192,7 @@ echo -e "Enable OpenUnison Monitoring"
 echo -e "*******************************************************************************************************************\n\n"
 tput setaf 2
 
-kubectl apply -f monitor-openuniosn.yaml
+kubectl apply -f ./monitor-openunison.yaml
 
 tput setaf 7
 echo -e "\n\n*******************************************************************************************************************"
