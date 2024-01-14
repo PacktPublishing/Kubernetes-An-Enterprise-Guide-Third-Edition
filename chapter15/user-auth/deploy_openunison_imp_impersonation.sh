@@ -185,6 +185,15 @@ EOF
 
 kubectl create -f ./grafana-result-group.yaml
 
+
+tput setaf 7
+echo -e "\n\n*******************************************************************************************************************"
+echo -e "Enable OpenUnison Monitoring"
+echo -e "*******************************************************************************************************************\n\n"
+tput setaf 2
+
+kubectl apply -f monitor-openuniosn.yaml
+
 tput setaf 7
 echo -e "\n\n*******************************************************************************************************************"
 echo -e "Openunison has been deployed"
