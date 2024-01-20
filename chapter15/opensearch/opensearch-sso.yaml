@@ -82,7 +82,7 @@ spec:
           codeTokenSkewMilis: '60000'
           publicEndpoint: "false"
           redirectURI: 
-          - https://opensearch.apps.IPADDR.nip.io/
+          - https://opensearch.apps.IPADDR.nip.io/auth/openid/login
         secretParams:
         - name: clientSecret
           secretName: orchestra-secrets-source
