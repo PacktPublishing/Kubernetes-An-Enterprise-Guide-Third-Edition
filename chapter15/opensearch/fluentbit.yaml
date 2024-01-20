@@ -1,0 +1,24 @@
+config:
+    outputs: |
+        [OUTPUT]
+            Name opensearch
+            Match kube.*
+            Host my-cluster-masters.opensearch-cp.svc
+            HTTP_User logstash
+            HTTP_Passwd logstash
+            tls On
+            tls.verify Off
+            Logstash_Format On
+            Retry_Limit False
+
+        [OUTPUT]
+            Name opensearch
+            Match host.*
+            Host my-cluster-masters.opensearch-cp.svc
+            HTTP_User logstash
+            HTTP_Passwd logstash
+            tls On
+            tls.verify Off
+            Logstash_Format On
+            Logstash_Prefix node
+            Retry_Limit False

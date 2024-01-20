@@ -1,0 +1,93 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: opensearch-ingress
+  namespace: opensearch
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "enterprise-ca"
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: my-cluster-dashboards
+            port: 
+              number: 5601
+        path: "/"
+        pathType: Prefix
+    host: opensearch.apps.IPADDR.nip.io
+  tls:
+  - hosts:
+    - opensearch.apps.IPADDR.nip.io
+    secretName: opensearch-web-tls
+---
+apiVersion: openunison.tremolo.io/v2
+kind: Application
+metadata:
+  labels:
+    app.kubernetes.io/component: openunison-applications
+    app.kubernetes.io/instance: openunison-orchestra-login-portal
+    app.kubernetes.io/name: openunison
+    app.kubernetes.io/part-of: openunison
+  name: opensearch
+  namespace: openunison
+spec:
+  azTimeoutMillis: 3000
+  cookieConfig:
+    cookiesEnabled: true
+    domain: '#[OU_HOST]'
+    httpOnly: true
+    keyAlias: session-unison
+    logoutURI: /logout
+    scope: -1
+    secure: true
+    sessionCookieName: tremolosession
+    timeout: 900
+  isApp: false
+  urls:
+  - azRules:
+    - constraint: (groups=cn=k8s-cluster-admins,ou=Groups,DC=domain,DC=com)
+      scope: filter
+    filterChain: []
+    hosts:
+    - '#[OU_HOST]'
+    idp:
+      className: com.tremolosecurity.idp.providers.OpenIDConnectIdP
+      mappings:
+        map:
+        - sourceType: user
+          targetAttributeName: sub
+          targetAttributeSource: sub
+        - sourceType: static
+          targetAttributeName: roles
+          targetAttributeSource: all_access
+        strict: true
+      params:
+        jwtSigningKey: unison-saml2-rp-sig
+        k8sNameSpace: 'openunison'
+        k8sTarget: k8s
+        sessionStoreClassName: com.tremolosecurity.oidc.k8s.K8sSessionStore
+      trusts:
+      - name: 'https://opensearch.apps.IPADDR.nip.io/'
+        params:
+          accessTokenSkewMillis: "120000"
+          accessTokenTimeToLive: '60000'
+          authChainName: login-service
+          clientID: opensearch
+          codeLastMileKeyName: lastmile-oidc
+          codeTokenSkewMilis: '60000'
+          publicEndpoint: "false"
+          redirectURI: 
+          - https://opensearch.apps.IPADDR.nip.io/auth/callback
+        secretParams:: 
+        - name: clientSecret
+          secretName: orchestra-secrets-source
+          secretKey: opensearch-oidc-client-secret
+    results:
+      auFail: default-login-failure
+      azFail: default-login-failure
+    uri: /auth/idp/opensearch
