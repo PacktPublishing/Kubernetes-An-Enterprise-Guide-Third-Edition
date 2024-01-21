@@ -138,7 +138,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: opensearch-security-config
-  namespace: opensearch
+  namespace: opensearch-cp
 stringData:
   whitelist.yml: |-
     ---
