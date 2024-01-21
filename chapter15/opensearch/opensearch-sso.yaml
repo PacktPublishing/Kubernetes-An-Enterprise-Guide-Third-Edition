@@ -137,6 +137,15 @@ metadata:
 apiVersion: v1
 kind: Secret
 metadata:
+  name: opensearch-admin-creds
+  namespace: opensearch-cp
+stringData:
+  username: admin
+  password: admin
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: opensearch-security-config
   namespace: opensearch-cp
 stringData:
