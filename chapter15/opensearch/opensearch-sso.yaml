@@ -860,7 +860,7 @@ stringData:
                 openid_connect_idp:
                   enable_ssl: true
                   verify_hostnames: true
-                  pemtrustedcas_filepath: /usr/share/opensearch/tls/enterprise-ca/ca.crt
+                  pemtrustedcas_filepath: /usr/share/opensearch/config/enterprise-ca/ca.crt
                 subject_key: sub
                 roles_key: roles
                 openid_connect_url: https://k8sou.apps.192-168-2-93.nip.io/auth/idp/opensearch/.well-known/openid-configuration
