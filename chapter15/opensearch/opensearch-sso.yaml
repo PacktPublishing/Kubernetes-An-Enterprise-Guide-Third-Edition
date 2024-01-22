@@ -149,464 +149,464 @@ metadata:
   name: opensearch-security-config
   namespace: opensearch-cp
 stringData:
-  whitelist.yml: |-
-    ---
-    _meta:
-      type: "tenants"
-      config_version: 2
+  # whitelist.yml: |-
+  #   ---
+  #   _meta:
+  #     type: "tenants"
+  #     config_version: 2
 
-    # Define your tenants here
+  #   # Define your tenants here
 
-    ## Demo tenants
-    admin_tenant:
-      reserved: false
-      description: "Demo tenant for admin user"
-  tenants.yml: |-
-    ---
-    _meta:
-      type: "tenants"
-      config_version: 2
+  #   ## Demo tenants
+  #   admin_tenant:
+  #     reserved: false
+  #     description: "Demo tenant for admin user"
+  # tenants.yml: |-
+  #   ---
+  #   _meta:
+  #     type: "tenants"
+  #     config_version: 2
 
-    # Define your tenants here
+  #   # Define your tenants here
 
-    ## Demo tenants
-    admin_tenant:
-      reserved: false
-      description: "Demo tenant for admin user"
-  roles_mapping.yml: |-
-    ---
-    # In this file users, backendroles and hosts can be mapped to Security roles.
-    # Permissions for OpenSearch roles are configured in roles.yml
+  #   ## Demo tenants
+  #   admin_tenant:
+  #     reserved: false
+  #     description: "Demo tenant for admin user"
+  # roles_mapping.yml: |-
+  #   ---
+  #   # In this file users, backendroles and hosts can be mapped to Security roles.
+  #   # Permissions for OpenSearch roles are configured in roles.yml
 
-    _meta:
-      type: "rolesmapping"
-      config_version: 2
+  #   _meta:
+  #     type: "rolesmapping"
+  #     config_version: 2
 
-    # Define your roles mapping here
+  #   # Define your roles mapping here
 
-    ## Demo roles mapping
+  #   ## Demo roles mapping
 
-    all_access:
-      reserved: false
-      backend_roles:
-      - "admin"
-      description: "Maps admin to all_access"
+  #   all_access:
+  #     reserved: false
+  #     backend_roles:
+  #     - "admin"
+  #     description: "Maps admin to all_access"
 
-    own_index:
-      reserved: false
-      users:
-      - "*"
-      description: "Allow full access to an index named like the username"
+  #   own_index:
+  #     reserved: false
+  #     users:
+  #     - "*"
+  #     description: "Allow full access to an index named like the username"
 
-    logstash:
-      reserved: false
-      backend_roles:
-      - "logstash"
+  #   logstash:
+  #     reserved: false
+  #     backend_roles:
+  #     - "logstash"
 
-    kibana_user:
-      reserved: false
-      backend_roles:
-      - "kibanauser"
-      description: "Maps kibanauser to kibana_user"
+  #   kibana_user:
+  #     reserved: false
+  #     backend_roles:
+  #     - "kibanauser"
+  #     description: "Maps kibanauser to kibana_user"
 
-    readall:
-      reserved: false
-      backend_roles:
-      - "readall"
+  #   readall:
+  #     reserved: false
+  #     backend_roles:
+  #     - "readall"
 
-    manage_snapshots:
-      reserved: false
-      backend_roles:
-      - "snapshotrestore"
+  #   manage_snapshots:
+  #     reserved: false
+  #     backend_roles:
+  #     - "snapshotrestore"
 
-    kibana_server:
-      reserved: true
-      users:
-      - "kibanaserver"
-  roles.yml: |-
-    _meta:
-      type: "roles"
-      config_version: 2
+  #   kibana_server:
+  #     reserved: true
+  #     users:
+  #     - "kibanaserver"
+  # roles.yml: |-
+  #   _meta:
+  #     type: "roles"
+  #     config_version: 2
 
-    # Restrict users so they can only view visualization and dashboard on OpenSearchDashboards
-    kibana_read_only:
-      reserved: true
+  #   # Restrict users so they can only view visualization and dashboard on OpenSearchDashboards
+  #   kibana_read_only:
+  #     reserved: true
 
-    # The security REST API access role is used to assign specific users access to change the security settings through the REST API.
-    security_rest_api_access:
-      reserved: true
+  #   # The security REST API access role is used to assign specific users access to change the security settings through the REST API.
+  #   security_rest_api_access:
+  #     reserved: true
 
-    security_rest_api_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'restapi:admin/actiongroups'
-        - 'restapi:admin/allowlist'
-        - 'restapi:admin/config/update'
-        - 'restapi:admin/internalusers'
-        - 'restapi:admin/nodesdn'
-        - 'restapi:admin/roles'
-        - 'restapi:admin/rolesmapping'
-        - 'restapi:admin/ssl/certs/info'
-        - 'restapi:admin/ssl/certs/reload'
-        - 'restapi:admin/tenants'
+  #   security_rest_api_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'restapi:admin/actiongroups'
+  #       - 'restapi:admin/allowlist'
+  #       - 'restapi:admin/config/update'
+  #       - 'restapi:admin/internalusers'
+  #       - 'restapi:admin/nodesdn'
+  #       - 'restapi:admin/roles'
+  #       - 'restapi:admin/rolesmapping'
+  #       - 'restapi:admin/ssl/certs/info'
+  #       - 'restapi:admin/ssl/certs/reload'
+  #       - 'restapi:admin/tenants'
 
-    # Allows users to view monitors, destinations and alerts
-    alerting_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/alerting/alerts/get'
-        - 'cluster:admin/opendistro/alerting/destination/get'
-        - 'cluster:admin/opendistro/alerting/monitor/get'
-        - 'cluster:admin/opendistro/alerting/monitor/search'
-        - 'cluster:admin/opensearch/alerting/findings/get'
-        - 'cluster:admin/opensearch/alerting/workflow/get'
-        - 'cluster:admin/opensearch/alerting/workflow_alerts/get'
+  #   # Allows users to view monitors, destinations and alerts
+  #   alerting_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/alerting/alerts/get'
+  #       - 'cluster:admin/opendistro/alerting/destination/get'
+  #       - 'cluster:admin/opendistro/alerting/monitor/get'
+  #       - 'cluster:admin/opendistro/alerting/monitor/search'
+  #       - 'cluster:admin/opensearch/alerting/findings/get'
+  #       - 'cluster:admin/opensearch/alerting/workflow/get'
+  #       - 'cluster:admin/opensearch/alerting/workflow_alerts/get'
 
-    # Allows users to view and acknowledge alerts
-    alerting_ack_alerts:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/alerting/alerts/*'
-        - 'cluster:admin/opendistro/alerting/chained_alerts/*'
-        - 'cluster:admin/opendistro/alerting/workflow_alerts/*'
+  #   # Allows users to view and acknowledge alerts
+  #   alerting_ack_alerts:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/alerting/alerts/*'
+  #       - 'cluster:admin/opendistro/alerting/chained_alerts/*'
+  #       - 'cluster:admin/opendistro/alerting/workflow_alerts/*'
 
-    # Allows users to use all alerting functionality
-    alerting_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster_monitor'
-        - 'cluster:admin/opendistro/alerting/*'
-        - 'cluster:admin/opensearch/alerting/*'
-        - 'cluster:admin/opensearch/notifications/feature/publish'
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'indices_monitor'
-            - 'indices:admin/aliases/get'
-            - 'indices:admin/mappings/get'
+  #   # Allows users to use all alerting functionality
+  #   alerting_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster_monitor'
+  #       - 'cluster:admin/opendistro/alerting/*'
+  #       - 'cluster:admin/opensearch/alerting/*'
+  #       - 'cluster:admin/opensearch/notifications/feature/publish'
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'indices_monitor'
+  #           - 'indices:admin/aliases/get'
+  #           - 'indices:admin/mappings/get'
 
-    # Allow users to read Anomaly Detection detectors and results
-    anomaly_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/ad/detector/info'
-        - 'cluster:admin/opendistro/ad/detector/search'
-        - 'cluster:admin/opendistro/ad/detectors/get'
-        - 'cluster:admin/opendistro/ad/result/search'
-        - 'cluster:admin/opendistro/ad/tasks/search'
-        - 'cluster:admin/opendistro/ad/detector/validate'
-        - 'cluster:admin/opendistro/ad/result/topAnomalies'
+  #   # Allow users to read Anomaly Detection detectors and results
+  #   anomaly_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/ad/detector/info'
+  #       - 'cluster:admin/opendistro/ad/detector/search'
+  #       - 'cluster:admin/opendistro/ad/detectors/get'
+  #       - 'cluster:admin/opendistro/ad/result/search'
+  #       - 'cluster:admin/opendistro/ad/tasks/search'
+  #       - 'cluster:admin/opendistro/ad/detector/validate'
+  #       - 'cluster:admin/opendistro/ad/result/topAnomalies'
 
-    # Allows users to use all Anomaly Detection functionality
-    anomaly_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster_monitor'
-        - 'cluster:admin/opendistro/ad/*'
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'indices_monitor'
-            - 'indices:admin/aliases/get'
-            - 'indices:admin/mappings/get'
+  #   # Allows users to use all Anomaly Detection functionality
+  #   anomaly_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster_monitor'
+  #       - 'cluster:admin/opendistro/ad/*'
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'indices_monitor'
+  #           - 'indices:admin/aliases/get'
+  #           - 'indices:admin/mappings/get'
 
-    # Allow users to execute read only k-NN actions
-    knn_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/knn_search_model_action'
-        - 'cluster:admin/knn_get_model_action'
-        - 'cluster:admin/knn_stats_action'
+  #   # Allow users to execute read only k-NN actions
+  #   knn_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/knn_search_model_action'
+  #       - 'cluster:admin/knn_get_model_action'
+  #       - 'cluster:admin/knn_stats_action'
 
-    # Allow users to use all k-NN functionality
-    knn_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/knn_training_model_action'
-        - 'cluster:admin/knn_training_job_router_action'
-        - 'cluster:admin/knn_training_job_route_decision_info_action'
-        - 'cluster:admin/knn_warmup_action'
-        - 'cluster:admin/knn_delete_model_action'
-        - 'cluster:admin/knn_remove_model_from_cache_action'
-        - 'cluster:admin/knn_update_model_graveyard_action'
-        - 'cluster:admin/knn_search_model_action'
-        - 'cluster:admin/knn_get_model_action'
-        - 'cluster:admin/knn_stats_action'
+  #   # Allow users to use all k-NN functionality
+  #   knn_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/knn_training_model_action'
+  #       - 'cluster:admin/knn_training_job_router_action'
+  #       - 'cluster:admin/knn_training_job_route_decision_info_action'
+  #       - 'cluster:admin/knn_warmup_action'
+  #       - 'cluster:admin/knn_delete_model_action'
+  #       - 'cluster:admin/knn_remove_model_from_cache_action'
+  #       - 'cluster:admin/knn_update_model_graveyard_action'
+  #       - 'cluster:admin/knn_search_model_action'
+  #       - 'cluster:admin/knn_get_model_action'
+  #       - 'cluster:admin/knn_stats_action'
 
-    # Allow users to execute read only ip2geo datasource action
-    ip2geo_datasource_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/geospatial/datasource/get'
+  #   # Allow users to execute read only ip2geo datasource action
+  #   ip2geo_datasource_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/geospatial/datasource/get'
 
-    # Allow users to use all ip2geo datasource action
-    ip2geo_datasource_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/geospatial/datasource/*'
+  #   # Allow users to use all ip2geo datasource action
+  #   ip2geo_datasource_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/geospatial/datasource/*'
 
-    # Allows users to read Notebooks
-    notebooks_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/notebooks/list'
-        - 'cluster:admin/opendistro/notebooks/get'
+  #   # Allows users to read Notebooks
+  #   notebooks_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/notebooks/list'
+  #       - 'cluster:admin/opendistro/notebooks/get'
 
-    # Allows users to all Notebooks functionality
-    notebooks_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/notebooks/create'
-        - 'cluster:admin/opendistro/notebooks/update'
-        - 'cluster:admin/opendistro/notebooks/delete'
-        - 'cluster:admin/opendistro/notebooks/get'
-        - 'cluster:admin/opendistro/notebooks/list'
+  #   # Allows users to all Notebooks functionality
+  #   notebooks_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/notebooks/create'
+  #       - 'cluster:admin/opendistro/notebooks/update'
+  #       - 'cluster:admin/opendistro/notebooks/delete'
+  #       - 'cluster:admin/opendistro/notebooks/get'
+  #       - 'cluster:admin/opendistro/notebooks/list'
 
-    # Allows users to read observability objects
-    observability_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/observability/get'
+  #   # Allows users to read observability objects
+  #   observability_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/observability/get'
 
-    # Allows users to all Observability functionality
-    observability_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/observability/create'
-        - 'cluster:admin/opensearch/observability/update'
-        - 'cluster:admin/opensearch/observability/delete'
-        - 'cluster:admin/opensearch/observability/get'
+  #   # Allows users to all Observability functionality
+  #   observability_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/observability/create'
+  #       - 'cluster:admin/opensearch/observability/update'
+  #       - 'cluster:admin/opensearch/observability/delete'
+  #       - 'cluster:admin/opensearch/observability/get'
 
-    # Allows users to all PPL functionality
-    ppl_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/ppl'
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'indices:admin/mappings/get'
-            - 'indices:data/read/search*'
-            - 'indices:monitor/settings/get'
+  #   # Allows users to all PPL functionality
+  #   ppl_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/ppl'
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'indices:admin/mappings/get'
+  #           - 'indices:data/read/search*'
+  #           - 'indices:monitor/settings/get'
 
-    # Allows users to read and download Reports
-    reports_instances_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/reports/instance/list'
-        - 'cluster:admin/opendistro/reports/instance/get'
-        - 'cluster:admin/opendistro/reports/menu/download'
+  #   # Allows users to read and download Reports
+  #   reports_instances_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/reports/instance/list'
+  #       - 'cluster:admin/opendistro/reports/instance/get'
+  #       - 'cluster:admin/opendistro/reports/menu/download'
 
-    # Allows users to read and download Reports and Report-definitions
-    reports_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/reports/definition/get'
-        - 'cluster:admin/opendistro/reports/definition/list'
-        - 'cluster:admin/opendistro/reports/instance/list'
-        - 'cluster:admin/opendistro/reports/instance/get'
-        - 'cluster:admin/opendistro/reports/menu/download'
+  #   # Allows users to read and download Reports and Report-definitions
+  #   reports_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/reports/definition/get'
+  #       - 'cluster:admin/opendistro/reports/definition/list'
+  #       - 'cluster:admin/opendistro/reports/instance/list'
+  #       - 'cluster:admin/opendistro/reports/instance/get'
+  #       - 'cluster:admin/opendistro/reports/menu/download'
 
-    # Allows users to all Reports functionality
-    reports_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/reports/definition/create'
-        - 'cluster:admin/opendistro/reports/definition/update'
-        - 'cluster:admin/opendistro/reports/definition/on_demand'
-        - 'cluster:admin/opendistro/reports/definition/delete'
-        - 'cluster:admin/opendistro/reports/definition/get'
-        - 'cluster:admin/opendistro/reports/definition/list'
-        - 'cluster:admin/opendistro/reports/instance/list'
-        - 'cluster:admin/opendistro/reports/instance/get'
-        - 'cluster:admin/opendistro/reports/menu/download'
+  #   # Allows users to all Reports functionality
+  #   reports_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/reports/definition/create'
+  #       - 'cluster:admin/opendistro/reports/definition/update'
+  #       - 'cluster:admin/opendistro/reports/definition/on_demand'
+  #       - 'cluster:admin/opendistro/reports/definition/delete'
+  #       - 'cluster:admin/opendistro/reports/definition/get'
+  #       - 'cluster:admin/opendistro/reports/definition/list'
+  #       - 'cluster:admin/opendistro/reports/instance/list'
+  #       - 'cluster:admin/opendistro/reports/instance/get'
+  #       - 'cluster:admin/opendistro/reports/menu/download'
 
-    # Allows users to use all asynchronous-search functionality
-    asynchronous_search_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/asynchronous_search/*'
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'indices:data/read/search*'
+  #   # Allows users to use all asynchronous-search functionality
+  #   asynchronous_search_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/asynchronous_search/*'
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'indices:data/read/search*'
 
-    # Allows users to read stored asynchronous-search results
-    asynchronous_search_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opendistro/asynchronous_search/get'
+  #   # Allows users to read stored asynchronous-search results
+  #   asynchronous_search_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opendistro/asynchronous_search/get'
 
-    # Allows user to use all index_management actions - ism policies, rollups, transforms
-    index_management_full_access:
-      reserved: true
-      cluster_permissions:
-        - "cluster:admin/opendistro/ism/*"
-        - "cluster:admin/opendistro/rollup/*"
-        - "cluster:admin/opendistro/transform/*"
-        - "cluster:admin/opensearch/controlcenter/lron/*"
-        - "cluster:admin/opensearch/notifications/channels/get"
-        - "cluster:admin/opensearch/notifications/feature/publish"
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'indices:admin/opensearch/ism/*'
+  #   # Allows user to use all index_management actions - ism policies, rollups, transforms
+  #   index_management_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - "cluster:admin/opendistro/ism/*"
+  #       - "cluster:admin/opendistro/rollup/*"
+  #       - "cluster:admin/opendistro/transform/*"
+  #       - "cluster:admin/opensearch/controlcenter/lron/*"
+  #       - "cluster:admin/opensearch/notifications/channels/get"
+  #       - "cluster:admin/opensearch/notifications/feature/publish"
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'indices:admin/opensearch/ism/*'
 
-    # Allows users to use all cross cluster replication functionality at leader cluster
-    cross_cluster_replication_leader_full_access:
-      reserved: true
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - "indices:admin/plugins/replication/index/setup/validate"
-            - "indices:data/read/plugins/replication/changes"
-            - "indices:data/read/plugins/replication/file_chunk"
+  #   # Allows users to use all cross cluster replication functionality at leader cluster
+  #   cross_cluster_replication_leader_full_access:
+  #     reserved: true
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - "indices:admin/plugins/replication/index/setup/validate"
+  #           - "indices:data/read/plugins/replication/changes"
+  #           - "indices:data/read/plugins/replication/file_chunk"
 
-    # Allows users to use all cross cluster replication functionality at follower cluster
-    cross_cluster_replication_follower_full_access:
-      reserved: true
-      cluster_permissions:
-        - "cluster:admin/plugins/replication/autofollow/update"
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - "indices:admin/plugins/replication/index/setup/validate"
-            - "indices:data/write/plugins/replication/changes"
-            - "indices:admin/plugins/replication/index/start"
-            - "indices:admin/plugins/replication/index/pause"
-            - "indices:admin/plugins/replication/index/resume"
-            - "indices:admin/plugins/replication/index/stop"
-            - "indices:admin/plugins/replication/index/update"
-            - "indices:admin/plugins/replication/index/status_check"
+  #   # Allows users to use all cross cluster replication functionality at follower cluster
+  #   cross_cluster_replication_follower_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - "cluster:admin/plugins/replication/autofollow/update"
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - "indices:admin/plugins/replication/index/setup/validate"
+  #           - "indices:data/write/plugins/replication/changes"
+  #           - "indices:admin/plugins/replication/index/start"
+  #           - "indices:admin/plugins/replication/index/pause"
+  #           - "indices:admin/plugins/replication/index/resume"
+  #           - "indices:admin/plugins/replication/index/stop"
+  #           - "indices:admin/plugins/replication/index/update"
+  #           - "indices:admin/plugins/replication/index/status_check"
 
-    # Allows users to use all cross cluster search functionality at remote cluster
-    cross_cluster_search_remote_full_access:
-      reserved: true
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'indices:admin/shards/search_shards'
-            - 'indices:data/read/search'
+  #   # Allows users to use all cross cluster search functionality at remote cluster
+  #   cross_cluster_search_remote_full_access:
+  #     reserved: true
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'indices:admin/shards/search_shards'
+  #           - 'indices:data/read/search'
 
-    # Allow users to read ML stats/models/tasks
-    ml_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/ml/stats/nodes'
-        - 'cluster:admin/opensearch/ml/model_groups/search'
-        - 'cluster:admin/opensearch/ml/models/get'
-        - 'cluster:admin/opensearch/ml/models/search'
-        - 'cluster:admin/opensearch/ml/tasks/get'
-        - 'cluster:admin/opensearch/ml/tasks/search'
+  #   # Allow users to read ML stats/models/tasks
+  #   ml_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/ml/stats/nodes'
+  #       - 'cluster:admin/opensearch/ml/model_groups/search'
+  #       - 'cluster:admin/opensearch/ml/models/get'
+  #       - 'cluster:admin/opensearch/ml/models/search'
+  #       - 'cluster:admin/opensearch/ml/tasks/get'
+  #       - 'cluster:admin/opensearch/ml/tasks/search'
 
-    # Allows users to use all ML functionality
-    ml_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster_monitor'
-        - 'cluster:admin/opensearch/ml/*'
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'indices_monitor'
+  #   # Allows users to use all ML functionality
+  #   ml_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster_monitor'
+  #       - 'cluster:admin/opensearch/ml/*'
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'indices_monitor'
 
-    # Allows users to use all Notifications functionality
-    notifications_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/notifications/*'
+  #   # Allows users to use all Notifications functionality
+  #   notifications_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/notifications/*'
 
-    # Allows users to read Notifications config/channels
-    notifications_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/notifications/configs/get'
-        - 'cluster:admin/opensearch/notifications/features'
-        - 'cluster:admin/opensearch/notifications/channels/get'
+  #   # Allows users to read Notifications config/channels
+  #   notifications_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/notifications/configs/get'
+  #       - 'cluster:admin/opensearch/notifications/features'
+  #       - 'cluster:admin/opensearch/notifications/channels/get'
 
-    # Allows users to use all snapshot management functionality
-    snapshot_management_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/snapshot_management/*'
-        - 'cluster:admin/opensearch/notifications/feature/publish'
-        - 'cluster:admin/repository/*'
-        - 'cluster:admin/snapshot/*'
+  #   # Allows users to use all snapshot management functionality
+  #   snapshot_management_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/snapshot_management/*'
+  #       - 'cluster:admin/opensearch/notifications/feature/publish'
+  #       - 'cluster:admin/repository/*'
+  #       - 'cluster:admin/snapshot/*'
 
-    # Allows users to see snapshots, repositories, and snapshot management policies
-    snapshot_management_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/snapshot_management/policy/get'
-        - 'cluster:admin/opensearch/snapshot_management/policy/search'
-        - 'cluster:admin/opensearch/snapshot_management/policy/explain'
-        - 'cluster:admin/repository/get'
-        - 'cluster:admin/snapshot/get'
+  #   # Allows users to see snapshots, repositories, and snapshot management policies
+  #   snapshot_management_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/snapshot_management/policy/get'
+  #       - 'cluster:admin/opensearch/snapshot_management/policy/search'
+  #       - 'cluster:admin/opensearch/snapshot_management/policy/explain'
+  #       - 'cluster:admin/repository/get'
+  #       - 'cluster:admin/snapshot/get'
 
-    # Allows user to use point in time functionality
-    point_in_time_full_access:
-      reserved: true
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'manage_point_in_time'
+  #   # Allows user to use point in time functionality
+  #   point_in_time_full_access:
+  #     reserved: true
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'manage_point_in_time'
 
-    # Allows users to see security analytics detectors and others
-    security_analytics_read_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/securityanalytics/alerts/get'
-        - 'cluster:admin/opensearch/securityanalytics/correlations/findings'
-        - 'cluster:admin/opensearch/securityanalytics/correlations/list'
-        - 'cluster:admin/opensearch/securityanalytics/detector/get'
-        - 'cluster:admin/opensearch/securityanalytics/detector/search'
-        - 'cluster:admin/opensearch/securityanalytics/findings/get'
-        - 'cluster:admin/opensearch/securityanalytics/mapping/get'
-        - 'cluster:admin/opensearch/securityanalytics/mapping/view/get'
-        - 'cluster:admin/opensearch/securityanalytics/rule/get'
-        - 'cluster:admin/opensearch/securityanalytics/rule/search'
+  #   # Allows users to see security analytics detectors and others
+  #   security_analytics_read_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/securityanalytics/alerts/get'
+  #       - 'cluster:admin/opensearch/securityanalytics/correlations/findings'
+  #       - 'cluster:admin/opensearch/securityanalytics/correlations/list'
+  #       - 'cluster:admin/opensearch/securityanalytics/detector/get'
+  #       - 'cluster:admin/opensearch/securityanalytics/detector/search'
+  #       - 'cluster:admin/opensearch/securityanalytics/findings/get'
+  #       - 'cluster:admin/opensearch/securityanalytics/mapping/get'
+  #       - 'cluster:admin/opensearch/securityanalytics/mapping/view/get'
+  #       - 'cluster:admin/opensearch/securityanalytics/rule/get'
+  #       - 'cluster:admin/opensearch/securityanalytics/rule/search'
 
-    # Allows users to use all security analytics functionality
-    security_analytics_full_access:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/securityanalytics/alerts/*'
-        - 'cluster:admin/opensearch/securityanalytics/correlations/*'
-        - 'cluster:admin/opensearch/securityanalytics/detector/*'
-        - 'cluster:admin/opensearch/securityanalytics/findings/*'
-        - 'cluster:admin/opensearch/securityanalytics/mapping/*'
-        - 'cluster:admin/opensearch/securityanalytics/rule/*'
-      index_permissions:
-        - index_patterns:
-            - '*'
-          allowed_actions:
-            - 'indices:admin/mapping/put'
-            - 'indices:admin/mappings/get'
+  #   # Allows users to use all security analytics functionality
+  #   security_analytics_full_access:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/securityanalytics/alerts/*'
+  #       - 'cluster:admin/opensearch/securityanalytics/correlations/*'
+  #       - 'cluster:admin/opensearch/securityanalytics/detector/*'
+  #       - 'cluster:admin/opensearch/securityanalytics/findings/*'
+  #       - 'cluster:admin/opensearch/securityanalytics/mapping/*'
+  #       - 'cluster:admin/opensearch/securityanalytics/rule/*'
+  #     index_permissions:
+  #       - index_patterns:
+  #           - '*'
+  #         allowed_actions:
+  #           - 'indices:admin/mapping/put'
+  #           - 'indices:admin/mappings/get'
 
-    # Allows users to view and acknowledge alerts
-    security_analytics_ack_alerts:
-      reserved: true
-      cluster_permissions:
-        - 'cluster:admin/opensearch/securityanalytics/alerts/*'
-  nodes_dn.yml: |-
-    _meta:
-      type: "nodesdn"
-      config_version: 2
+  #   # Allows users to view and acknowledge alerts
+  #   security_analytics_ack_alerts:
+  #     reserved: true
+  #     cluster_permissions:
+  #       - 'cluster:admin/opensearch/securityanalytics/alerts/*'
+  # nodes_dn.yml: |-
+  #   _meta:
+  #     type: "nodesdn"
+  #     config_version: 2
 
-    # Define nodesdn mapping name and corresponding values
-    # cluster1:
-    #   nodes_dn:
-    #       - CN=*.example.com
+  #   # Define nodesdn mapping name and corresponding values
+  #   # cluster1:
+  #   #   nodes_dn:
+  #   #       - CN=*.example.com
   internal_users.yml: |-
     ---
     # This is the internal user database
@@ -671,166 +671,166 @@ stringData:
       backend_roles:
       - "snapshotrestore"
       description: "Demo snapshotrestore user, using external role mapping"
-  audit.yml: |-
-    _meta:
-      type: "audit"
-      config_version: 2
+  # audit.yml: |-
+  #   _meta:
+  #     type: "audit"
+  #     config_version: 2
 
-    config:
-      # enable/disable audit logging
-      enabled: true
+  #   config:
+  #     # enable/disable audit logging
+  #     enabled: true
 
-      audit:
-        # Enable/disable REST API auditing
-        enable_rest: true
+  #     audit:
+  #       # Enable/disable REST API auditing
+  #       enable_rest: true
 
-        # Categories to exclude from REST API auditing
-        disabled_rest_categories:
-          - AUTHENTICATED
-          - GRANTED_PRIVILEGES
+  #       # Categories to exclude from REST API auditing
+  #       disabled_rest_categories:
+  #         - AUTHENTICATED
+  #         - GRANTED_PRIVILEGES
 
-        # Enable/disable Transport API auditing
-        enable_transport: true
+  #       # Enable/disable Transport API auditing
+  #       enable_transport: true
 
-        # Categories to exclude from Transport API auditing
-        disabled_transport_categories:
-          - AUTHENTICATED
-          - GRANTED_PRIVILEGES
+  #       # Categories to exclude from Transport API auditing
+  #       disabled_transport_categories:
+  #         - AUTHENTICATED
+  #         - GRANTED_PRIVILEGES
 
-        # Users to be excluded from auditing. Wildcard patterns are supported. Eg:
-        # ignore_users: ["test-user", "employee-*"]
-        ignore_users:
-          - kibanaserver
+  #       # Users to be excluded from auditing. Wildcard patterns are supported. Eg:
+  #       # ignore_users: ["test-user", "employee-*"]
+  #       ignore_users:
+  #         - kibanaserver
 
-        # Requests to be excluded from auditing. Wildcard patterns are supported. Eg:
-        # ignore_requests: ["indices:data/read/*", "SearchRequest"]
-        ignore_requests: []
+  #       # Requests to be excluded from auditing. Wildcard patterns are supported. Eg:
+  #       # ignore_requests: ["indices:data/read/*", "SearchRequest"]
+  #       ignore_requests: []
 
-        # Log individual operations in a bulk request
-        resolve_bulk_requests: false
+  #       # Log individual operations in a bulk request
+  #       resolve_bulk_requests: false
 
-        # Include the body of the request (if available) for both REST and the transport layer
-        log_request_body: true
+  #       # Include the body of the request (if available) for both REST and the transport layer
+  #       log_request_body: true
 
-        # Logs all indices affected by a request. Resolves aliases and wildcards/date patterns
-        resolve_indices: true
+  #       # Logs all indices affected by a request. Resolves aliases and wildcards/date patterns
+  #       resolve_indices: true
 
-        # Exclude sensitive headers from being included in the logs. Eg: Authorization
-        exclude_sensitive_headers: true
+  #       # Exclude sensitive headers from being included in the logs. Eg: Authorization
+  #       exclude_sensitive_headers: true
 
-      compliance:
-        # enable/disable compliance
-        enabled: true
+  #     compliance:
+  #       # enable/disable compliance
+  #       enabled: true
 
-        # Log updates to internal security changes
-        internal_config: true
+  #       # Log updates to internal security changes
+  #       internal_config: true
 
-        # Log external config files for the node
-        external_config: false
+  #       # Log external config files for the node
+  #       external_config: false
 
-        # Log only metadata of the document for read events
-        read_metadata_only: true
+  #       # Log only metadata of the document for read events
+  #       read_metadata_only: true
 
-        # Map of indexes and fields to monitor for read events. Wildcard patterns are supported for both index names and fields. Eg:
-        # read_watched_fields: {
-        #   "twitter": ["message"]
-        #   "logs-*": ["id", "attr*"]
-        # }
-        read_watched_fields: {}
+  #       # Map of indexes and fields to monitor for read events. Wildcard patterns are supported for both index names and fields. Eg:
+  #       # read_watched_fields: {
+  #       #   "twitter": ["message"]
+  #       #   "logs-*": ["id", "attr*"]
+  #       # }
+  #       read_watched_fields: {}
 
-        # List of users to ignore for read events. Wildcard patterns are supported. Eg:
-        # read_ignore_users: ["test-user", "employee-*"]
-        read_ignore_users:
-          - kibanaserver
+  #       # List of users to ignore for read events. Wildcard patterns are supported. Eg:
+  #       # read_ignore_users: ["test-user", "employee-*"]
+  #       read_ignore_users:
+  #         - kibanaserver
 
-        # Log only metadata of the document for write events
-        write_metadata_only: true
+  #       # Log only metadata of the document for write events
+  #       write_metadata_only: true
 
-        # Log only diffs for document updates
-        write_log_diffs: false
+  #       # Log only diffs for document updates
+  #       write_log_diffs: false
 
-        # List of indices to watch for write events. Wildcard patterns are supported
-        # write_watched_indices: ["twitter", "logs-*"]
-        write_watched_indices: []
+  #       # List of indices to watch for write events. Wildcard patterns are supported
+  #       # write_watched_indices: ["twitter", "logs-*"]
+  #       write_watched_indices: []
 
-        # List of users to ignore for write events. Wildcard patterns are supported. Eg:
-        # write_ignore_users: ["test-user", "employee-*"]
-        write_ignore_users:
-          - kibanaserver
-  allowlist.yml : |- 
-    ---
-    _meta:
-      type: "allowlist"
-      config_version: 2
+  #       # List of users to ignore for write events. Wildcard patterns are supported. Eg:
+  #       # write_ignore_users: ["test-user", "employee-*"]
+  #       write_ignore_users:
+  #         - kibanaserver
+  # allowlist.yml : |- 
+  #   ---
+  #   _meta:
+  #     type: "allowlist"
+  #     config_version: 2
 
-    # Description:
-    # enabled - feature flag.
-    # if enabled is false, the allowlisting feature is removed.
-    # This is like removing the check that checks if an API is allowlisted.
-    # This is equivalent to continuing with the usual access control checks, and removing all the code that implements allowlisting.
-    # if enabled is true, then all users except SuperAdmin can access only the APIs in requests
-    # SuperAdmin can access all APIs.
-    # SuperAdmin is defined by the SuperAdmin certificate, which is configured in the opensearch.yml setting: plugins.security.authcz.admin_dn:
-    # Refer to the example setting in opensearch.yml.example, and the opendistro documentation to know more about configuring SuperAdmin.
-    #
-    # requests - map of allowlisted endpoints, and the allowlisted HTTP requests for those endpoints
+  #   # Description:
+  #   # enabled - feature flag.
+  #   # if enabled is false, the allowlisting feature is removed.
+  #   # This is like removing the check that checks if an API is allowlisted.
+  #   # This is equivalent to continuing with the usual access control checks, and removing all the code that implements allowlisting.
+  #   # if enabled is true, then all users except SuperAdmin can access only the APIs in requests
+  #   # SuperAdmin can access all APIs.
+  #   # SuperAdmin is defined by the SuperAdmin certificate, which is configured in the opensearch.yml setting: plugins.security.authcz.admin_dn:
+  #   # Refer to the example setting in opensearch.yml.example, and the opendistro documentation to know more about configuring SuperAdmin.
+  #   #
+  #   # requests - map of allowlisted endpoints, and the allowlisted HTTP requests for those endpoints
 
-    # Examples showing how to configure this yml file (make sure the _meta data from above is also there):
-    # Example 1:
-    # To enable allowlisting and allowlist GET /_cluster/settings
-    #
-    #config:
-    #  enabled: true
-    #  requests:
-    #    /_cluster/settings:
-    #      - GET
-    #
-    # Example 2:
-    # If you want to allowlist multiple request methods for /_cluster/settings (GET,PUT):
-    #
-    #config:
-    #  enabled: true
-    #  requests:
-    #    /_cluster/settings:
-    #      - GET
-    #      - PUT
-    #
-    # Example 3:
-    # If you want to allowlist other APIs as well, for example GET /_cat/nodes, and GET /_cat/shards:
-    #
-    #config:
-    #  enabled: true
-    #  requests:
-    #    /_cluster/settings:
-    #      - GET
-    #      - PUT
-    #    /_cat/nodes:
-    #      - GET
-    #    /_cat/shards:
-    #      - GET
-    #
-    # Example 4:
-    # If you want to disable the allowlisting feature, set enabled to false.
-    #  enabled: false
-    #  requests:
-    #    /_cluster/settings:
-    #      - GET
-    #
-    #At this point, all APIs become allowlisted because the feature to allowlist is off, so requests is irrelevant.
+  #   # Examples showing how to configure this yml file (make sure the _meta data from above is also there):
+  #   # Example 1:
+  #   # To enable allowlisting and allowlist GET /_cluster/settings
+  #   #
+  #   #config:
+  #   #  enabled: true
+  #   #  requests:
+  #   #    /_cluster/settings:
+  #   #      - GET
+  #   #
+  #   # Example 2:
+  #   # If you want to allowlist multiple request methods for /_cluster/settings (GET,PUT):
+  #   #
+  #   #config:
+  #   #  enabled: true
+  #   #  requests:
+  #   #    /_cluster/settings:
+  #   #      - GET
+  #   #      - PUT
+  #   #
+  #   # Example 3:
+  #   # If you want to allowlist other APIs as well, for example GET /_cat/nodes, and GET /_cat/shards:
+  #   #
+  #   #config:
+  #   #  enabled: true
+  #   #  requests:
+  #   #    /_cluster/settings:
+  #   #      - GET
+  #   #      - PUT
+  #   #    /_cat/nodes:
+  #   #      - GET
+  #   #    /_cat/shards:
+  #   #      - GET
+  #   #
+  #   # Example 4:
+  #   # If you want to disable the allowlisting feature, set enabled to false.
+  #   #  enabled: false
+  #   #  requests:
+  #   #    /_cluster/settings:
+  #   #      - GET
+  #   #
+  #   #At this point, all APIs become allowlisted because the feature to allowlist is off, so requests is irrelevant.
 
 
-    #this name must be config
-    config:
-      enabled: false
-      requests:
-        /_cluster/settings:
-          - GET
-        /_cat/nodes:
-          - GET
-  action_groups.yml: |-
-    _meta:
-      type: "actiongroups"
-      config_version: 2
+  #   #this name must be config
+  #   config:
+  #     enabled: false
+  #     requests:
+  #       /_cluster/settings:
+  #         - GET
+  #       /_cat/nodes:
+  #         - GET
+  # # action_groups.yml: |-
+  # #   _meta:
+  # #     type: "actiongroups"
+  # #     config_version: 2
   config.yml: |-
     _meta:
       type: "config"
@@ -839,6 +839,7 @@ stringData:
       dynamic:
         http:
           anonymous_auth_enabled: true
+        authz: {}
         authc:
           basic_internal_auth_domain:
             http_enabled: true
