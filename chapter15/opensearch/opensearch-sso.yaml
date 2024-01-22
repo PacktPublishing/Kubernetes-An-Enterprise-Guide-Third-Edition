@@ -276,7 +276,6 @@ spec:
     pluginsList: ["repository-s3"]
     additionalConfig:
       node.store.allow_mmap: "false"
-      compatibility.override_main_response_version: "true"
     additionalVolumes:
     - name: enterprise-ca
       path: /usr/share/opensearch/config/enterprise-ca
