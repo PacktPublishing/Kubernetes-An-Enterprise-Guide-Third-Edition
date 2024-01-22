@@ -27,6 +27,11 @@ echo -e "***********************************************************************
 tput setaf 3
 
 kubectl create ns opensearch-cp
+kubectl create ns opensearch-operator
+
+helm repo add opensearch-operator https://opensearch-project.github.io/opensearch-k8s-operator/
+helm repo update
+helm install opensearch-operator opensearch-operator/opensearch-operator -n opensearch-operator
 
 
 tput setaf 5
