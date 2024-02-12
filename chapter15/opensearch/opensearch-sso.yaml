@@ -1,0 +1,352 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: opensearch-ingress
+  namespace: opensearch-cp
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "enterprise-ca"
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: my-cluster-dashboards
+            port: 
+              number: 5601
+        path: "/"
+        pathType: Prefix
+    host: opensearch.apps.IPADDR.nip.io
+  tls:
+  - hosts:
+    - opensearch.apps.IPADDR.nip.io
+    secretName: opensearch-web-tls
+---
+apiVersion: openunison.tremolo.io/v2
+kind: Application
+metadata:
+  labels:
+    app.kubernetes.io/component: openunison-applications
+    app.kubernetes.io/instance: openunison-orchestra-login-portal
+    app.kubernetes.io/name: openunison
+    app.kubernetes.io/part-of: openunison
+  name: opensearch
+  namespace: openunison
+spec:
+  azTimeoutMillis: 3000
+  cookieConfig:
+    cookiesEnabled: true
+    domain: '#[OU_HOST]'
+    httpOnly: true
+    keyAlias: session-unison
+    logoutURI: /logout
+    scope: -1
+    secure: true
+    sessionCookieName: tremolosession
+    timeout: 900
+  isApp: false
+  urls:
+  - azRules:
+    - constraint: (groups=cn=k8s-cluster-admins,ou=Groups,DC=domain,DC=com)
+      scope: filter
+    filterChain: []
+    hosts:
+    - '#[OU_HOST]'
+    idp:
+      className: com.tremolosecurity.idp.providers.OpenIDConnectIdP
+      mappings:
+        map:
+        - sourceType: user
+          targetAttributeName: sub
+          targetAttributeSource: sub
+        - sourceType: static
+          targetAttributeName: roles
+          targetAttributeSource: admin
+        strict: true
+      params:
+        jwtSigningKey: unison-saml2-rp-sig
+        k8sNameSpace: 'openunison'
+        k8sTarget: k8s
+        sessionStoreClassName: com.tremolosecurity.oidc.k8s.K8sSessionStore
+      trusts:
+      - name: 'https://opensearch.apps.IPADDR.nip.io/'
+        params:
+          accessTokenSkewMillis: "120000"
+          accessTokenTimeToLive: '60000'
+          authChainName: login-service
+          clientID: opensearch
+          codeLastMileKeyName: lastmile-oidc
+          codeTokenSkewMilis: '60000'
+          publicEndpoint: "false"
+          redirectURI: 
+          - https://opensearch.apps.IPADDR.nip.io/auth/openid/login
+        secretParams:
+        - name: clientSecret
+          secretName: orchestra-secrets-source
+          secretKey: opensearch-oidc-client-secret
+    results:
+      auFail: default-login-failure
+      azFail: default-login-failure
+    uri: /auth/idp/opensearch
+---
+apiVersion: openunison.tremolo.io/v1
+kind: PortalUrl
+metadata:
+  name: opensearch
+  namespace: openunison
+spec:
+  label: OpenSearch
+  org: B158BD40-0C1B-11E3-8FFD-0800200C9A66
+  url: https://opensearch.apps.IPADDR.nip.io
+  icon: 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uNwBIk+6bMiO5KclFIvA+xl9Uw4YugX61ty5tc9x+gBkaFapG+DgEBgrUfa6x7t7u+f2b097fj9y3XKnqfRmmAAADRxpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+Cjx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDQuNC4wLUV4aXYyIj4KIDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+CiAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIKICAgIHhtbG5zOkdJTVA9Imh0dHA6Ly93d3cuZ2ltcC5vcmcveG1wLyIKICAgIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIgogICAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIgogICB4bXBNTTpEb2N1bWVudElEPSJnaW1wOmRvY2lkOmdpbXA6OTg0NzQ5YzAtMzQzOC00Y2E5LTllNzMtYmJkOTA4MTJiMjRkIgogICB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOmZlZmMyNmY1LTlmOGQtNDMwMi05ZGY3LTU5YWY2Y2E0YTliZCIKICAgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOmIxYWVmNzlmLTBmMDEtNDg1OC05NzliLWYwNjYzZmZmMGQ2OSIKICAgZGM6Rm9ybWF0PSJpbWFnZS9wbmciCiAgIEdJTVA6QVBJPSIyLjAiCiAgIEdJTVA6UGxhdGZvcm09Ik1hYyBPUyIKICAgR0lNUDpUaW1lU3RhbXA9IjE3MDU3NjI4NjkzMTI3NzIiCiAgIEdJTVA6VmVyc2lvbj0iMi4xMC4yOCIKICAgdGlmZjpPcmllbnRhdGlvbj0iMSIKICAgeG1wOkNyZWF0b3JUb29sPSJHSU1QIDIuMTAiPgogICA8eG1wTU06SGlzdG9yeT4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGkKICAgICAgc3RFdnQ6YWN0aW9uPSJzYXZlZCIKICAgICAgc3RFdnQ6Y2hhbmdlZD0iLyIKICAgICAgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDoxMzljYmIxYS1lNTNhLTQ3NTItOTQxNC1iYWI5YmRjZTA2NDMiCiAgICAgIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkdpbXAgMi4xMCAoTWFjIE9TKSIKICAgICAgc3RFdnQ6d2hlbj0iMjAyNC0wMS0yMFQxMDowMTowOS0wNTowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgCjw/eHBhY2tldCBlbmQ9InciPz4kDuq2AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAACxLAAAsSwGlPZapAAAAB3RJTUUH6AEUDwEJv0MU7wAAIABJREFUeNrtnXeYVdXVh9917h2GjoIEBUGNvQEaVIoIFoQ7lhhLEJkCKIkxxk/zJSQmJsbEaGL8NFETuzDDDGA3KFOQKIRqF9SgYqEIiEiHYYa5Z6/vj3sNKG24bW5Z7/PM4zMy99xz9l6/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
+  azRules:
+  - constraint: (groups=cn=k8s-cluster-admins,ou=Groups,DC=domain,DC=com)
+    scope: filter    
+---
+apiVersion: v1
+data:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDETCCAfmgAwIBAgIUbkbKfQ7oeurnTzrygH/GCKI36E0wDQYJKoZIhvcNAQEL
+    BQAwGDEWMBQGA1UEAwwNZW50ZXJwcmlzZS1jYTAeFw0yMjExMDcxNDQ1MjJaFw0z
+    MjExMDQxNDQ1MjJaMBgxFjAUBgNVBAMMDWVudGVycHJpc2UtY2EwggEiMA0GCSqG
+    SIb3DQEBAQUAA4IBDwAwggEKAoIBAQCnqVwyQo22rG6nUZcSe/GmVfr90Kzgux09
+    468pSSQdpDq9RTQUOvfATPBW81wBRfP1/ryEhshruAKa9/5h+5B/x8ncxTXpm8B7
+    vD7etv8WuryKPsILuidOD0GQSETo77AXM7FfiROr01j7w6QPwuPvBJSp3ikiC/Dc
+    vE66lvIEXN7dSgDddvuvGQNDWOYlGZhf5FHW/5drPHuO9zuyUG+MMi1iP+RBMPRg
+    Ie6v8BpOgrsgdtmXLa4VMsPM+0XfD0H8cSf/2H6WS4/7D8AulnPIoKcY+FLJPAm3
+    ITR7/l6Q0IQuMSw6BLKafBFnBVcTQSH7yJdAJ5gH4VYDr2jkUZL3AgMBAAGjUzBR
+    MB0GA1UdDgQWBBSf9D5FKwHIF7xWqF/48n+r/RTQ3jAfBgNVHSMEGDAWgBSf9D5F
+    KwHIF7xWqF/48n+r/RTQ3jAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUA
+    A4IBAQB7Pl29+rRvxp+TxKOtBddKxHaE2UELnbidhU/16QmnuViBAXbuERHAvcJa
+    naoZecBUARtiLXOjh91A6Ao5ZDOdDNYNRCgLb6s7CUXR+3KzvVFcITTRtkSNLJ15
+    g4hjYrAKDY1H3OswQ/SrhLoFBwgxbICQyxSKit49Dk+exszn1BE716iiIVgYOGZO
+    yIayzBYumFss40jkmhlnk5enab8IL4TqpCe/qbvm5wNjKZUZ3jbl3d1UemqYNuYV
+    cEcZ4QymABYKy4VE3TRYRbIdet4V6uYHF5YPyEEiY0TUe+XURZVAmiOcrkjnUHOx
+    1bjzRqJZL5TwoFCg5eeDzuY4ZTcc
+    -----END CERTIFICATE-----
+
+kind: ConfigMap
+metadata:
+  name: enterprise-root-ca.crt
+  namespace: opensearch-cp
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: opensearch-admin-creds
+  namespace: opensearch-cp
+stringData:
+  username: admin
+  password: admin
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: opensearch-security-config
+  namespace: opensearch-cp
+stringData:
+  internal_users.yml: |-
+    ---
+    # This is the internal user database
+    # The hash value is a bcrypt hash and can be generated with plugin/tools/hash.sh
+
+    _meta:
+      type: "internalusers"
+      config_version: 2
+
+    # Define your internal users here
+
+    ## Demo users
+
+    admin:
+      hash: "$2a$12$VcCDgh2NDk07JGN0rjGbM.Ad41qVR/YFJcgHp0UGns5JDymv..TOG"
+      reserved: true
+      backend_roles:
+      - "admin"
+      description: "Demo admin user"
+
+    anomalyadmin:
+      hash: "$2y$12$TRwAAJgnNo67w3rVUz4FIeLx9Dy/llB79zf9I15CKJ9vkM4ZzAd3."
+      reserved: false
+      opendistro_security_roles:
+      - "anomaly_full_access"
+      description: "Demo anomaly admin user, using internal role"
+
+    kibanaserver:
+      hash: "$2a$12$4AcgAt3xwOWadA5s5blL6ev39OXDNhmOesEoo33eZtrq2N0YrU3H."
+      reserved: true
+      description: "Demo OpenSearch Dashboards user"
+
+    kibanaro:
+      hash: "$2a$12$JJSXNfTowz7Uu5ttXfeYpeYE0arACvcwlPBStB1F.MI7f0U9Z4DGC"
+      reserved: false
+      backend_roles:
+      - "kibanauser"
+      - "readall"
+      attributes:
+        attribute1: "value1"
+        attribute2: "value2"
+        attribute3: "value3"
+      description: "Demo OpenSearch Dashboards read only user, using external role mapping"
+
+    logstash:
+      hash: "$2a$12$u1ShR4l4uBS3Uv59Pa2y5.1uQuZBrZtmNfqB3iM/.jL0XoV9sghS2"
+      reserved: false
+      backend_roles:
+      - "logstash"
+      description: "Demo logstash user, using external role mapping"
+
+    readall:
+      hash: "$2a$12$ae4ycwzwvLtZxwZ82RmiEunBbIPiAmGZduBAjKN0TXdwQFtCwARz2"
+      reserved: false
+      backend_roles:
+      - "readall"
+      description: "Demo readall user, using external role mapping"
+
+    snapshotrestore:
+      hash: "$2y$12$DpwmetHKwgYnorbgdvORCenv4NAK8cPUg8AI6pxLCuWf/ALc0.v7W"
+      reserved: false
+      backend_roles:
+      - "snapshotrestore"
+      description: "Demo snapshotrestore user, using external role mapping"
+  config.yml: |-
+    _meta:
+      type: "config"
+      config_version: 2
+    config:
+      dynamic:
+        http:
+          anonymous_auth_enabled: true
+        authz: {}
+        authc:
+          basic_internal_auth_domain:
+            http_enabled: true
+            order: 1
+            http_authenticator:
+              type: "basic"
+              challenge: false
+            authentication_backend:
+              type: "internal"        
+          openid_auth_domain:
+            http_enabled: true
+            transport_enabled: true
+            order: 0
+            http_authenticator:
+              type: openid
+              challenge: false
+              config:
+                openid_connect_idp:
+                  enable_ssl: true
+                  verify_hostnames: true
+                  pemtrustedcas_filepath: /usr/share/opensearch/config/enterprise-ca/ca.crt
+                subject_key: sub
+                roles_key: roles
+                openid_connect_url: https://k8sou.apps.IPADDR.nip.io/auth/idp/opensearch/.well-known/openid-configuration
+            authentication_backend:
+              type: noop
+---
+apiVersion: opensearch.opster.io/v1
+kind: OpenSearchCluster
+metadata:
+  name: local
+  namespace: opensearch-cp
+spec:
+  security:
+    config:
+      securityConfigSecret:
+        name: opensearch-security-config
+      adminCredentialsSecret:
+        name: opensearch-admin-creds
+    tls:
+      transport:
+        generate: true
+      http:
+        generate: true
+  general:
+    version: "2.11.1"
+    httpPort: 9200
+    vendor: opensearch
+    serviceName: my-cluster
+    monitoring:
+     enable: true
+    pluginsList: ["repository-s3"]
+    additionalConfig:
+      node.store.allow_mmap: "false"
+    additionalVolumes:
+    - name: enterprise-ca
+      path: /usr/share/opensearch/config/enterprise-ca
+      configMap:
+        name: enterprise-root-ca.crt
+  dashboards:
+    version: "2.11.1"
+    enable: true
+    replicas: 1
+    resources:
+      requests:
+         memory: "1Gi"
+         cpu: "500m"
+      limits:
+         memory: "1Gi"
+         cpu: "500m"
+    additionalConfig:
+      server.name: opensearch.apps.IPADDR.nip.io
+      opensearch_security.auth.type: "openid"
+      opensearch_security.openid.connect_url: https://k8sou.apps.IPADDR.nip.io/auth/idp/opensearch/.well-known/openid-configuration
+      opensearch_security.openid.base_redirect_url: https://opensearch.apps.IPADDR.nip.io/
+      opensearch_security.openid.client_id: opensearch
+      opensearch_security.openid.client_secret: BLxvl7oMSx8mxpSGpOV0UtRiKArFLMm4n368nzT4cu9cXuVc3AZq69vcPcQ2zetj
+      opensearch_security.openid.scope: openid profile email
+      opensearch_security.openid.root_ca: /etc/enterprise-ca/ca.crt
+      opensearch_security.openid.refresh_tokens: "true"
+    additionalVolumes:
+    - name: enterprise-ca
+      path: /etc/enterprise-ca
+      configMap:
+        name: enterprise-root-ca.crt
+  confMgmt:
+    smartScaler: true
+  nodePools:
+    - component: masters
+      replicas: 3
+      diskSize: "3Gi"
+      nodeSelector:
+      resources:
+         requests:
+            memory: "2Gi"
+            cpu: "500m"
+         limits:
+            memory: "2Gi"
+            cpu: "500m"
+      roles:
+        - "master"
+        - "data"
+    - component: nodes
+      replicas: 1
+      diskSize: "3Gi"
+      nodeSelector:
+      resources:
+         requests:
+            memory: "2Gi"
+            cpu: "500m"
+         limits:
+            memory: "2Gi"
+            cpu: "500m"
+      roles:
+        - "data"
+    - component: coordinators
+      replicas: 1
+      diskSize: "3Gi"
+      nodeSelector:
+      resources:
+         requests:
+            memory: "2Gi"
+            cpu: "500m"
+         limits:
+            memory: "2Gi"
+            cpu: "500m"
+      roles:
+        - "ingest"

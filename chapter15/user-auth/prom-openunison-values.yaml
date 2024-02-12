@@ -1,0 +1,13 @@
+grafana:
+  grafana.ini:
+    users:
+      allow_sign_up: false
+      auto_assign_org: true
+      auto_assign_org_role: Admin
+
+
+    auth.proxy:
+      enabled: true
+      header_name: X-WEBAUTH-USER
+      auto_sign_up: true
+      headers: "Groups:X-WEBAUTH-GROUPS"

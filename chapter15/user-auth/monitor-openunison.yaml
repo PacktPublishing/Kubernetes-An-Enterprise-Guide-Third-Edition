@@ -1,0 +1,83 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    audit2rbac.liggitt.net/version: v0.7.0
+  labels:
+    audit2rbac.liggitt.net/generated: "true"
+    audit2rbac.liggitt.net/user: system-serviceaccount-monitoring-prometheus-k8s
+  name: monitoring-list-services
+  namespace: openunison
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - pods
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    audit2rbac.liggitt.net/version: v0.7.0
+  labels:
+    audit2rbac.liggitt.net/generated: "true"
+    audit2rbac.liggitt.net/user: system-serviceaccount-monitoring-prometheus-k8s
+  name: monitoring-list-services
+  namespace: openunison
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: monitoring-list-services
+subjects:
+- kind: ServiceAccount
+  name: prometheus-kube-prometheus-prometheus
+  namespace: openunison
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    release: prometheus
+  name: orchestra
+  namespace: monitoring
+spec:
+  endpoints:
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    interval: 30s
+    port: openunison-secure-orchestra
+    scheme: https
+    targetPort: 8443
+    tlsConfig:
+      insecureSkipVerify: true
+  namespaceSelector:
+    matchNames:
+    - openunison
+  selector:
+    matchLabels:
+      app: openunison-orchestra
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  creationTimestamp: null
+  labels:
+    release: prometheus
+  name: openunison-has-activesessions
+spec:
+  groups:
+  - name: openunison.rules
+    rules:
+    - alert: no-sessions
+      annotations:
+        description: Fires when there are no OpenUnison sessions
+      expr: absent(active_sessions)
+      for: 1m
+      labels:
+        severity: openunison-critical
+        source: openunison

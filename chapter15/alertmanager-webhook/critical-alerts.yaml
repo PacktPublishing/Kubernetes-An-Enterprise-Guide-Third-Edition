@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: critical-alerts
+  namespace: kube-system
+  labels:
+    alertmanagerConfig: critical
+spec:
+  receivers:
+    - name: nginx-webhook
+      webhookConfigs:
+        - sendResolved: true
+          url: http://nginx-alerts.alert-manager-webhook.svc/webhook
+  route:
+    repeatInterval: 30s
+    receiver: 'nginx-webhook'
+    matchers:
+    - name: severity
+      matchType: "="
+      value: critical
+    groupBy: ['namespace']
+    groupWait: 30s
+    groupInterval: 5m
