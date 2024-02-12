@@ -1,0 +1,15 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: testapp-get-allow
+  namespace: testapp
+spec:
+  selector:
+    matchLabels:
+      app: nginx-web
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+         methods: ["GET"]
+

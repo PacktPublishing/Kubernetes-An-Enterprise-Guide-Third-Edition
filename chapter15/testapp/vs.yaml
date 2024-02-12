@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: testapp-vs
+  namespace: testapp
+spec:
+  hosts:
+  - testapp.$hostip.nip.io
+  gateways:
+  - frontend-gateway
+  http:
+  - route:
+    - destination:
+        port:
+          number: 8080
+        host: nginx-web
+

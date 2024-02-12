@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: frontend-vs
+  namespace: demo
+spec:
+  hosts:
+  - demo.$hostip.nip.io
+  gateways:
+  - frontend-gateway
+  http:
+  - route:
+    - destination:
+        port:
+          number: 80
+        host: frontend
+
