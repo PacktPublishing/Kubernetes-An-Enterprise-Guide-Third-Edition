@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: grafana-vs
+  namespace: istio-system
+spec:
+  hosts:
+  - grafana.$hostip.nip.io
+  gateways:
+  - grafana-gateway
+  http:
+  - route:
+    - destination:
+        port:
+          number: 3000
+        host: grafana
+

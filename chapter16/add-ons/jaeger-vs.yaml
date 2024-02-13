@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: jaeger-vs
+  namespace: istio-system
+spec:
+  hosts:
+  - jaeger.$hostip.nip.io
+  gateways:
+  - grafana-gateway
+  http:
+  - route:
+    - destination:
+        port:
+          number: 80
+        host: tracing
+
