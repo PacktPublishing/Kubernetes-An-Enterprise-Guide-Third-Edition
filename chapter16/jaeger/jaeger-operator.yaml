@@ -12610,7 +12610,7 @@ metadata:
   labels:
     name: jaeger-operator
   name: jaeger-operator
-  namespace: observability
+  namespace: istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -12618,7 +12618,7 @@ metadata:
   labels:
     name: jaeger-operator
   name: leader-election-role
-  namespace: observability
+  namespace: istio-system
 rules:
 - apiGroups:
   - ""
@@ -12661,7 +12661,7 @@ metadata:
   labels:
     name: jaeger-operator
   name: prometheus
-  namespace: observability
+  namespace: istio-system
 rules:
 - apiGroups:
   - ""
@@ -12942,7 +12942,7 @@ metadata:
   labels:
     name: jaeger-operator
   name: leader-election-rolebinding
-  namespace: observability
+  namespace: istio-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -12950,7 +12950,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: jaeger-operator
-  namespace: observability
+  namespace: istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -12961,7 +12961,7 @@ metadata:
   labels:
     name: jaeger-operator
   name: prometheus
-  namespace: observability
+  namespace: istio-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -12984,7 +12984,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: jaeger-operator
-  namespace: observability
+  namespace: istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -12999,7 +12999,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: jaeger-operator
-  namespace: observability
+  namespace: istio-system
 ---
 apiVersion: v1
 kind: Service
@@ -13008,7 +13008,7 @@ metadata:
     control-plane: jaeger-operator
     name: jaeger-operator
   name: jaeger-operator-metrics
-  namespace: observability
+  namespace: istio-system
 spec:
   ports:
   - name: https
@@ -13024,7 +13024,7 @@ metadata:
   labels:
     name: jaeger-operator
   name: jaeger-operator
-  namespace: observability
+  namespace: istio-system
 spec:
   replicas: 1
   selector:
