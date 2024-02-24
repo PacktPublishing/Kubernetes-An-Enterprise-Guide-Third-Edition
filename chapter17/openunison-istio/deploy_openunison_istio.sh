@@ -1,7 +1,14 @@
 #!/bin/bash
 clear
 
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "cleaning our demo apps from chapter 16 to free up space"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
 
+kubectl delete ns demo
+kubectl delete ns testapp
 
 
 tput setaf 5

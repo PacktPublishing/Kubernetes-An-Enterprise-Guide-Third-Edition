@@ -52,7 +52,7 @@ active_directory:
   srv_dns: "false"
        
 network_policies:
-  enabled: true
+  enabled: false
   ingress:
     enabled: true
     labels:
