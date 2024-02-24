@@ -136,7 +136,7 @@ sed "s/IPADDR/$hostip/g" < ./openunison-values-impersonation.yaml  > /tmp/openun
 
 
 
-kubectl create -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -144,9 +144,8 @@ metadata:
   namespace: istio-system
 spec:
   dnsNames:
-  - k8sou.$hostip.nip.io
-  - k8sdb.$hostip.nip.io
-  - k8sapi.$hostip.nip.io
+  - "*.apps.$hostip.nip.io"
+  - apps.$hostip.nip.io
   issuerRef:
     group: cert-manager.io
     kind: ClusterIssuer
