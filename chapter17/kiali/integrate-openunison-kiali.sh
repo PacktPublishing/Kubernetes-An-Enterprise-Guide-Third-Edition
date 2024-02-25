@@ -36,6 +36,30 @@ helm upgrade --namespace istio-system --set auth.strategy="header" --repo https:
 
 kubectl delete pods -l app=kiali -n istio-system
 
+
+tput setaf 5
+echo -e "\n \n*******************************************************************************************************************"
+echo -e "Setting up Helm repo"
+echo -e "*******************************************************************************************************************"
+tput setaf 3
+
+if [[ -z "${TS_REPO_NAME}" ]]; then
+	REPO_NAME="tremolo"
+else
+	REPO_NAME=$TS_REPO_NAME
+fi
+
+echo "Helm Repo Name $REPO_NAME"
+
+if [[ -z "${TS_REPO_URL}" ]]; then
+	REPO_URL="https://nexus.tremolo.io/repository/helm"
+else
+	REPO_URL=$TS_REPO_URL
+fi
+
+echo "Helm Repo URL $REPO_URL"
+
+
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
 echo -e "Update OpenUnison for reverse proxy authentication"
