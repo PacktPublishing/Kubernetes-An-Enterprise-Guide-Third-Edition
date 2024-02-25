@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: run-service
   jwtRules:
-  - issuer: https://k8sou.IPADDR.nip.io/auth/idp/k8sIdp
+  - issuer: https://k8sou.apps.IPADDR.nip.io/auth/idp/k8sIdp
     jwksUri: https://k8sou.apps.IPADDR.nip.io/auth/idp/k8sIdp/certs
     audiences:
     - kubernetes
