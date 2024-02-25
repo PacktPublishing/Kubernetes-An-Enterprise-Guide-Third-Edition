@@ -29,7 +29,7 @@ metadata:
   namespace: istio-system
 EOF
 
-kubectl delete pods -l app=istiod -n istio-system
+kubectl patch deployment istiod -n istio-system --type json --patch-file=./patch-istiod.json
 
 while [[ $(kubectl get pods -l app=istiod -n istio-system -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for istiod to be running" && sleep 1; done
 
