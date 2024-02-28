@@ -250,7 +250,7 @@ spec:
     app: write-checks
 ---
 kind: Gateway
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 metadata:
   name: service-gateway 
   namespace: write-checks
@@ -286,7 +286,7 @@ spec:
           number: 80
         host: write-checks
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: write-checks-auth
@@ -305,7 +305,7 @@ spec:
     outputPayloadToHeader: User-Info
     forwardOriginalToken: true
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: service-level-az
