@@ -74,7 +74,7 @@ data:
           "Authorization": "Bearer %s" % pod_jwt
         }
 
-        resp = requests.post("https://k8sou.IPADDR.nip.io/auth/idp/service-idp/token",verify=False,data=impersonation_request,headers=impersonation_headers)
+        resp = requests.post("https://k8sou.apps.IPADDR.nip.io/auth/idp/service-idp/token",verify=False,data=impersonation_request,headers=impersonation_headers)
 
         response_payload = json.loads(resp.text)
 
@@ -111,7 +111,7 @@ data:
           "Authorization": "Bearer %s" % pod_jwt
         }
 
-        resp = requests.post("https://k8sou.IPADDR.nip.io/auth/idp/service-idp/token",verify=False,data=client_credentials_grant_request,headers=delegation_headers)
+        resp = requests.post("https://k8sou.apps.IPADDR.nip.io/auth/idp/service-idp/token",verify=False,data=client_credentials_grant_request,headers=delegation_headers)
 
         response_payload = json.loads(resp.text)
         actor_token = response_payload["id_token"]
@@ -129,7 +129,7 @@ data:
           "actor_token_type": "urn:ietf:params:oauth:token-type:id_token"
         }
 
-        resp = requests.post("https://k8sou.IPADDR.nip.io/auth/idp/service-idp/token",verify=False,data=delegation_request)
+        resp = requests.post("https://k8sou.apps.IPADDR.nip.io/auth/idp/service-idp/token",verify=False,data=delegation_request)
 
         response_payload = json.loads(resp.text)
 
@@ -296,8 +296,8 @@ spec:
     matchLabels:
       app: write-checks
   jwtRules:
-  - issuer: https://k8sou.IPADDR.nip.io/auth/idp/service-idp
-    jwks: 'JWKS_FROM_SERVER'
+  - issuer: https://k8sou.apps.IPADDR.nip.io/auth/idp/service-idp
+    jwksUri: https://k8sou.apps.IPADDR.nip.io/auth/idp/service-idp/certs
     audiences:
     - users
     - checkfunds
