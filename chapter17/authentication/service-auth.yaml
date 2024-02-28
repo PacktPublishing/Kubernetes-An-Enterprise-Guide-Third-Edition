@@ -1,0 +1,32 @@
+---
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: hello-world-auth
+  namespace: istio-hello-world
+spec:
+  selector:
+    matchLabels:
+      app: run-service
+  jwtRules:
+  - issuer: https://k8sou.apps.IPADDR.nip.io/auth/idp/k8sIdp
+    jwksUri: https://k8sou.apps.IPADDR.nip.io/auth/idp/k8sIdp/certs
+    audiences:
+    - kubernetes
+    outputPayloadToHeader: User-Info
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: simple-hellow-world
+  namespace: istio-hello-world
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app: run-service
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["*"]
+  

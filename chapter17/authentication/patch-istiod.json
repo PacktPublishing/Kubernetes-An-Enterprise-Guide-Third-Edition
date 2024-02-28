@@ -1,0 +1,23 @@
+[
+    {
+      "op": "add",
+      "path":"/spec/template/spec/volumes/-",
+      "value": {
+        "name": "extracerts",
+        "configMap": {
+          "name": "jwks-certs",
+          "defaultMode": 420,
+          "optional": true
+        }
+      }
+    },
+    {
+      "op": "add",
+      "path": "/spec/template/spec/containers/0/volumeMounts/-",
+      "value": {
+        "name": "extracerts",
+        "readOnly": true,
+        "mountPath": "/cacerts"
+      }
+    }
+  ]
