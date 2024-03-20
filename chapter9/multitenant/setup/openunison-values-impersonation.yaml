@@ -116,7 +116,7 @@ openunison:
 myvd_configmap: myvd-book
 
 database:
-  hibernate_dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+  hibernate_dialect: org.hibernate.dialect.MySQLDialect
   quartz_dialect: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
   driver: com.mysql.jdbc.Driver
   url: jdbc:mysql://mysql.mysql.svc:3306/unison

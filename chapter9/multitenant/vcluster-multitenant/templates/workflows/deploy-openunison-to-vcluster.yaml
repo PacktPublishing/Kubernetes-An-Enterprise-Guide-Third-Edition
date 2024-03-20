@@ -132,9 +132,6 @@ spec:
                   use_standard_jit_workflow: true
                   az_groups:
                   - k8s-namespace-administrators-k8s-$nameSpace$-external
-
-        kind: ConfigMap
-        url: /api/v1/namespaces/{{ .Release.Namespace }}/configmaps
         srcType: yaml
         writeToRequest: "$useGit$"
         requestAttribute: git-secret-cluster-k8s-$nameSpace$
@@ -222,8 +219,6 @@ spec:
                     - name: openunison-helm-values
                       configMap:
                         name: vcluster-openunison-$nsName$
-        kind: Job
-        url: /apis/batch/v1/namespaces/{{ .Release.Namespace }}/jobs
         srcType: yaml
     
     - taskType: customTask
@@ -283,6 +278,4 @@ spec:
               - name: fullName
                 source: displayName
                 sourceType: user
-        kind: Target
-        url: /apis/openunison.tremolo.io/v1/namespaces/{{ .Release.Namespace }}/targets
         srcType: yaml

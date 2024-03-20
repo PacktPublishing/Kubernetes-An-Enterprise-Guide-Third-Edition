@@ -99,8 +99,6 @@ spec:
                 kind: ClusterIssuer
                 group: cert-manager.io
 
-        kind: Certificate
-        url: /apis/cert-manager.io/v1/namespaces/$nameSpace$/certificates
         srcType: yaml
         writeToRequest: "$useGit$"
         requestAttribute: git-secret-cluster-k8s-$nameSpace$
