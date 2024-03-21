@@ -94,12 +94,15 @@ openunison:
     K8S_DEPLOYMENT_NAME: vCluster Control Plane
     K8S_DEPLOYMENT_DESC: vCluster host that runs all tenant vClusters
   secrets: []
+  role_attribute: portalGroups
+  groups:
+    areJson: "true"
   html:
-    image: ghcr.io/openunison/openunison-k8s-react:0.0.1
     legacy: false
   enable_provisioning: true
   use_standard_jit_workflow: false
   activemq_use_pvc: true
+  
   naas:
     workflows:
       new_namespace:

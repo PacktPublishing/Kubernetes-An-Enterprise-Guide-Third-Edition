@@ -27,13 +27,18 @@ data:
     server.shadow.weight=0
     server.shadow.entry.className=net.sourceforge.myvd.inserts.RootObject
 
-    server.shadowUsers.chain=loadGroups,map,logit,makesub,tremolo
+    server.shadowUsers.chain=roledata,loadGroups,map,logit,makesub,tremolo
     server.shadowUsers.nameSpace=ou=users,ou=shadow,o=Tremolo
     server.shadowUsers.weight=0
     server.shadowUsers.enabled=true
     server.shadowUsers.logit.className=net.sourceforge.myvd.inserts.DumpTransaction
     server.shadowUsers.logit.config.logLevel=info
     server.shadowUsers.logit.config.label=fromdb
+    server.shadowUsers.roledata.className=com.tremolosecurity.myvd.AddPortalRolesAsAttribute
+    server.shadowUsers.roledata.config.extSuffix=-external
+    server.shadowUsers.roledata.config.intSuffix=-internal
+    server.shadowUsers.roledata.config.k8sTargetName=k8s
+    server.shadowUsers.roledata.config.role2label=administrators=Administrators,viewer=Viewers,
     server.shadowUsers.loadGroups.className=com.tremolosecurity.proxy.myvd.inserts.AddGroupsFromProvisioningTarget
     server.shadowUsers.loadGroups.config.attributeName=groups
     server.shadowUsers.loadGroups.config.targetName=jitdb
