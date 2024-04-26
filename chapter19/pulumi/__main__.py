@@ -11,12 +11,13 @@ from src.devplatform.argocd.deploy import deploy_argocd
 from src.devplatform.gitlab.deploy import deploy_gitlab
 from src.devplatform.openunison_idp.deploy import deploy_openunison_idp
 from src.devplatform.vault.deploy import deploy_vault
+from src.devplatform.harbor.deploy import deploy_harbor
 import logging
 
 def main():
     config = pulumi.Config()
 
-    kubeconfig = os.getenv("KUBECONFIG")  or ".kube/config"
+    kubeconfig = config.require('kube.cp.path')
     kubeconfig_context = config.require('kube.cp.context')
 
     kubernetes_distribution = "doesntmatter"
@@ -102,7 +103,8 @@ def main():
     # deploy vault
     deploy_vault("devplatform",k8s_provider,kubernetes_distribution,"devplatform","vault",openunison_cluster_management_release,orchestra_release)
     
-    
+    # deploy harbor
+    deploy_harbor("devplatform",k8s_provider,kubernetes_distribution,"devplatform","harbor",openunison_cluster_management_release)
     
     # we won't run the customized OpenUnison charts until we have service accounts.  Unfortunately this part can't be automated
 

@@ -40,6 +40,7 @@ def deploy_openunison_idp(name: str, k8s_provider: Provider, kubernetes_distribu
         "gitlab_url": "https://gitlab." + dns_suffix,
         "argocd_url": "https://argocd." + dns_suffix,
         "vault_url": "https://vault." + dns_suffix,
+        "harbor_url": "https://harbor." + dns_suffix,
     }
 
     chart_name = "kube-enterprise-guide-openunison-idp"

@@ -16,11 +16,14 @@ import pulumi_vault as vault
 
 def load_ca_cert():
     # this is probably the wrong way to do this, but <shrug>
-    kube_config.load_kube_config()
-    cluster_issuer_object = k8s_client.CustomObjectsApi().get_cluster_custom_object(group="cert-manager.io",version="v1",plural="clusterissuers",name="enterprise-ca")
+    k8s_cp_api = kube_config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
+    k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
+    k8s_cp_custom_api = k8s_client.CustomObjectsApi(k8s_cp_api)
+
+    cluster_issuer_object = k8s_cp_custom_api.get_cluster_custom_object(group="cert-manager.io",version="v1",plural="clusterissuers",name="enterprise-ca")
     cluster_issuer_ca_secret_name = cluster_issuer_object["spec"]["ca"]["secretName"]
     pulumi.log.info("Loading CA from {}".format(cluster_issuer_ca_secret_name))
-    ca_secret = k8s_client.CoreV1Api().read_namespaced_secret(namespace="cert-manager",name=cluster_issuer_ca_secret_name)
+    ca_secret = k8s_cp_core_api.read_namespaced_secret(namespace="cert-manager",name=cluster_issuer_ca_secret_name)
     ca_cert = ca_secret.data["tls.crt"]
 
     decoded_cert = base64.b64decode(ca_cert).decode("utf-8")
@@ -28,9 +31,11 @@ def load_ca_cert():
 
 def load_kube_ca_cert():
     # this is probably the wrong way to do this, but <shrug>
-    kube_config.load_kube_config()
+    k8s_cp_api = kube_config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
+    k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
     
-    ca_secret = k8s_client.CoreV1Api().read_namespaced_config_map(namespace="default",name="kube-root-ca.crt")
+    
+    ca_secret = k8s_cp_core_api.read_namespaced_config_map(namespace="default",name="kube-root-ca.crt")
     ca_cert = ca_secret.data["ca.crt"]
     #ca_cert = base64.b64encode(ca_cert.encode('utf8')).decode('ascii')
     return ca_cert
@@ -38,9 +43,12 @@ def load_kube_ca_cert():
 
 def load_oidc_secret(k8s_provider):
     # this is probably the wrong way to do this, but <shrug>
-    kube_config.load_kube_config()
+    k8s_cp_api = kube_config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
+    k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
+    
+
     try:
-        oidc_secret = k8s_client.CoreV1Api().read_namespaced_secret(namespace="openunison",name="vault-oidc")
+        oidc_secret = k8s_cp_core_api.read_namespaced_secret(namespace="openunison",name="vault-oidc")
         oidc_client_secret = oidc_secret.data["vault.oidc.client_secret"]
 
         decoded_secret = base64.b64decode(oidc_client_secret).decode("utf-8")
@@ -74,14 +82,16 @@ def load_oidc_secret(k8s_provider):
 
 
 def gen_vault_client_token():
-    kube_config.load_kube_config()
+    k8s_cp_api = kube_config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
+    k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
+    
     
     try:
         token_request = k8s_client.V1TokenRequestSpec(
                 audiences = ["https://kubernetes.default.svc.cluster.local"],
                 expiration_seconds = 31536000
         )
-        token_response = k8s_client.CoreV1Api().create_namespaced_service_account_token(namespace="vault-integration",
+        token_response = k8s_cp_core_api.create_namespaced_service_account_token(namespace="vault-integration",
                                                                                         name="vault-client",
                                                                                         body=token_request)
         logging.info("generated token " )
@@ -222,7 +232,6 @@ def deploy_vault(name: str, k8s_provider: Provider, kubernetes_distribution: str
         backend=kubernetes_auth_backend.path,
         # Provide the base64 encoded cluster CA certificate
         kubernetes_ca_cert=load_kube_ca_cert(),
-        description="Authenticate via a TokenRequest to the control plane cluster",
         # get a JWT via TokenRequest API
         token_reviewer_jwt = gen_vault_client_token() 
         
@@ -286,7 +295,7 @@ def deploy_vault(name: str, k8s_provider: Provider, kubernetes_distribution: str
         backend = oidc_auth_backend.path,
         bound_audiences=["vault"],
         allowed_redirect_uris=["https://vault." + domain_suffix + "/ui/vault/auth/oidc/oidc/callback","https://vault." + domain_suffix + "/oidc/oidc/callback"],
-        user_claim="name",
+        user_claim="sub",
         role_type="oidc",
         groups_claim="groups",
         role_name="oidc-auth-openunison"

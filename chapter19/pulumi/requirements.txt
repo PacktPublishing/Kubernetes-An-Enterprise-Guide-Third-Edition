@@ -5,3 +5,4 @@ beautifulsoup4
 pyyaml
 packaging
 pulumi_vault
+pulumiverse_harbor

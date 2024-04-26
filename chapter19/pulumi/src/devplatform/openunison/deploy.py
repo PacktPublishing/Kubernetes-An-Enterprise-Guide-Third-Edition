@@ -85,16 +85,18 @@ def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution
     )
 
     # this is probably the wrong way to do this, but <shrug>
-    config.load_kube_config()
+    k8s_cp_api = config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
+    k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
+    k8s_cp_custom_api = k8s_client.CustomObjectsApi(k8s_cp_api)
 
 
-    cluster_issuer_object = k8s_client.CustomObjectsApi().get_cluster_custom_object(group="cert-manager.io",version="v1",plural="clusterissuers",name=cluster_issuer)
+    cluster_issuer_object = k8s_cp_custom_api.get_cluster_custom_object(group="cert-manager.io",version="v1",plural="clusterissuers",name=cluster_issuer)
 
     cluster_issuer_ca_secret_name = cluster_issuer_object["spec"]["ca"]["secretName"]
 
     pulumi.log.info("Loading CA from {}".format(cluster_issuer_ca_secret_name))
 
-    ca_secret = k8s_client.CoreV1Api().read_namespaced_secret(namespace="cert-manager",name=cluster_issuer_ca_secret_name)
+    ca_secret = k8s_cp_core_api.read_namespaced_secret(namespace="cert-manager",name=cluster_issuer_ca_secret_name)
 
     ca_cert = ca_secret.data["tls.crt"]
 
