@@ -6,11 +6,12 @@ metadata:
 spec:
   action: Block
   file:
+    # /bin in the KinD image is a link to /usr/bin - KubeArmor secures the final endpoint, so we need to have /usr/bin in the policy
     matchDirectories:
-    - dir: /bin/
+    - dir: /usr/bin/
       readOnly: true
       recursive: true
-    - dir: /usr/bin/
+    - dir: /bin/
       readOnly: true
       recursive: true
   message: Alert! An attempt to write to the /bin directory denied.

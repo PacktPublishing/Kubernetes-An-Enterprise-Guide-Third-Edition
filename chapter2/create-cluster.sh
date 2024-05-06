@@ -12,12 +12,12 @@ echo -e "***********************************************************************
 # with the exercies in the book due to breaking changes and compatibility with the Kubernetes versions.
 tput setaf 5
 echo -e "\n*******************************************************************************************************************"
-echo -e "Downloading the KinD v0.20.0 Binary"
-echo -e "All of the exercises in the book have been tested against KinD v0.20.0.  We cannot guarantee that the scripts will"
+echo -e "Downloading the KinD v0.22.0 Binary"
+echo -e "All of the exercises in the book have been tested against KinD v0.22.0.  We cannot guarantee that the scripts will"
 echo -e "will work on any other KinD release."
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.20.0/kind-linux-amd64
+curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.22.0/kind-linux-amd64
 chmod +x ./kind
 
 tput setaf 5
@@ -60,15 +60,22 @@ sudo snap install jq --classic
 tput setaf 5
 # Create KIND Cluster calle cluster01 using config cluster01-kind.yaml
 # KinD will deploy a cluster using the v1.27.1 Image - This has been tested with all of the book exercises and any K8s version
-# other than 1.27.1 may not work with all the book scripts due to any changes in K8s.
+# other than 1.30 may not work with all the book scripts due to any changes in K8s.
+# Unofficially, the scripts have been tested against KinD running 1.28.x, 1.29.x, and 1.30.x images
+# To change the K8s cluster version, comment the create cluster for the 1.30 image and uncomment the image you would like to use
+# instead (ie: uncomment the line #kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.29.2)
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the v.1.28.0 Image"
+echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the v.1.30.0 Image"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31
+#Use a custom image for 1.30 until KinD releases the official 1.30.0 image
+kind create cluster --name cluster01 --config cluster01-kind.yaml --image surovich/node:v1.30
+#Use the K8s 1.29.2 Image
+#kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+#Use the K8s 1.28.0 Image
+#kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31
 
 # Add a label to the worker node, ingress-ready=true.  The NGINX deployment will only deploy to nodes that have this label.
-
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
 echo -e "Adding node label for Ingress Controller to worker node"
