@@ -16,10 +16,10 @@ sudo sysctl fs.inotify.max_user_instances=512
 # other than 1.27.1 may not work with all the book scripts due to any changes in K8s.
 tput setaf 5
 echo -e "\n \n*******************************************************************************************************************"
-echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the v.127.1 Image"
+echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the v1.30 Image"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-kind create cluster --name multinode --config multinode.yaml --image kindest/node:v1.27.3
+kind create cluster --name multinode --config multinode.yaml --image surovich/node:v1.30
 
 # Add a label to the worker node, ingress-ready=true.  The NGINX deployment will only deploy to nodes that have this label.
 
@@ -109,6 +109,12 @@ backend ingress_https
  server worker2 $worker2:443 check port 443
  server worker3 $worker3:443 check port 443
 
+frontend stats
+  bind *:8404
+  mode http
+  stats enable
+  stats uri /
+  stats refresh 10s
 frontend workers_http
  bind *:80
  use_backend ingress_http
@@ -140,5 +146,5 @@ echo -e "\n\n"
 KIND_NETWORK=$(docker network ls | grep kind | awk '{print $1}')
 
 # Start the HAProxy Container for the Worker Nodes
-docker run --name HAProxy-workers-lb --network $KIND_NETWORK -d -p 80:80 -p 443:443 -v ~/HAProxy:/usr/local/etc/HAProxy:ro haproxy -f /usr/local/etc/HAProxy/HAProxy.cfg
+docker run --name HAProxy-workers-lb --network $KIND_NETWORK -d -p 8404:8404 -p 80:80 -p 443:443 -v ~/HAProxy:/usr/local/etc/HAProxy:ro haproxy -f /usr/local/etc/HAProxy/HAProxy.cfg
 
