@@ -103,7 +103,7 @@ frontend workers_https
  mode tcp
  use_backend ingress_https
 backend ingress_https
- option httpchk GET /healthz
+ option ssl-hello-chk 
  mode tcp
  server worker $worker1:443 check port 443
  server worker2 $worker2:443 check port 443
