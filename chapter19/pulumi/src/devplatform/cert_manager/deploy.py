@@ -5,11 +5,11 @@ from pulumi_kubernetes.apiextensions.CustomResource import CustomResource
 from ...lib.helm_chart_versions import get_latest_helm_chart_version
 import logging
 
-def deploy_cert_manager(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str):
+def deploy_cert_manager(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str, env: str):
     logging.info("in deploy_cert_manager")
     config = pulumi.Config()
     # Create a Namespace
-    cert_manager_namespace = k8s.core.v1.Namespace("cert_manager_namespace",
+    cert_manager_namespace = k8s.core.v1.Namespace("cert_manager_namespace" + env,
         metadata= k8s.meta.v1.ObjectMetaArgs(
             name="cert-manager"
         ),
@@ -35,7 +35,7 @@ def deploy_cert_manager(name: str, k8s_provider: Provider, kubernetes_distributi
     helm_values = gen_helm_values(kubernetes_distribution, project_name)
 
     release = k8s.helm.v3.Release(
-        'cert-manager',
+        'cert-manager' + env,
         k8s.helm.v3.ReleaseArgs(
             chart='cert-manager',
             version=chart_version,
@@ -63,7 +63,7 @@ def deploy_cert_manager(name: str, k8s_provider: Provider, kubernetes_distributi
     cluster_issuer_key = config.get_secret("certmanager.clusterissuer.cert") or "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2Z0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktnd2dnU2tBZ0VBQW9JQkFRQ25xVnd5UW8yMnJHNm4KVVpjU2UvR21WZnI5MEt6Z3V4MDk0NjhwU1NRZHBEcTlSVFFVT3ZmQVRQQlc4MXdCUmZQMS9yeUVoc2hydUFLYQo5LzVoKzVCL3g4bmN4VFhwbThCN3ZEN2V0djhXdXJ5S1BzSUx1aWRPRDBHUVNFVG83N0FYTTdGZmlST3IwMWo3Cnc2UVB3dVB2QkpTcDNpa2lDL0RjdkU2Nmx2SUVYTjdkU2dEZGR2dXZHUU5EV09ZbEdaaGY1RkhXLzVkclBIdU8KOXp1eVVHK01NaTFpUCtSQk1QUmdJZTZ2OEJwT2dyc2dkdG1YTGE0Vk1zUE0rMFhmRDBIOGNTZi8ySDZXUzQvNwpEOEF1bG5QSW9LY1krRkxKUEFtM0lUUjcvbDZRMElRdU1TdzZCTEthZkJGbkJWY1RRU0g3eUpkQUo1Z0g0VllECnIyamtVWkwzQWdNQkFBRUNnZ0VBRlcwb0RTYnRqcm9tbDFkdW83d1hPOEgzMjRGVU5wRnpGbyt4dU9oUi9KVWEKWDBuU3lBQnBNbUxOYkM5RVEzSzV6MmJkN0xSL2lkU2E4S0cweEF6WmdKcjdDZGhpSUJmNWdnRk5WT1VLQ3lZKwpKZzlkem1YY2ZyWDdFNnllQnk2LzBFSHVSRjZlUVowMjNWQ09vajBEMHNOQkdjYjhkcm9UN3F4YUJnVWkvMlRjClkvL1o1WGl3ZDFIb0pmaWxrMXI0SEZnNmJlQ3NtWnJDREJQcGdqK29vbGdFYzdxdkY4T3ErNDlZUjlJc1FLTTAKUGx5ZVdkdjlPZkg0MHRwVVZXQi8zd01kd3JFT0E2Z1MrZ3BCWEcrblQyUXNjTkZrSnRueWM0SFB5SlBQSkJtcQpYeXVhQjlIelJZQmI4d2w2cTFxUllKNVFDZVhibDhoTGZ2TCtHRzkwd1FLQmdRQzZaQXFMelRLMWs4c1c1TU5XCmYzQWthd3Ryd21LbERQY1JSUkRsTXFTTkwwY0tUelh4YVBMcXRZMDRZbmNiK2tvS3dJeXpXaTVrdzRJR1dnQXMKUXdVZ2Q5RnFFRnBEZHV6UDBxU2UvM3RBTWR6UEY2Q3dTeDk1UnpGNnBwQ01aV2ZKQ2dvWU5PZGppMU1tTS9rRwpyMFFDczJNZ0YrNzdzSW80NXBCN0FmTm9FUUtCZ1FEbVJyUnRHS29rVWlEWU9GVUZDbWs0T3kzbzJUMmJiaCs2ClUxWHZ4WmRMNnRPVHIrT1N5dlFXQ2VBaUpQZ1ZuYWhQS3Zmc1NuODQvN2QySDY4WTRvbzVxT0xDZHhRL1Z0clUKT2QxU2FqQ1Z4b3VSR2tvTjM2SmlBNXBKQTFuN2FuNHh1MStXcC9odTdQcGZsN1dFQllYRk9EbnJZZjV5OTBQSApBSVE3emR5U2h3S0JnUUNxZlZ1UUtPL2JXd2FIT0ZUY3g5Q2gzekFoTHpyZjBnNGtROUtDYzJKRXFod0crQkZWCmNqUFFNS1N1RUpMMmltZ3prWkNoZFRtK2ZYNXZwTjlIblQ0UlJzZk1ob3lwN1J3THRKZFR3RWpTblVsbVBDeUYKVlJIQzh6WDFCR3B2b1VuZmdFbGZmdlN2L3Y3ZGtPaVdEcmJjNlkwZ0RBUlRRRllPV2dlS0hHeXlvUUtCZ1FDZgozWkpBOHhDYnFwQzJ5MVRxN1BGalltSmE5d1o0TTVtL1J6K3YrQ016UjFHZmhFcWZqRnFzT2lycVNYUVp2Wnd0CmFnMDRjL2VpNEpURFl2ZXlkUU8xUi9RMVFXcERGczlRNnVNbDVpYll0RUFNZW8zUzErRHAzc3ByeWZIY1EzQmMKb2xLWVN3Q0VNZTBZRkVDbDZSZVhkWk53UUZYZ0JwMTlPSFNVK0RRYlhRS0JnRmRsZHFWcmJ5N1crVEF4dGdMZApQZzJTemo3NHUyMjlmTkZldktRZ0RXUHIzMUJOSitrTEFFRzVKRXlncXJSWDF0OHdCajhMUlh3ZnBPSXhUa2RnCmxEMkd2a3BFM0V0cDJKSDlKbEQ3OVVQc1htN0hDT2E0bjRrWmtINW1qWUY5YzhMSjh1MFJRdDNEQVRoaXJQaVkKWlZpMEhtWWNuVmp5L0RxNWRwc0tHU0FoCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
 
     clusterissuer_ca_secret = k8s.core.v1.Secret(
-        "root-ca",
+        "root-ca" + env,
         metadata= k8s.meta.v1.ObjectMetaArgs(
             name="root-ca",
             namespace="cert-manager"
@@ -86,7 +86,7 @@ def deploy_cert_manager(name: str, k8s_provider: Provider, kubernetes_distributi
     )
 
     cluster_issuer_root = CustomResource(
-        "cluster-emterprise-ca",
+        "cluster-emterprise-ca" + env,
         api_version="cert-manager.io/v1",
         kind="ClusterIssuer",
         metadata={
@@ -100,7 +100,7 @@ def deploy_cert_manager(name: str, k8s_provider: Provider, kubernetes_distributi
         },
         opts=pulumi.ResourceOptions(
             provider = k8s_provider,
-            depends_on=[clusterissuer_ca_secret],
+            depends_on=[clusterissuer_ca_secret,release],
             custom_timeouts=pulumi.CustomTimeouts(
                 create="5m",
                 update="10m",

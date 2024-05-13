@@ -12,6 +12,7 @@ from src.devplatform.gitlab.deploy import deploy_gitlab
 from src.devplatform.openunison_idp.deploy import deploy_openunison_idp
 from src.devplatform.vault.deploy import deploy_vault
 from src.devplatform.harbor.deploy import deploy_harbor
+from src.devplatform.openunison_sat.deploy import deploy_openunison_sat
 import logging
 
 def main():
@@ -32,6 +33,31 @@ def main():
         enable_server_side_apply=True
     )
 
+
+    k8s_dev_provider = None    
+    if config.get('kube.dev.context'):
+        # initialize the dev cluster
+        k8s_dev_provider = k8s.Provider(
+            "k8sProviderDev",
+            context=config.get('kube.dev.context') or 'kubernetes-admin@kubernetes',
+            kubeconfig=config.require('kube.dev.path'),
+            suppress_deprecation_warnings=True,
+            suppress_helm_hook_warnings=True,
+            enable_server_side_apply=True
+        )
+
+    k8s_prod_provider = None    
+    if config.get('kube.prod.context'):
+        # initialize the dev cluster
+        k8s_prod_provider = k8s.Provider(
+            "k8sProviderProd",
+            context=config.get('kube.prod.context') or 'kubernetes-admin@kubernetes',
+            kubeconfig=config.require('kube.prod.path'),
+            suppress_deprecation_warnings=True,
+            suppress_helm_hook_warnings=True,
+            enable_server_side_apply=True
+        )
+
     # Get the Kubernetes API endpoint IP
     #kubernetes_endpoint_ip = KubernetesApiEndpointIp("k8s-api-ip", k8s_provider)
 
@@ -41,7 +67,8 @@ def main():
         k8s_provider,
         kubernetes_distribution,
         "devplatform",
-        "cert-manager"
+        "cert-manager",
+        ""
     )
 
     # deploy mysql
@@ -92,19 +119,19 @@ def main():
     gitlab_root_token = config.get_secret(key="gitlab.root.token") or None
 
     # # Deploy OpenUnison
-    [openunison_cluster_management_release,orchestra_release] = deploy_openunison("devplatform",k8s_provider,kubernetes_distribution,"devplatform","openunison",gitlab_root_token != None)
+    [openunison_cluster_management_release,orchestra_release] = deploy_openunison("devplatform",k8s_provider,kubernetes_distribution,"devplatform","openunison",gitlab_root_token != None,cert_manager)
 
     # Deploy ArgoCD
-    deploy_argocd("devplatform",k8s_provider,kubernetes_distribution,"devplatform","argocd",openunison_cluster_management_release)
+    deploy_argocd("devplatform",k8s_provider,kubernetes_distribution,"devplatform","argocd",openunison_cluster_management_release,cert_manager)
 
     # Deploy GitLab
-    deploy_gitlab("devplatform",k8s_provider,kubernetes_distribution,"devplatform","gitlab",openunison_cluster_management_release)
+    deploy_gitlab("devplatform",k8s_provider,kubernetes_distribution,"devplatform","gitlab",openunison_cluster_management_release,cert_manager)
 
     # deploy vault
-    deploy_vault("devplatform",k8s_provider,kubernetes_distribution,"devplatform","vault",openunison_cluster_management_release,orchestra_release)
+    deploy_vault("devplatform",k8s_provider,kubernetes_distribution,"devplatform","vault",openunison_cluster_management_release,orchestra_release,cert_manager)
     
     # deploy harbor
-    deploy_harbor("devplatform",k8s_provider,kubernetes_distribution,"devplatform","harbor",openunison_cluster_management_release)
+    deploy_harbor("devplatform",k8s_provider,kubernetes_distribution,"devplatform","harbor",openunison_cluster_management_release,cert_manager)
     
     # we won't run the customized OpenUnison charts until we have service accounts.  Unfortunately this part can't be automated
 
@@ -117,6 +144,38 @@ def main():
         logging.info("no gitlab token set")
 
     
-    
+
+
+    if k8s_dev_provider != None:
+        # integrate the dev openunison
+        # deploy cert-manager
+        dev_cert_manager = deploy_cert_manager(
+            "devplatform",
+            k8s_dev_provider,
+            kubernetes_distribution,
+            "devplatform",
+            "cert-manager",
+            "-dev"
+        )
+
+        # deploy dev openunison
+        deploy_openunison_sat("devplatform",k8s_dev_provider,k8s_provider,kubernetes_distribution,"devplatform","openunison","dev",openunison_cluster_management_release,dev_cert_manager)
+
+    if k8s_prod_provider != None:
+        # integrate the prod openunison
+        # deploy cert-manager
+        prod_cert_manager = deploy_cert_manager(
+            "devplatform",
+            k8s_prod_provider,
+            kubernetes_distribution,
+            "devplatform",
+            "cert-manager",
+            "-prod"
+        )
+
+        # deploy prod openunison
+        deploy_openunison_sat("devplatform",k8s_prod_provider,k8s_provider,kubernetes_distribution,"devplatform","openunison","prod",openunison_cluster_management_release,prod_cert_manager)
+
+
 
 main()

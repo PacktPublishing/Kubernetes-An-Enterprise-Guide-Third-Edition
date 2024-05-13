@@ -13,21 +13,24 @@ from kubernetes.client import api_client
 import secrets
 
 def load_ca_cert():
-    # this is probably the wrong way to do this, but <shrug>
-    k8s_cp_api = kube_config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
-    k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
-    k8s_cp_custom_api = k8s_client.CustomObjectsApi(k8s_cp_api)
+    try:
+        # this is probably the wrong way to do this, but <shrug>
+        k8s_cp_api = kube_config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
+        k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
+        k8s_cp_custom_api = k8s_client.CustomObjectsApi(k8s_cp_api)
 
-    cluster_issuer_object = k8s_cp_custom_api.get_cluster_custom_object(group="cert-manager.io",version="v1",plural="clusterissuers",name="enterprise-ca")
-    cluster_issuer_ca_secret_name = cluster_issuer_object["spec"]["ca"]["secretName"]
-    pulumi.log.info("Loading CA from {}".format(cluster_issuer_ca_secret_name))
-    ca_secret = k8s_cp_core_api.read_namespaced_secret(namespace="cert-manager",name=cluster_issuer_ca_secret_name)
-    ca_cert = ca_secret.data["tls.crt"]
+        cluster_issuer_object = k8s_cp_custom_api.get_cluster_custom_object(group="cert-manager.io",version="v1",plural="clusterissuers",name="enterprise-ca")
+        cluster_issuer_ca_secret_name = cluster_issuer_object["spec"]["ca"]["secretName"]
+        pulumi.log.info("Loading CA from {}".format(cluster_issuer_ca_secret_name))
+        ca_secret = k8s_cp_core_api.read_namespaced_secret(namespace="cert-manager",name=cluster_issuer_ca_secret_name)
+        ca_cert = ca_secret.data["tls.crt"]
 
-    return ca_cert
+        return ca_cert
+    except:
+        return pulumi.Config().get("certmanager.clusterissuer.cert") or "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURFVENDQWZtZ0F3SUJBZ0lVYmtiS2ZRN29ldXJuVHpyeWdIL0dDS0kzNkUwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0dERVdNQlFHQTFVRUF3d05aVzUwWlhKd2NtbHpaUzFqWVRBZUZ3MHlNakV4TURjeE5EUTFNakphRncwegpNakV4TURReE5EUTFNakphTUJneEZqQVVCZ05WQkFNTURXVnVkR1Z5Y0hKcGMyVXRZMkV3Z2dFaU1BMEdDU3FHClNJYjNEUUVCQVFVQUE0SUJEd0F3Z2dFS0FvSUJBUUNucVZ3eVFvMjJyRzZuVVpjU2UvR21WZnI5MEt6Z3V4MDkKNDY4cFNTUWRwRHE5UlRRVU92ZkFUUEJXODF3QlJmUDEvcnlFaHNocnVBS2E5LzVoKzVCL3g4bmN4VFhwbThCNwp2RDdldHY4V3VyeUtQc0lMdWlkT0QwR1FTRVRvNzdBWE03RmZpUk9yMDFqN3c2UVB3dVB2QkpTcDNpa2lDL0RjCnZFNjZsdklFWE43ZFNnRGRkdnV2R1FORFdPWWxHWmhmNUZIVy81ZHJQSHVPOXp1eVVHK01NaTFpUCtSQk1QUmcKSWU2djhCcE9ncnNnZHRtWExhNFZNc1BNKzBYZkQwSDhjU2YvMkg2V1M0LzdEOEF1bG5QSW9LY1krRkxKUEFtMwpJVFI3L2w2UTBJUXVNU3c2QkxLYWZCRm5CVmNUUVNIN3lKZEFKNWdINFZZRHIyamtVWkwzQWdNQkFBR2pVekJSCk1CMEdBMVVkRGdRV0JCU2Y5RDVGS3dISUY3eFdxRi80OG4rci9SVFEzakFmQmdOVkhTTUVHREFXZ0JTZjlENUYKS3dISUY3eFdxRi80OG4rci9SVFEzakFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQTBHQ1NxR1NJYjNEUUVCQ3dVQQpBNElCQVFCN1BsMjkrclJ2eHArVHhLT3RCZGRLeEhhRTJVRUxuYmlkaFUvMTZRbW51VmlCQVhidUVSSEF2Y0phCm5hb1plY0JVQVJ0aUxYT2poOTFBNkFvNVpET2RETllOUkNnTGI2czdDVVhSKzNLenZWRmNJVFRSdGtTTkxKMTUKZzRoallyQUtEWTFIM09zd1EvU3JoTG9GQndneGJJQ1F5eFNLaXQ0OURrK2V4c3puMUJFNzE2aWlJVmdZT0daTwp5SWF5ekJZdW1Gc3M0MGprbWhsbms1ZW5hYjhJTDRUcXBDZS9xYnZtNXdOaktaVVozamJsM2QxVWVtcVlOdVlWCmNFY1o0UXltQUJZS3k0VkUzVFJZUmJJZGV0NFY2dVlIRjVZUHlFRWlZMFRVZStYVVJaVkFtaU9jcmtqblVIT3gKMWJqelJxSlpMNVR3b0ZDZzVlZUR6dVk0WlRjYwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
 
 
-def load_oidc_secret(k8s_provider):
+def load_oidc_secret(k8s_provider,openunison_cluster_management_release):
     # this is probably the wrong way to do this, but <shrug>
     k8s_cp_api = kube_config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
     k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
@@ -56,6 +59,7 @@ def load_oidc_secret(k8s_provider):
         provider = k8s_provider,
         retain_on_delete=False,
         delete_before_replace=True,
+        depends_on=[openunison_cluster_management_release],
         custom_timeouts=pulumi.CustomTimeouts(
             create="10m",
             update="10m",
@@ -69,7 +73,7 @@ def load_oidc_secret(k8s_provider):
 
 
 
-def deploy_gitlab(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str,openunison_cluster_management_release):
+def deploy_gitlab(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str,openunison_cluster_management_release,cert_manager):
     logging.info("in deploy_gitlab")
     config = pulumi.Config()
     # Create a Namespace
@@ -98,7 +102,7 @@ def deploy_gitlab(name: str, k8s_provider: Provider, kubernetes_distribution: st
     domain_suffix = config.require('openunison.cp.dns_suffix')
 
     # get the oidc client secret
-    [gitlab_oidc_secret,oidc_client_secret] = load_oidc_secret(k8s_provider)
+    [gitlab_oidc_secret,oidc_client_secret] = load_oidc_secret(k8s_provider,openunison_cluster_management_release)
 
     sso_secret = """name: openid_connect
 label: OpenUnison
@@ -158,6 +162,7 @@ args:
     },
     opts=pulumi.ResourceOptions(
         provider = k8s_provider,
+        depends_on=[cert_manager],
         retain_on_delete=False,
         delete_before_replace=True,
         custom_timeouts=pulumi.CustomTimeouts(
@@ -200,7 +205,7 @@ args:
         },
         opts=pulumi.ResourceOptions(
             provider = k8s_provider,
-            depends_on=[],
+            depends_on=[cert_manager],
             custom_timeouts=pulumi.CustomTimeouts(
                 create="30m",
                 update="30m",

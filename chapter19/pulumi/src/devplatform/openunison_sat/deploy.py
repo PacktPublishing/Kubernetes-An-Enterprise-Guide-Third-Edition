@@ -13,15 +13,182 @@ from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from kubernetes.client import api_client
 
 
-def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str, gitlab_integrated: bool,cert_manager):
+def deploy_cp_integration(k8s_provider: Provider,cp_domain_suffix:str,domain_suffix:str,env:str,ca_cert:str,orchestra_login_portal):
+    # this is probably the wrong way to do this, but <shrug>
+    k8s_cp_api =config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
+    k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
+    
+
+    try:
+        oidc_secret =k8s_cp_core_api.read_namespaced_secret(namespace="openunison",name="oidc-remote-" + env)
+        oidc_client_secret = oidc_secret.data["cluster-idp-kubernetes-" + env]
+
+        decoded_secret = base64.b64decode(oidc_client_secret).decode("utf-8")
+
+    except k8s_client.exceptions.ApiException:
+        # the secret doesn't exist, let's create it
+        decoded_secret = secrets.token_urlsafe(64)
+    
+    oidc_secret = k8s.core.v1.Secret(
+    "oidc-remote-" + env,
+    metadata= k8s.meta.v1.ObjectMetaArgs(
+        name="oidc-remote-" + env,
+        namespace="openunison"
+    ),
+    data={
+        "cluster-idp-kubernetes-"+env : base64.b64encode(decoded_secret.encode('utf-8')).decode('utf-8'),
+    },
+    opts=pulumi.ResourceOptions(
+        provider = k8s_provider,
+        retain_on_delete=False,
+        delete_before_replace=True,
+        custom_timeouts=pulumi.CustomTimeouts(
+            create="10m",
+            update="10m",
+            delete="10m"
+        )
+    )
+    )
+
+    helm_values =   {
+                        "cluster": {
+                        "az_groups": [
+                            "k8s-namespace-administrators-k8s-kubernetes-" + env + "-*",
+                            "k8s-namespace-viewer-k8s-kubernetes-" + env + "-*",
+                            "k8s-cluster-k8s-kubernetes-" + env + "-administrators-internal"
+                        ],
+                        "description": "Cluster kubernetes-" + env + "",
+                        "hosts": {
+                            "dashboard": "k8sdb." + domain_suffix,
+                            "portal": "k8sou." + domain_suffix,
+                        },
+                        "label": "kubernetes-" + env,
+                        "management": {
+                            "enabled": True,
+                            "target": {
+                            "base64_certificate": ca_cert,
+                            "tokenType": "oidc",
+                            "url": "oumgmt-proxy." + domain_suffix,
+                            "useToken": True
+                            }
+                        },
+                        "name": "kubernetes-" + env,
+                        "parent": "B158BD40-0C1B-11E3-8FFD-0800200C9A66",
+                        "sso": {
+                            "enabled": True,
+                            "inactivityTimeoutSeconds": 900,
+                            "client_secret": "oidc-remote-" + env,
+                        }
+                        },
+                        "naasRoles": [
+                        {
+                            "bindings": [
+                            {
+                                "binding": "admins",
+                                "name": "admin",
+                                "type": "ClusterRole"
+                            }
+                            ],
+                            "description": "Manage kubernetes namespace $cluster$ $nameSpace$",
+                            "external": {
+                            "errorMessage": "Invalid administrator group",
+                            "fieldName": "adminGroup",
+                            "label": "Administrator Group"
+                            },
+                            "name": "administrators",
+                            "workflow": {
+                            "approvalLabel": "Approve administrator access for $cluster$ - $name$",
+                            "displayLabel": "$name$ Administrator",
+                            "emailTemplate": "Approve administrator access to $cluster$ $name$",
+                            "label": "namespace administrator",
+                            "org": {
+                                "description": "Namespace Administrators",
+                                "label": "Administrators"
+                            },
+                            "userNotification": {
+                                "message": "Your access has been approved",
+                                "subject": "Admin access to $cluster$ $name$ approved"
+                            }
+                            }
+                        },
+                        {
+                            "bindings": [
+                            {
+                                "binding": "viewers",
+                                "name": "view",
+                                "type": "ClusterRole"
+                            }
+                            ],
+                            "description": "View kubernetes namespace $cluster$ $nameSpace$",
+                            "external": {
+                            "errorMessage": "Invalid viewer group",
+                            "fieldName": "viewerGroup",
+                            "label": "Viewer Group"
+                            },
+                            "name": "viewer",
+                            "workflow": {
+                            "approvalLabel": "Approve viewer access for $cluster$ - $name$",
+                            "displayLabel": "$name$ Administrator",
+                            "emailTemplate": "Approve viewer access to $cluster$ $name$",
+                            "label": "namespace viewer",
+                            "org": {
+                                "description": "Namespace Viewers",
+                                "label": "Viewers"
+                            },
+                            "userNotification": {
+                                "message": "Your access has been approved",
+                                "subject": "View access to $cluster$ $name$ approved"
+                            }
+                            }
+                        }
+                        ]
+                    }
+    
+    chart_name = "openunison-k8s-add-cluster"
+    chart_index_path = "index.yaml"
+    chart_url = "https://nexus.tremolo.io/repository/helm"
+    index_url = f"{chart_url}/{chart_index_path}"
+    #chart_version = get_latest_helm_chart_version(index_url,chart_name)
+    localpath = '/Users/marcboorshtein/git-local/helm-charts';
+    openunison_k8s_add_client_release = k8s.helm.v3.Release(
+        'openunison-cluster-' + env,
+        k8s.helm.v3.ReleaseArgs(
+            #chart=chart_name,
+            chart=localpath + '/' + chart_name,
+            #version=chart_version,
+            values=helm_values,
+            namespace='openunison',
+            skip_await=False,
+            # repository_opts= k8s.helm.v3.RepositoryOptsArgs(
+            #     repo=chart_url
+            # ),
+        ),
+        opts=pulumi.ResourceOptions(
+            provider = k8s_provider,
+            depends_on=[orchestra_login_portal],
+            custom_timeouts=pulumi.CustomTimeouts(
+                create="8m",
+                update="10m",
+                delete="10m"
+            )
+        )
+    )
+
+    return [openunison_k8s_add_client_release,decoded_secret]
+    
+
+
+
+
+def deploy_openunison_sat(name: str, k8s_provider: Provider, k8s_cp_provider: Provider,kubernetes_distribution: str, project_name: str, namespace: str, env :str,orchestra_login_portal,dev_cert_manager):
     # Initialize Pulumi configuration
     pconfig = pulumi.Config()
 
     # Deploy the Kubernetes Dashboard 6.0.8
-    k8s_db_release = deploy_kubernetes_dashboard(name=name,k8s_provider=k8s_provider,kubernetes_distribution=kubernetes_distribution,project_name=project_name,namespace=namespace)
+    k8s_db_release = deploy_kubernetes_dashboard(name=name,k8s_provider=k8s_provider,kubernetes_distribution=kubernetes_distribution,project_name=project_name,namespace=namespace,env=env)
 
     # generate openunison namespace
-    openunison_namespace = k8s.core.v1.Namespace("openunison",
+    openunison_namespace = k8s.core.v1.Namespace("openunison-"+env,
             metadata= k8s.meta.v1.ObjectMetaArgs(
                 name="openunison"
             ),
@@ -36,26 +203,17 @@ def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution
             )
         )
     
-    # create a ConfigMap for our "Active Directory" instance
-    # deploy "Active Directory"
-    ad_cm_manifest_url = 'https://raw.githubusercontent.com/PacktPublishing/Kubernetes-An-Enterprise-Guide-Third-Edition/main/chapter15/user-auth/myvd-book.yaml'
-    ad_cm_k8s_yaml = k8s.yaml.ConfigFile("ad_cm", file=ad_cm_manifest_url,opts=pulumi.ResourceOptions(provider = k8s_provider,
-            depends_on=[openunison_namespace],
-            custom_timeouts=pulumi.CustomTimeouts(
-                create="5m",
-                update="10m",
-                delete="10m"
-            )))
 
     # get the domain suffix and cluster_issuer
-    domain_suffix = pconfig.require('openunison.cp.dns_suffix')
+    domain_suffix = pconfig.require('openunison.' + env + '.dns_suffix')
+    cp_domain_suffix = pconfig.require('openunison.cp.dns_suffix')
 
     # get the cluster issuer
     cluster_issuer = "enterprise-ca"
 
     # create the Certificate
     openunison_certificate = CustomResource(
-        "ou-tls-certificate",
+        "ou-tls-certificate-"+env,
         api_version="cert-manager.io/v1",
         kind="Certificate",
         metadata={
@@ -81,7 +239,7 @@ def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution
         },
         opts=pulumi.ResourceOptions(
             provider = k8s_provider,
-            depends_on=[openunison_namespace,cert_manager],
+            depends_on=[openunison_namespace,dev_cert_manager],
             custom_timeouts=pulumi.CustomTimeouts(
                 create="5m",
                 update="10m",
@@ -91,12 +249,11 @@ def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution
     )
 
     # this is probably the wrong way to do this, but <shrug>
+    k8s_cp_api = config.kube_config.new_client_from_config(pulumi.Config().require("kube.dev.path"))
+    k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
+    k8s_cp_custom_api = k8s_client.CustomObjectsApi(k8s_cp_api)
+
     try:
-        k8s_cp_api = config.kube_config.new_client_from_config(pulumi.Config().require("kube.cp.path"))
-        k8s_cp_core_api = k8s_client.CoreV1Api(k8s_cp_api)
-        k8s_cp_custom_api = k8s_client.CustomObjectsApi(k8s_cp_api)
-
-
         cluster_issuer_object = k8s_cp_custom_api.get_cluster_custom_object(group="cert-manager.io",version="v1",plural="clusterissuers",name=cluster_issuer)
 
         cluster_issuer_ca_secret_name = cluster_issuer_object["spec"]["ca"]["secretName"]
@@ -106,16 +263,24 @@ def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution
         ca_secret = k8s_cp_core_api.read_namespaced_secret(namespace="cert-manager",name=cluster_issuer_ca_secret_name)
 
         ca_cert = ca_secret.data["tls.crt"]
-    except:
+    except k8s_client.exceptions.ApiException:
         ca_cert = pulumi.Config().get("certmanager.clusterissuer.cert") or "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURFVENDQWZtZ0F3SUJBZ0lVYmtiS2ZRN29ldXJuVHpyeWdIL0dDS0kzNkUwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0dERVdNQlFHQTFVRUF3d05aVzUwWlhKd2NtbHpaUzFqWVRBZUZ3MHlNakV4TURjeE5EUTFNakphRncwegpNakV4TURReE5EUTFNakphTUJneEZqQVVCZ05WQkFNTURXVnVkR1Z5Y0hKcGMyVXRZMkV3Z2dFaU1BMEdDU3FHClNJYjNEUUVCQVFVQUE0SUJEd0F3Z2dFS0FvSUJBUUNucVZ3eVFvMjJyRzZuVVpjU2UvR21WZnI5MEt6Z3V4MDkKNDY4cFNTUWRwRHE5UlRRVU92ZkFUUEJXODF3QlJmUDEvcnlFaHNocnVBS2E5LzVoKzVCL3g4bmN4VFhwbThCNwp2RDdldHY4V3VyeUtQc0lMdWlkT0QwR1FTRVRvNzdBWE03RmZpUk9yMDFqN3c2UVB3dVB2QkpTcDNpa2lDL0RjCnZFNjZsdklFWE43ZFNnRGRkdnV2R1FORFdPWWxHWmhmNUZIVy81ZHJQSHVPOXp1eVVHK01NaTFpUCtSQk1QUmcKSWU2djhCcE9ncnNnZHRtWExhNFZNc1BNKzBYZkQwSDhjU2YvMkg2V1M0LzdEOEF1bG5QSW9LY1krRkxKUEFtMwpJVFI3L2w2UTBJUXVNU3c2QkxLYWZCRm5CVmNUUVNIN3lKZEFKNWdINFZZRHIyamtVWkwzQWdNQkFBR2pVekJSCk1CMEdBMVVkRGdRV0JCU2Y5RDVGS3dISUY3eFdxRi80OG4rci9SVFEzakFmQmdOVkhTTUVHREFXZ0JTZjlENUYKS3dISUY3eFdxRi80OG4rci9SVFEzakFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQTBHQ1NxR1NJYjNEUUVCQ3dVQQpBNElCQVFCN1BsMjkrclJ2eHArVHhLT3RCZGRLeEhhRTJVRUxuYmlkaFUvMTZRbW51VmlCQVhidUVSSEF2Y0phCm5hb1plY0JVQVJ0aUxYT2poOTFBNkFvNVpET2RETllOUkNnTGI2czdDVVhSKzNLenZWRmNJVFRSdGtTTkxKMTUKZzRoallyQUtEWTFIM09zd1EvU3JoTG9GQndneGJJQ1F5eFNLaXQ0OURrK2V4c3puMUJFNzE2aWlJVmdZT0daTwp5SWF5ekJZdW1Gc3M0MGprbWhsbms1ZW5hYjhJTDRUcXBDZS9xYnZtNXdOaktaVVozamJsM2QxVWVtcVlOdVlWCmNFY1o0UXltQUJZS3k0VkUzVFJZUmJJZGV0NFY2dVlIRjVZUHlFRWlZMFRVZStYVVJaVkFtaU9jcmtqblVIT3gKMWJqelJxSlpMNVR3b0ZDZzVlZUR6dVk0WlRjYwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
 
-    pulumi.log.info("CA Certificate {}".format(ca_cert))
+    pulumi.log.info("Satelite CA Certificate {}".format(ca_cert))
 
-    return deploy_openunison_charts(ca_cert=ca_cert,k8s_provider=k8s_provider,kubernetes_distribution=kubernetes_distribution,project_name=project_name,namespace=namespace,domain_suffix=domain_suffix,openunison_certificate=openunison_certificate,config=pconfig,db_release=k8s_db_release,gitlab_integrated=gitlab_integrated,openunison_namespace=openunison_namespace)
+    # deploy integration on the control plane
+    [openunison_k8s_add_client_release,client_secret] = deploy_cp_integration(k8s_provider=k8s_cp_provider,
+                          cp_domain_suffix=cp_domain_suffix,
+                          domain_suffix=domain_suffix,
+                          env=env,
+                          ca_cert=ca_cert,
+                          orchestra_login_portal=orchestra_login_portal)
+
+    return deploy_openunison_charts(ca_cert=ca_cert,k8s_provider=k8s_provider,kubernetes_distribution=kubernetes_distribution,project_name=project_name,namespace=namespace,domain_suffix=domain_suffix,openunison_certificate=openunison_certificate,config=pconfig,db_release=k8s_db_release,cp_domain_suffix=cp_domain_suffix,env=env,client_secret=client_secret,openunison_k8s_add_client_release=openunison_k8s_add_client_release)
 
 
 
-def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str,domain_suffix: str,openunison_certificate,config,db_release,gitlab_integrated,openunison_namespace):
+def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str,domain_suffix: str,openunison_certificate,config,db_release, cp_domain_suffix: str,env :str,client_secret : str,openunison_k8s_add_client_release):
 
 
     openunison_helm_values = {
@@ -141,7 +306,7 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
         },
         "myvd_config_path": "WEB-INF/myvd.conf",
         #"myvd_configmap": "myvd-book",
-        "k8s_cluster_name": "openunison-cp",
+        "k8s_cluster_name": "openunison-kubernetes-" + env,
         "enable_impersonation": True,
         "impersonation": {
             "use_jetstack": True,
@@ -163,25 +328,36 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
             "pem_b64": ca_cert,
         },
         {
-            "name": "ldaps",
-            "pem_b64": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURlekNDQW1PZ0F3SUJBZ0lFR2owUUZ6QU5CZ2txaGtpRzl3MEJBUXNGQURCdE1Rd3dDZ1lEVlFRR0V3TmsKWlhZeEREQUtCZ05WQkFnVEEyUmxkakVNTUFvR0ExVUVCeE1EWkdWMk1Rd3dDZ1lEVlFRS0V3TmtaWFl4RERBSwpCZ05WQkFzVEEyUmxkakVsTUNNR0ExVUVBeE1jWVhCaFkyaGxaSE11WVdOMGFYWmxaR2x5WldOMGIzSjVMbk4yCll6QWdGdzB5TVRBM01EVXdNRFV6TWpoYUdBOHlNVEl4TURZeE1UQXdOVE15T0Zvd2JURU1NQW9HQTFVRUJoTUQKWkdWMk1Rd3dDZ1lEVlFRSUV3TmtaWFl4RERBS0JnTlZCQWNUQTJSbGRqRU1NQW9HQTFVRUNoTURaR1YyTVF3dwpDZ1lEVlFRTEV3TmtaWFl4SlRBakJnTlZCQU1USEdGd1lXTm9aV1J6TG1GamRHbDJaV1JwY21WamRHOXllUzV6CmRtTXdnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFDNlNVQUJRSUZkYnRwZGJ3WEEKT05ablJVQlFBMEVyK2hWYmkxUHNWSnNaaUlGZjhJRC8xZXBPN0M4QlViVXN1U3dWWkc5ZEJIV3o0RFBwWUUrKwp2dmxrTEs1cEdiTnJQbDdFd241clJLRE5PeVR5ZUNBcFMzSVNsRW1iaVNQUjBuYXd5ckpoNjhQQ0I1bURSNTNmCmh1bFhPQ0dTd3ZNN2RwM2RPc3lFQmRlVkw3aTFnbkJNYi9wN05YdTN5WmlWaDlpS3pqaENrZndqL0VsNTZaUHEKYmsvOGtQN0xBdTFvZGJWTkZGSUx5clB6SFBFU3I3N0preHcvKytPTmhtblA2UFBiU3FtRm0rcUVEYWhQanBFZgpscUdaY3BsOEZ0VXBzTG5JK3B4blI5eWU5ZUNpVDVuaDhlTEhobkVFNzFpVE1rb2xrSHdxSm5xV1R3ZlF2b1g5CkM2SERBZ01CQUFHaklUQWZNQjBHQTFVZERnUVdCQlRjOGlDU055NnhSM2M5OU1aYkZUODgzREs1V0RBTkJna3EKaGtpRzl3MEJBUXNGQUFPQ0FRRUFOMEkwZnJDSzdYNGRHRmpGLzFpb3czUUwvbTcwemVIemlQVVFFUUdONXBFMwpyMlZZL0ZHWGdNV0tFSXpHa2hMZW5CUXRxRE5Pbm4vL1JjK0Y2anM1RkNOVXhaT2V4ekl2aElhY0M4YUhzRWpFClRnclI5OWNqUVdsdzFhSVF0YUhkSmVqYXdYcU50YU1FMSt4RlJBQTNCWUF1T3BveW9wQ0NoMXdJaTEvQk84TlQKVmFaancxQU8xd1ZUaTJ3SUtCSUp1Z0N2T0dYZEt3YzBuL0I4bzRRQkpScklRZEJnbzJVNjFBbkMxaWM4b0d3RwpxekN1V0dDenZjam9xNWFNcTliS0YyNHBQaDR3cWZMZnZGdWNsYmFIUlBiSmpxT3l0V3gzczhNV0lvRUNzdlhLCnhIYmJvSnU0c1AwLzRBMGQ4K25OOXI1MU8xalFaWHd0b3hwenFTV2ZlZz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
-        }
+            "name": "trusted-idp",
+            "pem_b64": ca_cert,
+        },
         ],
         "monitoring": {
             "prometheus_service_account": "system:serviceaccount:monitoring:prometheus-k8s"
         },
         
         
-        # TODO: Active Directory
-        "active_directory" :{
-            "base": "DC=domain,DC=com",
-            "host": "apacheds.activedirectory.svc",
-            "port": 10636,
-            "bind_dn": "cn=ou_svc_account,ou=Users,DC=domain,DC=com",
-            "con_type": "ldaps",
-            "srv_dns": False
-        }
-        ,
+        
+   
+        
+        "oidc": {
+            "claims": {
+                "display_name": "display_name",
+                "email": "email",
+                "family_name": "family_name",
+                "given_name": "given_name",
+                "groups": "groups",
+                "sub": "sub"
+            },
+            "client_id": "cluster-idp-kubernetes-" + env,
+            "domain": "",
+            "issuer": "https://k8sou." + cp_domain_suffix + "/auth/idp/cluster-idp-kubernetes-" + env,
+            "scopes": "openid email profile groups",
+            "user_in_idtoken": True
+        },
+        
+
+        
         "network_policies": {
         "enabled": False,
         "ingress": {
@@ -212,65 +388,37 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
         ]
         },
         "openunison": {
-        "replicas": 1,
-        "non_secret_data": {
+            "az_groups": [
+                "k8s-namespace-administrators-k8s-kubernetes-" + env + "-*",
+                "k8s-namespace-viewer-k8s-kubernetes-" + env + "-*",
+                "k8s-cluster-k8s-kubernetes-" + env + "-administrators-internal"
+            ],
+            "enable_provisioning": False,
+            "management_proxy": {
+                "enabled": True,
+                "host": "oumgmt-proxy." + domain_suffix,
+                "remote": {
+                    "cert_alias": "trusted-idp",
+                    "issuer": "https://k8sou." + cp_domain_suffix + "/auth/idp/remotek8s"
+                }
+            },
+            "non_secret_data": {
             "K8S_DB_SSO": "oidc",
             "PROMETHEUS_SERVICE_ACCOUNT": "system:serviceaccount:monitoring:prometheus-k8s",
-            "SHOW_PORTAL_ORGS": "true",
-            "K8S_DEPLOYMENT_NAME": "Developer Portal Control Plane",
-            "K8S_DEPLOYMENT_DESC": "Runs control plane systems for our internal developer portal"
-        },
-        "secrets": [
-
-        ],
-        "enable_provisioning": True,
-        "use_standard_jit_workflow": False,
-        "activemq_use_pvc": True,
-        "groups": {
-            "areJson": True
-        },
-        "role_attribute": "portalGroups",
-        "naas": {
-            "groups": {
-                "internal": {
-                    "enabled": True
-                },
-                "external": {
-                    "enabled": False
-                }
-            }
+            "SHOW_PORTAL_ORGS": "False"
+            },
+            "replicas": 1,
+            "secrets": []
         },
         "apps":[],
         # "post_jit_workflow": "jit-gitlab",
-        },
-        "database": {
-            "hibernate_dialect": "org.hibernate.dialect.MySQLDialect",
-            "quartz_dialect": "org.quartz.impl.jdbcjobstore.StdJDBCDelegate",
-            "driver": "com.mysql.jdbc.Driver",
-            "url": "jdbc:mysql://mysql.mysql.svc:3306/unison",
-            "user": "root",
-            "validation": "SELECT 1"
-        },
-        "smtp": {
-            "host": "blackhole.blackhole.svc.cluster.local",
-            "port": 1025,
-            "user": "none",
-            "from": "donotreply@domain.com",
-            "tls": False
-        }
     }
-
-    if (gitlab_integrated):
-        openunison_helm_values["openunison"]["post_jit_workflow"] = "jit-gitlab"
     
 
     orchesrta_login_portal_helm_values = json.loads(json.dumps(openunison_helm_values))
-    orchestra_cm_helm_values = json.loads(json.dumps(openunison_helm_values))
     openunison_helm_values["dashboard"]["service_name"] = db_release.name.apply(lambda name: name)
     openunison_helm_values["dashboard"]["cert_name"] = db_release.name.apply(lambda name: name + "-certs")
     orchesrta_login_portal_helm_values["dashboard"]["service_name"] = db_release.name.apply(lambda name: name)
-    orchestra_cm_helm_values["dashboard"]["service_name"] = db_release.name.apply(lambda name: name)
-
 
     # Fetch the latest version from the helm chart index
     chart_name = "openunison-operator"
@@ -280,7 +428,7 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
     chart_version = get_latest_helm_chart_version(index_url,chart_name)
 
     openunison_operator_release = k8s.helm.v3.Release(
-        'openunison-operator',
+        'openunison-operator-'+env,
         k8s.helm.v3.ReleaseArgs(
             chart=chart_name,
             version=chart_version,
@@ -293,7 +441,7 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
         ),
         opts=pulumi.ResourceOptions(
             provider = k8s_provider,
-            depends_on=[openunison_certificate],
+            depends_on=[openunison_certificate,openunison_k8s_add_client_release],
             custom_timeouts=pulumi.CustomTimeouts(
                 create="8m",
                 update="10m",
@@ -313,7 +461,7 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
     }
 
     orchestra_secret_source = k8s.core.v1.Secret(
-        "orchestra-secrets-source",
+        "orchestra-secrets-source-"+env,
         metadata= k8s.meta.v1.ObjectMetaArgs(
             name="orchestra-secrets-source",
             namespace="openunison"
@@ -321,15 +469,12 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
         data={
             "K8S_DB_SECRET": encoded_secret_data['K8S_DB_SECRET'],
             "unisonKeystorePassword": encoded_secret_data["unisonKeystorePassword"],
-            "AD_BIND_PASSWORD": base64.b64encode('start123'.encode('utf-8')).decode('utf-8') ,
-            "OU_JDBC_PASSWORD": base64.b64encode('start123'.encode('utf-8')).decode('utf-8') ,
-            "SMTP_PASSWORD": base64.b64encode('start123'.encode('utf-8')).decode('utf-8') ,
+            "OIDC_CLIENT_SECRET": base64.b64encode(client_secret.encode('utf-8')).decode('utf-8') 
         },
         opts=pulumi.ResourceOptions(
             provider = k8s_provider,
             retain_on_delete=False,
             delete_before_replace=True,
-            depends_on=[openunison_namespace],
             custom_timeouts=pulumi.CustomTimeouts(
                 create="10m",
                 update="10m",
@@ -342,7 +487,7 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
     orchestra_chart_version = get_latest_helm_chart_version(index_url,orchestra_chart_name)
     localpath = '/Users/marcboorshtein/git-local/helm-charts';
     openunison_orchestra_release = k8s.helm.v3.Release(
-        resource_name='orchestra',
+        resource_name='orch-'+env,
         args=k8s.helm.v3.ReleaseArgs(
             chart=localpath + '/' + orchestra_chart_name,
             version=orchestra_chart_version,
@@ -372,11 +517,11 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
     #pulumi.export("openunison_orchestra_release",openunison_orchestra_release)
 
     orchesrta_login_portal_helm_values["impersonation"]["orchestra_release_name"] = openunison_orchestra_release.name.apply(lambda name: name)
-    orchestra_cm_helm_values["impersonation"]["orchestra_release_name"] = openunison_orchestra_release.name.apply(lambda name: name)
+
     orchestra_login_portal_chart_name = 'orchestra-login-portal'
     orchestra_login_portal_chart_version = get_latest_helm_chart_version(index_url,orchestra_login_portal_chart_name)
     openunison_orchestra_login_portal_release = k8s.helm.v3.Release(
-        'orchestra-login-portal',
+        'orchestra-login-portal-'+env,
         k8s.helm.v3.ReleaseArgs(
             chart=orchestra_login_portal_chart_name,
             version=orchestra_login_portal_chart_version,
@@ -404,7 +549,7 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
     orchestra_kube_oidc_proxy_chart_name = 'orchestra-kube-oidc-proxy'
     orchestra_kube_oidc_proxy_chart_version = get_latest_helm_chart_version(index_url,orchestra_kube_oidc_proxy_chart_name)
     openunison_kube_oidc_proxy_release = k8s.helm.v3.Release(
-        'orchestra-kube-oidc-proxy',
+        'orchestra-kube-oidc-proxy-'+env,
         k8s.helm.v3.ReleaseArgs(
             chart=orchestra_kube_oidc_proxy_chart_name,
             version=orchestra_kube_oidc_proxy_chart_version,
@@ -430,49 +575,18 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
     )
 
     
-    
-    orchestra_cm_helm_values["openunison"]["orchestra_login_portal_name"] = openunison_orchestra_login_portal_release.name.apply(lambda name: name)
 
-    orchestra_cluster_management_chart_name = 'openunison-k8s-cluster-management'
-    # orchestra_cluster_management_chart_version = get_latest_helm_chart_version(index_url,orchestra_cluster_management_chart_name)
-    openunison_cluster_management_release = k8s.helm.v3.Release(
-        'orchestra-cluster-management',
-        k8s.helm.v3.ReleaseArgs(
-            #chart=orchestra_cluster_management_chart_name,
-            chart=localpath + '/' + orchestra_cluster_management_chart_name,
-            #version=orchestra_cluster_management_chart_version,
-            values=orchestra_cm_helm_values,
-            namespace='openunison',
-            skip_await=False,
-            wait_for_jobs=True,
-            # repository_opts= k8s.helm.v3.RepositoryOptsArgs(
-            #     repo=chart_url
-            # ),
-
-        ),
-
-        opts=pulumi.ResourceOptions(
-            provider = k8s_provider,
-            depends_on=[openunison_orchestra_login_portal_release],
-            custom_timeouts=pulumi.CustomTimeouts(
-                create="8m",
-                update="10m",
-                delete="10m"
-            )
-        )
-    )
-
-    return [openunison_cluster_management_release,openunison_orchestra_release]
+    return [openunison_kube_oidc_proxy_release,openunison_orchestra_release]
 
 
 
     
 
 
-def deploy_kubernetes_dashboard(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str):
+def deploy_kubernetes_dashboard(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str,env: str):
     # Deploy kubernetes-dashboard via the helm chart
     # Create a Namespace
-    dashboard_namespace = k8s.core.v1.Namespace("kubernetes-dashboard",
+    dashboard_namespace = k8s.core.v1.Namespace("kubernetes-dashboard-"+env,
         metadata= k8s.meta.v1.ObjectMetaArgs(
             name="kubernetes-dashboard"
         ),
@@ -495,7 +609,7 @@ def deploy_kubernetes_dashboard(name: str, k8s_provider: Provider, kubernetes_di
     chart_version = "6.0.8"
 
     k8s_db_release = k8s.helm.v3.Release(
-            'kubernetes-dashboard',
+            'kubernetes-dashboard-'+env,
             k8s.helm.v3.ReleaseArgs(
                 chart=chart_name,
                 version=chart_version,
