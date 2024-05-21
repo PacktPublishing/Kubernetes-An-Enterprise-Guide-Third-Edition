@@ -55,7 +55,8 @@ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scr
 chmod 700 get_helm.sh
 ./get_helm.sh
 
-sudo snap install jq --classic
+sudo apt install snapd -y
+sudo snap install jq  --classic
 
 tput setaf 5
 # Create KIND Cluster calle cluster01 using config cluster01-kind.yaml
@@ -69,7 +70,7 @@ echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 #Use a custom image for 1.30 until KinD releases the official 1.30.0 image
-kind create cluster --name cluster01 --config cluster01-kind.yaml --image surovich/node:v1.30
+kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e
 #Use the K8s 1.29.2 Image
 #kind create cluster --name cluster01 --config cluster01-kind.yaml --image kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
 #Use the K8s 1.28.0 Image
