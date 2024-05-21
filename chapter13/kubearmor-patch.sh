@@ -8,7 +8,7 @@ echo -e "\n \n******************************************************************
 echo -e "Downloading karmor release from get.kubearmor.io and moving it to /usr/bin"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-./get-kubearmor-bin.sh v0.14.3
+./get-kubearmor-bin.sh v1.2.1
 sudo mv ./bin/karmor /usr/bin
 
 tput setaf 5
@@ -16,8 +16,8 @@ echo -e "\n \n******************************************************************
 echo -e "Updating APT and Installing the apparmor-utils package on the Nodes"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-docker exec -it cluster01-worker bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
-docker exec -it cluster01-control-plane bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd"
+docker exec -it cluster01-worker bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd && systemctl start apparmor"
+docker exec -it cluster01-control-plane bash -c "apt update && apt install apparmor-utils -y && systemctl restart containerd && systemctl start apparmor"
 
 # Add calico-typha to Apparmor unconfined mode
 tput setaf 5
@@ -33,7 +33,8 @@ echo -e "\n \n******************************************************************
 echo -e "Install Kubearmor"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-karmor install
+kubectl create ns kubearmor
+karmor install -n kubearmor
 sleep 10
 
 # Add Kubearmor-relay to Apparmor unconfined mode 

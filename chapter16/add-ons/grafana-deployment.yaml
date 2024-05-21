@@ -239,7 +239,7 @@ spec:
             name: istio-services-grafana-dashboards
         - name: storage
           persistentVolumeClaim:
-            claimName: jaeger-pvc
+            claimName: grafana-pvc
 
 ---
 
