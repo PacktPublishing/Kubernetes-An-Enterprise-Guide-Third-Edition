@@ -30,3 +30,4 @@ nodes:
   extraMounts:
   - hostPath: /sys/kernel/security
     containerPath: /sys/kernel/security
+
