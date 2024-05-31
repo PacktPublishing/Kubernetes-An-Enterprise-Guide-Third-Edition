@@ -5,3 +5,4 @@ Please do not use this for the book exercises since they were created and tested
   
 While most of the srcipts should work with Cilium, we cannot offer any support if a script doesn't function as expected when using Cilium as your CNI.  
 
+To create a Cilium Cluster, make sure that there are no other KinD clusters on the host and execute the ./create-cilium-cluster.sh script.  This will create a new cluster called cilium-cluster
