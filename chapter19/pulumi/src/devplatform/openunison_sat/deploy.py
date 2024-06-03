@@ -89,25 +89,25 @@ def deploy_cp_integration(k8s_provider: Provider,cp_domain_suffix:str,domain_suf
                                 "type": "ClusterRole"
                             }
                             ],
-                            "description": "Manage kubernetes namespace $cluster$ $nameSpace$",
+                            "description": "Manage membership of the $nameSpace$ project, responsible for push to production",
                             "external": {
-                            "errorMessage": "Invalid administrator group",
-                            "fieldName": "adminGroup",
-                            "label": "Administrator Group"
+                            "errorMessage": "Invalid owners group",
+                            "fieldName": "ownerGroup",
+                            "label": "Owner Group"
                             },
-                            "name": "administrators",
+                            "name": "owners",
                             "workflow": {
-                            "approvalLabel": "Approve administrator access for $cluster$ - $name$",
-                            "displayLabel": "$name$ Administrator",
-                            "emailTemplate": "Approve administrator access to $cluster$ $name$",
-                            "label": "namespace administrator",
+                            "approvalLabel": "Approve owner, $name$",
+                            "displayLabel": "$name$ Owner",
+                            "emailTemplate": "Approve owner for $name$",
+                            "label": "project owner",
                             "org": {
-                                "description": "Namespace Administrators",
-                                "label": "Administrators"
+                                "description": "Project Owners",
+                                "label": "Owners"
                             },
                             "userNotification": {
                                 "message": "Your access has been approved",
-                                "subject": "Admin access to $cluster$ $name$ approved"
+                                "subject": "Owner access to $name$ approved"
                             }
                             }
                         },

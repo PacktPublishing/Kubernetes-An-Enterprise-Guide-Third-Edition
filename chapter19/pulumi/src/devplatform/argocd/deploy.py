@@ -80,13 +80,20 @@ def deploy_argocd(name: str, k8s_provider: Provider, kubernetes_distribution: st
     domain_suffix = config.require('openunison.cp.dns_suffix')
 
     helm_values = {
+                "applicationSet": {
+                    "allowAnyNamespace": True
+                },
                 "configs": {
                     "cm": {
                     "url": "https://argocd." + domain_suffix,
-                    "oidc.config": "name: OpenUnison\nissuer: https://k8sou." + domain_suffix + "/auth/idp/k8sIdp\nclientID: argocd\nrootCA: |\n" + ca_cert + "requestedIDTokenClaims:\n  groups:\n    essential: True\nrequestedScopes:\n  - openid\n  - profile\n  - email"
+                    "oidc.config": "name: OpenUnison\nissuer: https://k8sou." + domain_suffix + "/auth/idp/k8sIdp\nclientID: argocd\nrootCA: |\n" + ca_cert + "requestedIDTokenClaims:\n  groups:\n    essential: True\nrequestedScopes:\n  - openid\n  - profile\n  - email",
+                    "timeout.reconciliation": "30s"
                     },
                     "params": {
-                    "server.insecure": True
+                    "server.insecure": True,
+                    "applicationsetcontroller.namespaces": "*",
+                    "application.namespaces":"*",
+                    "applicationsetcontroller.enable.scm.providers": False
                     },
                     "rbac": {
                     "policy.csv": "g, \"k8s-cluster-k8s-administrators-internal\", role:admin"
@@ -116,6 +123,7 @@ def deploy_argocd(name: str, k8s_provider: Provider, kubernetes_distribution: st
                     }
                 },
                 "controller": {
+                    
                     "volumes": [
                     {
                         "name": "custom-tools",

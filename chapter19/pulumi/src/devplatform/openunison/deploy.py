@@ -218,7 +218,9 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
             "PROMETHEUS_SERVICE_ACCOUNT": "system:serviceaccount:monitoring:prometheus-k8s",
             "SHOW_PORTAL_ORGS": "true",
             "K8S_DEPLOYMENT_NAME": "Developer Portal Control Plane",
-            "K8S_DEPLOYMENT_DESC": "Runs control plane systems for our internal developer portal"
+            "K8S_DEPLOYMENT_DESC": "Runs control plane systems for our internal developer portal",
+            "GIT_USERNAME": "openunison",
+            "GIT_EMAIL": "openunison@nodomain.io"
         },
         "secrets": [
 
@@ -231,14 +233,112 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
         },
         "role_attribute": "portalGroups",
         "naas": {
+            "forms": {
+                "new_namespace": {
+                    "use_default": False,
+                },
+            },
             "groups": {
                 "internal": {
                     "enabled": True
                 },
                 "external": {
                     "enabled": False
+                },
+                "default": [
+                {
+                    "bindings": [
+                    {
+                        "binding": "admins",
+                        "name": "admin",
+                        "type": "ClusterRole"
+                    }
+                    ],
+                    "description": "Manage membership of the $nameSpace$ project, responsible for push to production",
+                    "external": {
+                    "errorMessage": "Invalid owners group",
+                    "fieldName": "ownerGroup",
+                    "label": "Owner Group"
+                    },
+                    "name": "owners",
+                    "workflow": {
+                    "approvalLabel": "Approve owner, $name$",
+                    "displayLabel": "$name$ Owner",
+                    "emailTemplate": "Approve owner for $name$",
+                    "label": "project owner",
+                    "org": {
+                        "description": "Project Owners",
+                        "label": "Owners"
+                    },
+                    "userNotification": {
+                        "message": "Your access has been approved",
+                        "subject": "Owner access to $name$ approved"
+                    }
+                    }
+                },
+                {
+                    "bindings": [
+                    {
+                        "binding": "admins",
+                        "name": "admin",
+                        "type": "ClusterRole"
+                    }
+                    ],
+                    "description": "Manage operations of the $nameSpace$ project, responsible for day to day operations",
+                    "external": {
+                    "errorMessage": "Invalid operations group",
+                    "fieldName": "operationsGroup",
+                    "label": "Operations Group"
+                    },
+                    "name": "operations",
+                    "workflow": {
+                    "approvalLabel": "Approve operations, $name$",
+                    "displayLabel": "$name$ Operations",
+                    "emailTemplate": "Approve operations for $name$",
+                    "label": "project operation",
+                    "org": {
+                        "description": "Project Operations",
+                        "label": "Operations"
+                    },
+                    "userNotification": {
+                        "message": "Your access has been approved",
+                        "subject": "Owner access to $name$ approved"
+                    }
+                    }
+                },
+                {
+                    "bindings": [
+                    {
+                        "binding": "developers",
+                        "name": "developer",
+                        "type": "ClusterRole"
+                    }
+                    ],
+                    "description": "Developer for project $nameSpace$",
+                    "external": {
+                    "errorMessage": "Invalid developer group",
+                    "fieldName": "developerGroup",
+                    "label": "Developer Group"
+                    },
+                    "name": "developer",
+                    "workflow": {
+                    "approvalLabel": "Approve developer access for project $name$",
+                    "displayLabel": "$name$ Developer",
+                    "emailTemplate": "Approve developer access to project $name$",
+                    "label": "namespace developer",
+                    "org": {
+                        "description": "Project Developer",
+                        "label": "Developers"
+                    },
+                    "userNotification": {
+                        "message": "Your access has been approved",
+                        "subject": "Developer access to project $name$ approved"
+                    }
+                    }
                 }
-            }
+                ]
+            },
+            
         },
         "apps":[],
         # "post_jit_workflow": "jit-gitlab",
@@ -462,7 +562,7 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
         )
     )
 
-    return [openunison_cluster_management_release,openunison_orchestra_release]
+    return [openunison_cluster_management_release,openunison_orchestra_release,openunison_orchestra_login_portal_release]
 
 
 

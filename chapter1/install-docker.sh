@@ -11,6 +11,12 @@ echo -e "***********************************************************************
 
 tput setaf 6
 echo -e "\n \n*******************************************************************************************************************"
+echo -e "Install jq"
+echo -e "*******************************************************************************************************************"
+sudo apt install jq -y
+
+tput setaf 6
+echo -e "\n \n*******************************************************************************************************************"
 echo -e "To make this and future exercises easier, we will grant the currently logged on user, $USER, passwordless sudo"
 echo -e "You will need to provide your password for the update, but after that, sudo commands will not require a password."
 echo -e "*******************************************************************************************************************"

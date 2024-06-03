@@ -6,3 +6,4 @@ pyyaml
 packaging
 pulumi_vault
 pulumiverse_harbor
+pulumi_gitlab

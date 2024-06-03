@@ -1,0 +1,104 @@
+{{ $root := . }}
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Application
+metadata:
+  name: scale-newproject
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: openunison
+    app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+    app.kubernetes.io/component: openunison-applications
+    app.kubernetes.io/part-of: openunison
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
+spec:
+  azTimeoutMillis: 3000
+  isApp: true
+  urls:
+  - hosts:
+    - "#[OU_HOST]"
+    filterChain: 
+    - className: com.tremolosecurity.proxy.filters.XForward
+      params:
+        createHeaders: "false"
+    - className: com.tremolosecurity.proxy.filters.SetNoCacheHeaders
+      params: {}
+    - className: com.tremolosecurity.proxy.filters.MapUriRoot
+      params:
+        newRoot: /register
+        paramName: registerURI
+    uri: "/newproject"
+    proxyTo: http://ouhtml-{{ .Values.openunison.orchestra_login_portal_name }}.{{ .Release.Namespace }}.svc:8080${registerURI}
+    authChain: login-service
+    overrideHost: true
+    overrideReferer: true
+    azRules:
+    - scope: dn
+      constraint: "o=Tremolo"
+    results: 
+      azFail: default-login-failure
+      auFail: default-login-failure
+  - hosts:
+    - "#[OU_HOST]"
+    filterChain:
+    - className: com.tremolosecurity.scalejs.register.ws.ScaleRegister
+      params:
+        displayNameAttribute: "sub"
+        frontPage.title: "Create New Project"
+        frontPage.text: "Use this page to request the creation of a new project.  Once the project is approved you will be the first approver and owner.  You will be notified when the project is ready."
+        uidAttributeName: uid
+        workflowName: "new-project"
+        logoutURL: "/logout"
+        homeURL: "/"
+        preSetPassword: "false"
+        
+        requireReCaptcha: "false"
+        rcSiteKey: ""
+        rcSecret: ""
+        requireTermsAndConditions: "false"
+        termsAndCondisionsText: ""
+        useCallWorkflowClass: "false"
+        callWorkflowClassName: ""
+        submitLoggedInUser: "true"
+
+        attributeNames:
+        
+        - nameSpace
+        nameSpace.displayName: "Namespace Name"
+        nameSpace.readOnly: "false"
+        nameSpace.required: "true"
+        nameSpace.regEx: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        nameSpace.regExFailedMsg: "Invalid namespace name, must be a valid DNS host name"
+        nameSpace.minChars: "0"
+        nameSpace.maxChars: "63"
+        nameSpace.unique: "false"
+        nameSpace.type: "text"
+        requireReason: "true"
+        callWorkflowInit:
+        - workflowName=new-k8s-namespace
+        - targetName=k8s
+        - projectAttributeName=nameSpace
+        jsUris:
+        - js/register-functions.js
+        - js-ext/functions.js
+
+
+    uri: /newproject/register
+    azRules:
+    - scope: dn
+      constraint: o=Tremolo
+    authChain: login-service
+    results:
+      azFail: default-login-failure
+      auFail: default-login-failure
+  cookieConfig:
+    sessionCookieName: tremolosession
+    domain: "#[OU_HOST]"
+    secure: true
+    httpOnly: true
+    logoutURI: "/logout"
+    keyAlias: session-unison
+    timeout: 900
+    scope: -1
+    cookiesEnabled: true

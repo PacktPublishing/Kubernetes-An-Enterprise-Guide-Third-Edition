@@ -6,7 +6,7 @@ from ...lib.helm_chart_versions import get_latest_helm_chart_version
 import logging
 import base64
 
-def deploy_openunison_idp(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str, orchestra_cluster_management_release):
+def deploy_openunison_idp(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str, orchestra_cluster_management_release,openunison_login_portal,orchestra_release):
     logging.info("in openunison-idp")
     
     config = pulumi.Config()
@@ -28,6 +28,35 @@ def deploy_openunison_idp(name: str, k8s_provider: Provider, kubernetes_distribu
         provider = k8s_provider,
         retain_on_delete=False,
         delete_before_replace=True,
+        depends_on=[openunison_login_portal],
+        custom_timeouts=pulumi.CustomTimeouts(
+            create="10m",
+            update="10m",
+            delete="10m"
+        )
+    )
+    )
+
+    # create the Secret for storing the MySQL passwords
+
+
+    
+
+    gitlab_token_secret = k8s.core.v1.Secret(
+    "mysql-target",
+    metadata= k8s.meta.v1.ObjectMetaArgs(
+        name="mysql-passwords",
+        namespace="openunison"
+    ),
+    data={
+        "dev":   base64.b64encode("start123".encode('utf-8')).decode('utf-8')   ,
+        "prod":   base64.b64encode("start123".encode('utf-8')).decode('utf-8')   ,
+    },
+    opts=pulumi.ResourceOptions(
+        provider = k8s_provider,
+        retain_on_delete=False,
+        delete_before_replace=True,
+        depends_on=[openunison_login_portal],
         custom_timeouts=pulumi.CustomTimeouts(
             create="10m",
             update="10m",
@@ -41,6 +70,18 @@ def deploy_openunison_idp(name: str, k8s_provider: Provider, kubernetes_distribu
         "argocd_url": "https://argocd." + dns_suffix,
         "vault_url": "https://vault." + dns_suffix,
         "harbor_url": "https://harbor." + dns_suffix,
+        "gitlab_ssh_host": "gitlab-ssh." + dns_suffix,
+        "openunison": {
+            "orchestra_login_portal_name": openunison_login_portal.name.apply(lambda name: name),
+            "orchestra_name": orchestra_release.name.apply(lambda name: name)
+        },
+        "dev_dns_suffix": config.require("openunison.dev.dns_suffix"),
+        "prod_dns_suffix": config.require("openunison.prod.dns_suffix"),
+        "cp_dns_suffix": config.require("openunison.cp.dns_suffix"),
+        "vcluster": {
+            "job_image": "ghcr.io/mlbiam/vcluster-onboard:1.0.0"
+        }
+
     }
 
     chart_name = "kube-enterprise-guide-openunison-idp"

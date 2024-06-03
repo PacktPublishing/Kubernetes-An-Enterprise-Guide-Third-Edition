@@ -1,0 +1,375 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: init-openunison
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: openunison
+    app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+    app.kubernetes.io/component: openunison-workflows
+    app.kubernetes.io/part-of: openunison
+spec:
+  description: Initialize OpenUnison
+  inList: true
+  label: Initialize OpenUnison
+  orgId: ca5ad0bb-b207-41ad-93e4-cffab65dd37c
+  dynamicConfiguration:
+    dynamic: false
+    className: ""
+    params: []
+  tasks: |-
+    # create a namespace in the control plane to store ApplicationSet objects
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        template: |-
+            kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: "control-plane"
+              labels:
+                name: "control-plane"
+            annotations:
+                tremolo.io/managedByGit: "false"
+        srcType: yaml
+
+    # create a "group" (namespace) in gitlab
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+      params:
+        target: gitlab
+        name: cluster-operations
+        attributes:
+        - requestAccessEnabled=false
+
+    # create group that maps to cluster admins
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+      params:
+        target: gitlab
+        name: k8s-cluster-k8s-administrators-internal
+        attributes:
+        - requestAccessEnabled=false
+    
+    # create an operations project in gitlab
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject
+      params:
+        namespace: cluster-operations
+        name: cluster-operations
+        description: Cluster administration project
+        issuesEnabled: "true"
+        mergeRequestsEnabled: "true"
+        wikiEnabled: "true"
+        snipitsEnabled: "true"
+        visibility: "2"
+        targetName: gitlab
+        gitSshHost: {{ .Values.gitlab_ssh_host | quote }}
+        createWebhook: "true"
+        webhookSuffix: {{ .Values.argocd_url }}/api/webhook
+        webhookBranchFilter: "main"
+        webhookSecretRequestName: clusterreposecret
+
+    # set secret in argo
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.PatchK8sObject
+      params:
+        targetName: k8s
+        kind: Secret
+        url: /api/v1/namespaces/argocd/secrets/argocd-secret
+        patchType: strategic
+        template: |-
+          {"data":{"webhook.gitlab.secret":"$b64clusterreposecret$"}}
+    
+    # create a git file so there's something in the repo
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
+      params:
+        targetName: gitlab
+        namespace: cluster-operations
+        project: cluster-operations
+        branch: main
+        path: README.md
+        content: |-
+          # Cluster Operations
+
+          This is going to be where cluster level objects are stored
+        commitMessage: initializing the repository
+
+    # create a ns in control plane via git
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
+      params:
+        targetName: gitlab
+        namespace: cluster-operations
+        project: cluster-operations
+        branch: main
+        path: k8s-cp-cp/cluster/namespaces/control-plane.yaml
+        content: |-
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: control-plane
+          spec:
+            finalizers:
+            - kubernetes
+        commitMessage: initializing the repository
+    
+    
+    # create a ns in prod via git
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
+      params:
+        targetName: gitlab
+        namespace: cluster-operations
+        project: cluster-operations
+        branch: main
+        path: k8s-cp-prod/cluster/namespaces/control-plane.yaml
+        content: |-
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: control-plane
+          spec:
+            finalizers:
+            - kubernetes
+        commitMessage: initializing the repository
+
+    # create a ns in dev via git
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
+      params:
+        targetName: gitlab
+        namespace: cluster-operations
+        project: cluster-operations
+        branch: main
+        path: k8s-cp-dev/cluster/namespaces/control-plane.yaml
+        content: |-
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: control-plane
+          spec:
+            finalizers:
+            - kubernetes
+        commitMessage: initializing the repository
+
+    
+
+    # create the admin group in gitlab
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject
+      params:
+        groupName: k8s-cluster-k8s-administrators-internal
+        targetName: gitlab
+        accessLevel: MAINTAINER
+
+    # create an argo project to store the argocd application
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        srcType: yaml
+        template: |-
+          apiVersion: argoproj.io/v1alpha1
+          kind: AppProject
+          metadata:
+            name: cluster-operations
+            namespace: argocd
+          spec:
+            description: Cluster operations project
+            destinations:
+              - server: https://kubernetes.default.svc
+                namespace: "*"
+              - server: https://oumgmt-proxy.{{ .Values.dev_dns_suffix }}
+                namespace: "*"
+              - server: https://oumgmt-proxy.{{ .Values.prod_dns_suffix }}
+                namespace: "*"
+            sourceRepos:
+              - git@{{ .Values.gitlab_ssh_host }}:cluster-operations/cluster-operations.git
+            clusterResourceWhitelist:
+            - group: "*"
+              kind: "*"
+            namespaceResourceWhitelist:
+            - group: '*'
+              kind: '*'
+            sourceNamespaces:
+            - control-plane
+
+    # create secret to access the cluster operations repo
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        srcType: yaml
+        template: |-
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: creds-cluster-operations
+              namespace: argocd
+              labels:
+                argocd.argoproj.io/secret-type: repo-creds
+            type: Opaque
+            data:
+                sshPrivateKey: $base64SshPrivateKey$
+            stringData:
+                type: git
+                url: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
+                
+
+    # create secrets to store the cluster configuration information
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        srcType: yaml
+        template: |-
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: k8s-cp-dev
+              namespace: argocd
+              labels:
+                argocd.argoproj.io/secret-type: cluster
+                tremolo.io/clustertype: control-plane
+            type: Opaque
+            stringData:
+                name: k8s-cp-dev
+                server: https://oumgmt-proxy.{{ .Values.dev_dns_suffix }}
+                config: |
+                    {
+                        "execProviderConfig": {
+                            "command": "/custom-tools/remote-token.sh",
+                            "args": ["k8sou.{{ .Values.cp_dns_suffix }}","k8s-kubernetes-dev","/var/run/secrets/kubernetes.io/serviceaccount/token"],
+                            "apiVersion": "client.authentication.k8s.io/v1"
+                        },
+                        "tlsClientConfig": {
+                            "insecure": true
+                        }
+                    }
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        srcType: yaml
+        template: |-
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: k8s-cp-prod
+              namespace: argocd
+              labels:
+                argocd.argoproj.io/secret-type: cluster
+                tremolo.io/clustertype: control-plane
+            type: Opaque
+            stringData:
+              name: k8s-cp-prod
+              server: https://oumgmt-proxy.{{ .Values.prod_dns_suffix }}
+              config: |
+                  {
+                      "execProviderConfig": {
+                          "command": "/custom-tools/remote-token.sh",
+                          "args": ["k8sou.{{ .Values.cp_dns_suffix }}","k8s-kubernetes-prod","/var/run/secrets/kubernetes.io/serviceaccount/token"],
+                          "apiVersion": "client.authentication.k8s.io/v1"
+                      },
+                      "tlsClientConfig": {
+                          "insecure": true
+                      }
+                  }
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        srcType: yaml
+        template: |-
+            apiVersion: argoproj.io/v1alpha1
+            kind: ApplicationSet
+            metadata:
+                name: control-plane
+                namespace: control-plane
+            spec:
+                goTemplate: true
+                goTemplateOptions: ["missingkey=error"]
+                generators:
+                - clusters: 
+                    selector:
+                        matchLabels:
+                          tremolo.io/clustertype: control-plane
+                template:
+                    metadata:
+                        name: '{{ `{{.name}}` }}' # 'name' field of the Secret
+                    spec:
+                        syncPolicy:
+                            automated: {}
+                        project: "cluster-operations"
+                        source:
+                            repoURL: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
+                            targetRevision: HEAD
+                            path: '{{ `{{.name}}` }}' # 'name' field of the secret
+                            directory:
+                                recurse: true
+                        destination:
+                            server: '{{ `{{.server}}` }}' # 'server' field of the secret
+
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        srcType: yaml
+        template: |-
+            apiVersion: argoproj.io/v1alpha1
+            kind: Application
+            metadata:
+                name: k8s-cp-cp
+                namespace: control-plane
+            spec:
+                destination:
+                    server: https://kubernetes.default.svc
+                project: cluster-operations
+                source:
+                    directory:
+                        recurse: true
+                    path: k8s-cp-cp
+                    repoURL: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
+                    targetRevision: HEAD
+                syncPolicy:
+                    automated: {}
+
+    # create private key for openunison to push manifests
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateDeploymentKey
+      params:
+        targetName: gitlab
+        namespace: cluster-operations
+        project: cluster-operations
+        keyLabel: openunison-push
+        makeWriteable: "true"
+        privateKeyReuestName: ouPushSecretB64
+        privateKeyReuestNamePT: ouPushSecret
+
+    # write the secret to k8s for later use
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        srcType: yaml
+        template: |-
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: openunison-git-cluster-key
+            namespace: openunison
+          data:
+            id_rsa: $ouPushSecretB64$
+
+    
+
+
+
+    

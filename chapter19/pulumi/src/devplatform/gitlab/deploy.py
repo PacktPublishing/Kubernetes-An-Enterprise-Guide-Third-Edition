@@ -12,6 +12,7 @@ from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from kubernetes.client import api_client
 import secrets
 
+
 def load_ca_cert():
     try:
         # this is probably the wrong way to do this, but <shrug>

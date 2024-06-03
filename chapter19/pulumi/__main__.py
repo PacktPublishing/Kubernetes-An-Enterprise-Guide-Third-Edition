@@ -13,6 +13,7 @@ from src.devplatform.openunison_idp.deploy import deploy_openunison_idp
 from src.devplatform.vault.deploy import deploy_vault
 from src.devplatform.harbor.deploy import deploy_harbor
 from src.devplatform.openunison_sat.deploy import deploy_openunison_sat
+from src.devplatform.mysql.deploy import deploy_mysql
 import logging
 
 def main():
@@ -77,6 +78,7 @@ def main():
             provider = k8s_provider,
             retain_on_delete=False,
             delete_before_replace=True,
+            depends_on=[cert_manager],
             custom_timeouts=pulumi.CustomTimeouts(
                 create="10m",
                 update="10m",
@@ -119,7 +121,7 @@ def main():
     gitlab_root_token = config.get_secret(key="gitlab.root.token") or None
 
     # # Deploy OpenUnison
-    [openunison_cluster_management_release,orchestra_release] = deploy_openunison("devplatform",k8s_provider,kubernetes_distribution,"devplatform","openunison",gitlab_root_token != None,cert_manager)
+    [openunison_cluster_management_release,orchestra_release,openunison_login_portal] = deploy_openunison("devplatform",k8s_provider,kubernetes_distribution,"devplatform","openunison",gitlab_root_token != None,cert_manager)
 
     # Deploy ArgoCD
     deploy_argocd("devplatform",k8s_provider,kubernetes_distribution,"devplatform","argocd",openunison_cluster_management_release,cert_manager)
@@ -139,7 +141,7 @@ def main():
 
     if gitlab_root_token:
         logging.info("gitlab secret set")
-        deploy_openunison_idp("devplatform",k8s_provider,kubernetes_distribution,"devplatform","openunison",openunison_cluster_management_release)
+        deploy_openunison_idp("devplatform",k8s_provider,kubernetes_distribution,"devplatform","openunison",openunison_cluster_management_release,openunison_login_portal,orchestra_release)
     else:
         logging.info("no gitlab token set")
 
@@ -158,6 +160,9 @@ def main():
             "-dev"
         )
 
+        # deploy MySQL for k3s backend
+        deploy_mysql("devplatform",k8s_dev_provider,kubernetes_distribution,"devplatform",dev_cert_manager,"dev")
+
         # deploy dev openunison
         deploy_openunison_sat("devplatform",k8s_dev_provider,k8s_provider,kubernetes_distribution,"devplatform","openunison","dev",openunison_cluster_management_release,dev_cert_manager)
 
@@ -173,8 +178,13 @@ def main():
             "-prod"
         )
 
+        # deploy MySQL for k3s backend
+        deploy_mysql("devplatform",k8s_prod_provider,kubernetes_distribution,"devplatform",prod_cert_manager,"prod")
+
         # deploy prod openunison
         deploy_openunison_sat("devplatform",k8s_prod_provider,k8s_provider,kubernetes_distribution,"devplatform","openunison","prod",openunison_cluster_management_release,prod_cert_manager)
+
+  
 
 
 

@@ -83,9 +83,6 @@ openunison:
     SHOW_PORTAL_ORGS: "false"
     K8S_DEPLOYMENT_NAME: "tenant1"
   secrets: []
-  html:
-    image: ghcr.io/openunison/openunison-k8s-react:0.0.1
-    legacy: false
   enable_provisioning: false
   use_standard_jit_workflow: true
 
