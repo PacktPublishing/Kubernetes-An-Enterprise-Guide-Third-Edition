@@ -88,6 +88,8 @@ echo -e "\n \n******************************************************************
 echo -e "Integrating Vault with the cluster"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
+echo -e "\nWaiting 10 seconds...\n"
+sleep 10
 ./vault_integrate_cluster.sh
 
-echo -n "\n\n"
+echo -e "\n\n"
