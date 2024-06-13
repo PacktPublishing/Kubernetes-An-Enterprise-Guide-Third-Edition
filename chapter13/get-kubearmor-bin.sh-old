@@ -60,8 +60,6 @@ execute() {
     fi
     install "${srcdir}/${binexe}" "${BINDIR}/"
     log_info "installed ${BINDIR}/${binexe}"
-    log_info "karmor is installed in ${BINDIR}"
-    log_info "invoke ${BINDIR}/${binexe} or move karmor to your desired PATH"
   done
   rm -rf "${tmpdir}"
 }
