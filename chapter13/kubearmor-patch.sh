@@ -8,7 +8,7 @@ echo -e "\n \n******************************************************************
 echo -e "Downloading karmor release from get.kubearmor.io and moving it to /usr/bin"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-./get-kubearmor-bin.sh v1.2.1
+./get-kubearmor-bin.sh v1.3.8
 sudo mv ./bin/karmor /usr/bin
 
 tput setaf 5
