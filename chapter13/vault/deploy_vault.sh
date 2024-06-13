@@ -1,4 +1,5 @@
 #!/bin/bash
+clear 
 
 # deploy cert-manager
 tput setaf 5
