@@ -33,34 +33,66 @@ spec:
       value: {{ .Values.dev_dns_suffix }}
       addToRequest: true
 
+    # - taskType: callWorkflow
+    #   name: create-vcluster-db
+
+    # - taskType: customTask
+    #   className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+    #   params:
+    #     message: "deployed cert"
+
+    # - taskType: callWorkflow
+    #   name: deploy-vcluster
+
+    # - taskType: customTask
+    #   className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+    #   params:
+    #     message: "deployed vcluster"
+
+    # - taskType: callWorkflow
+    #   name: deploy-openunison-to-vcluster
+
+    # - taskType: customTask
+    #   className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+    #   params:
+    #     message: "integrated openunison"
+
+    # - taskType: callWorkflow
+    #   name: create-argocd-tenant
+
+    # - taskType: customTask
+    #   className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+    #   params:
+    #     message: "argo-tenant-created"
+
+    # - taskType: callWorkflow
+    #   name: integrate-vault-vcluster
+
+    # - taskType: customTask
+    #   className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+    #   params:
+    #     message: "integrated with vault"
+
+    # - taskType: callWorkflow
+    #   name: deploy-external-secret-operator
+
+    # - taskType: customTask
+    #   className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+    #   params:
+    #     message: "deployed external secret operator"
+
+    # - taskType: callWorkflow
+    #   name: onboard-harbor-tenant
+
+    # - taskType: customTask
+    #   className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+    #   params:
+    #     message: "deployed pull secret"
+
     - taskType: callWorkflow
-      name: create-vcluster-db
+      name: sync-harbor-pull-secret
 
     - taskType: customTask
       className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
       params:
-        message: "deployed cert"
-
-    - taskType: callWorkflow
-      name: deploy-vcluster
-
-    - taskType: customTask
-      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
-      params:
-        message: "deployed vcluster"
-
-    - taskType: callWorkflow
-      name: deploy-openunison-to-vcluster
-
-    - taskType: customTask
-      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
-      params:
-        message: "integrated openunison"
-
-    - taskType: callWorkflow
-      name: create-argocd-tenant
-
-    - taskType: customTask
-      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
-      params:
-        message: "argo-tenant-created"
+        message: "synced pull secret"

@@ -146,6 +146,11 @@ spec:
         label: wait-ns-$env$-vcluster-cm-$nameSpace$
         conditions: []
 
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "Nolonger waiting for vcluster to deploy"
+
 
     - taskType: customTask
       className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
@@ -239,9 +244,14 @@ spec:
         namespace: openunison
         target: k8s-kubernetes-$env$
         uri: /api/v1/namespaces/$nameSpace$/configmaps/deploymentcomplete
-        label: wait-for-onboard-vcluster-$nameSpace$
+        label: wait-for-create-vcluster-$nameSpace$
         conditions:
         - .metadata.name=deploymentcomplete
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "Nolonger waiting for creating vcluster"
 
     # integration complete, cleanup in onboarded cluster
     - taskType: customTask

@@ -10,6 +10,23 @@ spec:
   label: Create ArgoCD Tenant
   orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
   tasks: |-
+              - taskType: customTask
+                className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+                params:
+                  javaScript: |-
+                    function init(task,params) {
+                    // nothing to do
+                    }
+    
+                    function reInit(task) {
+                    // do nothing
+                    }
+    
+                    function doTask(user,request) {
+                        request.put("WORKFLOW",task.getWorkflow());
+                        return true;
+                    }
+
               # create an argo project to store the argocd application
               - taskType: customTask
                 className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
@@ -24,16 +41,16 @@ spec:
                         spec:
                             description: Cluster operations project
                             destinations:
-                            - server: https://oumgmt-proxy.$domain$
-                                namespace: "*"
+                            - server: https://oumgmt-$nameSpace$.$domain$
+                              namespace: "*"
                             sourceRepos:
                             - git@{{ .Values.gitlab_ssh_host }}:$nameSpace$-$env$/$nameSpace$-ops.git
                             clusterResourceWhitelist:
                             - group: "*"
-                            kind: "*"
+                              kind: "*"
                             namespaceResourceWhitelist:
                             - group: '*'
-                            kind: '*'
+                              kind: '*'
                             sourceNamespaces:
                             - $nameSpace$
                     srcType: yaml
@@ -84,15 +101,15 @@ spec:
                         apiVersion: v1
                         kind: Secret
                         metadata:
-                        name: k8s-$nameSpace$-$env$
-                        namespace: argocd
-                        labels:
+                          name: k8s-$nameSpace$-$env$
+                          namespace: argocd
+                          labels:
                             argocd.argoproj.io/secret-type: cluster
                             tremolo.io/clustertype: tenant-$nameSpace$-$env$
                         type: Opaque
                         stringData:
                             name: k8s-$nameSpace$-$env$
-                            server: https://oumgmt-proxy.$domain$
+                            server: https://oumgmt-$nameSpace$.$domain$
                             config: |
                                 {
                                     "execProviderConfig": {
@@ -138,7 +155,7 @@ spec:
                                     source:
                                         repoURL: git@{{ .Values.gitlab_ssh_host }}:$nameSpace$-$env$/$nameSpace$-ops.git
                                         targetRevision: HEAD
-                                        path: '/yaml' 
+                                        path: 'yaml' 
                                         directory:
                                             recurse: true
                                     destination:
@@ -158,3 +175,27 @@ spec:
                     gitRepo: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
                     requestObject: git-$env$-$nameSpace$-vcluster-tenant
                     commitMsg: $env$ vcluster tenant for workflow $WORKFLOW.id$
+
+              # udpate argocd RBAC so that the teams can access their Applications
+              - taskType: customTask
+                className: com.tremolosecurity.argocd.tasks.AddtoRBAC
+                params:
+                  k8sTarget: k8s
+                  toAdd: |-
+                    p, role:$nameSpace$-operations, applications, get, $nameSpace$/*, allow
+                    p, role:$nameSpace$-operations, applications, override, $nameSpace$/*, allow
+                    p, role:$nameSpace$-operations, applications, sync, $nameSpace$/*, allow
+                    p, role:$nameSpace$-operations, applications, update, $nameSpace$/*, allow
+                    
+                    p, role:$nameSpace$-operations, projects, get, $nameSpace$, allow
+                    
+                    g, k8s-namespace-operations-k8s-$nameSpace$-internal, role:$nameSpace$-operations
+                    g, k8s-namespace-operations-k8s-$nameSpace$-external, role:$nameSpace$-operations
+                    g, k8s-namespace-owners-k8s-$nameSpace$-internal, role:$nameSpace$-operations
+                    g, k8s-namespace-owners-k8s-$nameSpace$-external, role:$nameSpace$-operations
+                    
+                    
+                    p, role:$nameSpace$-dev, applications, get, $nameSpace$/*, allow
+                    p, role:$nameSpace$-dev, projects, get, $nameSpace$, allow
+                    g, k8s-namespace-developer-k8s-$nameSpace$-internal, role:$nameSpace$-dev
+                    g, k8s-namespace-developer-k8s-$nameSpace$-external, role:$nameSpace$-dev

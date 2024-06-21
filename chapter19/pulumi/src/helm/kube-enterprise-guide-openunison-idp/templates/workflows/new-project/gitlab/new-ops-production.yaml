@@ -51,7 +51,7 @@ spec:
           Fork this project to create to create your application.
         commitMessage: initializing the repository
 
-    # create a ConfigMap just to have something to sync
+    # Create a ClusterRoleBinding for cluster-admins
     - taskType: customTask
       className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
       params:
@@ -59,14 +59,24 @@ spec:
         namespace: $nameSpace$-production
         project: $nameSpace$-ops
         branch: main
-        path: yaml/namespaces/default/configmaps/argo-snyc.yaml
+        path: yaml/cluster/clusterrolebindings/tenant-admins.yaml
         content: |-
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: argocd-sync
-            namespace: default
-        commitMessage: initializing the repository
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: tenant-admins
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: cluster-admin
+            subjects:
+            - kind: Group
+              name: k8s-namespace-owners-k8s-$nameSpace$-internal
+            - kind: Group
+              name: k8s-namespace-operations-k8s-$nameSpace$-internal
+            - kind: Group
+              name: k8s-namespace-developer-k8s-$nameSpace$-internal
+        commitMessage: initializing the repository with admin CRB
 
     # create a deployment key for argocd to use
     - taskType: customTask

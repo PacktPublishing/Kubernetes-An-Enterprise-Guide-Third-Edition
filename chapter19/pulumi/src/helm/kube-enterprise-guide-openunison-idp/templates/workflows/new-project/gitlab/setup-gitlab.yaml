@@ -54,3 +54,8 @@ spec:
 
       - taskType: callWorkflow
         name: new-ops-dev
+      
+      - taskType: customTask
+        className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+        params:
+          message: "gitlab projects setup"

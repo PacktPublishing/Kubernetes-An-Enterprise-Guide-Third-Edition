@@ -13,7 +13,7 @@ from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from kubernetes.client import api_client
 
 
-def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str, gitlab_integrated: bool,cert_manager):
+def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str, gitlab_integrated: bool,cert_manager,mysql_release):
     # Initialize Pulumi configuration
     pconfig = pulumi.Config()
 
@@ -111,14 +111,15 @@ def deploy_openunison(name: str, k8s_provider: Provider, kubernetes_distribution
 
     pulumi.log.info("CA Certificate {}".format(ca_cert))
 
-    return deploy_openunison_charts(ca_cert=ca_cert,k8s_provider=k8s_provider,kubernetes_distribution=kubernetes_distribution,project_name=project_name,namespace=namespace,domain_suffix=domain_suffix,openunison_certificate=openunison_certificate,config=pconfig,db_release=k8s_db_release,gitlab_integrated=gitlab_integrated,openunison_namespace=openunison_namespace)
+    return deploy_openunison_charts(ca_cert=ca_cert,k8s_provider=k8s_provider,kubernetes_distribution=kubernetes_distribution,project_name=project_name,namespace=namespace,domain_suffix=domain_suffix,openunison_certificate=openunison_certificate,config=pconfig,db_release=k8s_db_release,gitlab_integrated=gitlab_integrated,openunison_namespace=openunison_namespace,mysql_release=mysql_release)
 
 
 
-def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str,domain_suffix: str,openunison_certificate,config,db_release,gitlab_integrated,openunison_namespace):
+def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribution: str, project_name: str, namespace: str,domain_suffix: str,openunison_certificate,config,db_release,gitlab_integrated,openunison_namespace,mysql_release):
 
 
     openunison_helm_values = {
+        "image":"docker.io/tremolosecurity/betas:1.0.41",
         "enable_wait_for_job": True,
         "network": {
             "openunison_host": "k8sou." + domain_suffix,
@@ -444,23 +445,24 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
     openunison_orchestra_release = k8s.helm.v3.Release(
         resource_name='orchestra',
         args=k8s.helm.v3.ReleaseArgs(
-            chart=localpath + '/' + orchestra_chart_name,
+            chart=orchestra_chart_name,
+            #chart=localpath + '/' + orchestra_chart_name,
             version=orchestra_chart_version,
             values=openunison_helm_values,
             namespace='openunison',
             #name='orchestra',
             skip_await=False,
             wait_for_jobs=True,
-            # repository_opts= k8s.helm.v3.RepositoryOptsArgs(
-            #     #repo=chart_url
-            #     path=localpath
-            # ),
+            repository_opts= k8s.helm.v3.RepositoryOptsArgs(
+                repo=chart_url
+                #path=localpath
+            ),
 
         ),
 
         opts=pulumi.ResourceOptions(
             provider = k8s_provider,
-            depends_on=[openunison_operator_release,orchestra_secret_source],
+            depends_on=[openunison_operator_release,orchestra_secret_source,mysql_release],
             custom_timeouts=pulumi.CustomTimeouts(
                 create="8m",
                 update="10m",
@@ -534,20 +536,20 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
     orchestra_cm_helm_values["openunison"]["orchestra_login_portal_name"] = openunison_orchestra_login_portal_release.name.apply(lambda name: name)
 
     orchestra_cluster_management_chart_name = 'openunison-k8s-cluster-management'
-    # orchestra_cluster_management_chart_version = get_latest_helm_chart_version(index_url,orchestra_cluster_management_chart_name)
+    orchestra_cluster_management_chart_version = get_latest_helm_chart_version(index_url,orchestra_cluster_management_chart_name)
     openunison_cluster_management_release = k8s.helm.v3.Release(
         'orchestra-cluster-management',
         k8s.helm.v3.ReleaseArgs(
-            #chart=orchestra_cluster_management_chart_name,
-            chart=localpath + '/' + orchestra_cluster_management_chart_name,
-            #version=orchestra_cluster_management_chart_version,
+            chart=orchestra_cluster_management_chart_name,
+            #chart=localpath + '/' + orchestra_cluster_management_chart_name,
+            version=orchestra_cluster_management_chart_version,
             values=orchestra_cm_helm_values,
             namespace='openunison',
             skip_await=False,
             wait_for_jobs=True,
-            # repository_opts= k8s.helm.v3.RepositoryOptsArgs(
-            #     repo=chart_url
-            # ),
+            repository_opts= k8s.helm.v3.RepositoryOptsArgs(
+                repo=chart_url
+            ),
 
         ),
 

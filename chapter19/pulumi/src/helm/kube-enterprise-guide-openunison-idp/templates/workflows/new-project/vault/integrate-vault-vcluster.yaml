@@ -10,24 +10,25 @@ spec:
   label: Integrate vCluster and Vault
   orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
   tasks: |-
+    # create a namespace that will hold the vault integration ServiceAccount
     - taskType: customTask
       className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
       params: 
-        targetName: k8s-vcluster-$nsName$
+        targetName: k8s-$nameSpace$-$env$
         template: |-
             apiVersion: v1
             kind: Namespace
             metadata:
               name: vault-integration
         srcType: yaml
-        writeToRequest: "$useGit$"
-        requestAttribute: git-secret-cluster-k8s-$nameSpace$
-        path: /yaml/ns/$nameSpace$/vault-integration.yaml
+        writeToRequest: "true"
+        requestAttribute: vault-k8s-$nameSpace$-$env$
+        path: /yaml/cluster/namespaces/vault-integration.yaml
 
     - taskType: customTask
       className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
       params: 
-        targetName: k8s-vcluster-$nsName$
+        targetName: k8s-$nameSpace$-$env$
         template: |-
             apiVersion: v1
             kind: ServiceAccount
@@ -35,14 +36,15 @@ spec:
               name: vault-client
               namespace: vault-integration
         srcType: yaml
-        writeToRequest: "$useGit$"
-        requestAttribute: git-secret-cluster-k8s-$nameSpace$
-        path: /yaml/ns/$nameSpace$/serviceAccounts/vault-client.yaml
+        writeToRequest: "true"
+        requestAttribute: vault-k8s-$nameSpace$-$env$
+        path: /yaml/namespaces/$nameSpace$/serviceaccounts/vault-client.yaml
 
+    # create a ClusterRoleBinding that will allow Vault to validate tokens from our vCluster
     - taskType: customTask
       className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
       params: 
-        targetName: k8s-vcluster-$nsName$
+        targetName: k8s-$nameSpace$-$env$
         template: |-
             apiVersion: rbac.authorization.k8s.io/v1
             kind: ClusterRoleBinding
@@ -57,9 +59,33 @@ spec:
               name: vault-client
               namespace: vault-integration
         srcType: yaml
-        writeToRequest: "$useGit$"
-        requestAttribute: git-secret-cluster-k8s-$nameSpace$
-        path: /yaml/clusterrolebindings/role-tokenreview-binding.yaml
+        writeToRequest: "true"
+        requestAttribute: vault-k8s-$nameSpace$-$env$
+        path: /yaml/cluster/clusterrolebindings/role-tokenreview-binding.yaml
+
+    # GitOps - push to vCluster repo
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.PushToGit
+      params:
+        secretName: openunison-git-$nameSpace$-$env$-key
+        nameSpace: openunison
+        target: k8s
+        keyName: id_rsa
+        gitRepo: git@{{ .Values.gitlab_ssh_host }}:$nameSpace$-$env$/$nameSpace$-ops.git
+        requestObject: vault-k8s-$nameSpace$-$env$
+        commitMsg: $env$ vcluster vault integration for workflow $WORKFLOW.id$
+
+    # wait for the namespaces to sync
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+      params:
+        holdingTarget: k8s
+        namespace: openunison
+        target: k8s-$nameSpace$-$env$
+        uri: /apis/rbac.authorization.k8s.io/v1/clusterrolebindings/role-tokenreview-binding
+        label: wait-ns-$env$-vcluster-vault-$nameSpace$
+        conditions: []
+    
 
     - taskType: customTask
       className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
@@ -86,6 +112,7 @@ spec:
             ActionType = Java.type("com.tremolosecurity.provisioning.core.ProvisioningUtil.ActionType");
             var nsName = request.get("nameSpace").toLowerCase();
             request.put("nsName",nsName);
+            var env = request.get("env").toLowerCase();
             var approvalID = 0;
             if (request.containsKey("APPROVAL_ID")) {
               approvalID = request.get("APPROVAL_ID");
@@ -95,13 +122,15 @@ spec:
             k8s = task.getConfigManager().getProvisioningEngine().getTarget("k8s").getProvider();
             payload = JSON.stringify({
               "jwt": k8s.getAuthToken(),
-              "role": "openunison-admin"
+              "role": "ou_admin_role"
             });
+
+            
 
             
             http = HttpClient.newBuilder().build();
             authTokenRequest = HttpRequest.newBuilder()
-                                          .uri(URI.create("https://vault.apps.{{ .Values.vcluster.ip }}.nip.io/v1/auth/kubernetes/login"))
+                                          .uri(URI.create("{{ .Values.vault_url }}/v1/auth/kubernetes/login"))
                                           .header("Content-Type", "application/json")
                                           .POST(BodyPublishers.ofString(payload))
                                           .build();
@@ -114,7 +143,7 @@ spec:
             // create an authentication mechanism for the vcluster
             authJson = {
               "type": "kubernetes",
-              "description": "Authentication for vcluster " + nsName,
+              "description": "Authentication for vcluster " + nsName + "-" + env,
               "config": {
                 "options": null,
                 "default_lease_ttl": "0s",
@@ -128,7 +157,7 @@ spec:
             };
 
             createAuth = HttpRequest.newBuilder()
-                                    .uri(URI.create("https://vault.apps.{{ .Values.vcluster.ip }}.nip.io/v1/sys/auth/vcluster-" + nsName))
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/sys/auth/vcluster-" + nsName + "-" + env))
                                     .header("Content-Type", "application/json")
                                     .header("X-Vault-Request","true")
                                     .header("X-Vault-Token",authToken)
@@ -138,14 +167,14 @@ spec:
             response = http.send(createAuth, BodyHandlers.ofString());
             
             if (response.statusCode() == 204) {
-              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-authentication-method",'vcluster-' + nsName);
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-authentication-method",'vcluster-' + nsName + "-" + env);
             } else {
               throw new Error("Could not create authentication method: " + response.statusCode() + " / " + response.body());
             }
             
 
-            var base64Cert = "{{ .Values.vcluster.cacert }}";
-            vcluster = task.getConfigManager().getProvisioningEngine().getTarget("k8s-vcluster-" + nsName).getProvider();
+            var base64Cert = "{{ .Values.cacert }}";
+            vcluster = task.getConfigManager().getProvisioningEngine().getTarget("k8s-" + nsName + "-" + env).getProvider();
             vclusterHttp = vcluster.createClient();
 
             respToken = JSON.parse(vcluster.callWSPost(vcluster.getAuthToken(),vclusterHttp,"/api/v1/namespaces/vault-integration/serviceaccounts/vault-client/token",JSON.stringify({"kind":"TokenRequest","apiVersion":"authentication.k8s.io/v1","metadata":{"creationTimestamp":null},"spec":{"audiences":null,"expirationSeconds":31212000,"boundObjectRef":null},"status":{"token":"","expirationTimestamp":null}})));
@@ -156,12 +185,12 @@ spec:
             authConfigJson = {
               "issuer": "https://kubernetes.default.svc.cluster.local",
               "kubernetes_ca_cert": JSUtils.base64Decode(base64Cert),
-              "kubernetes_host": "https://k8sapi-" + nsName + ".apps.{{ .Values.vcluster.ip }}.nip.io",
+              "kubernetes_host": "https://k8sapi-" + nsName + "." + "{{ .Values.dev_dns_suffix }}",
               "token_reviewer_jwt": respToken.status.token
             }
 
             createAuthConfig = HttpRequest.newBuilder()
-                                    .uri(URI.create("https://vault.apps.{{ .Values.vcluster.ip }}.nip.io/v1/auth/vcluster-" + nsName + "/config"))
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/auth/vcluster-" + nsName + "-" + env + "/config"))
                                     .header("Content-Type", "application/json")
                                     .header("X-Vault-Request","true")
                                     .header("X-Vault-Token",authToken)
@@ -171,14 +200,14 @@ spec:
             response = http.send(createAuthConfig, BodyHandlers.ofString());
             
             if (response.statusCode() == 204) {
-              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-authentication-config",'vcluster-' + nsName);
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-authentication-config",'vcluster-' + nsName + "-" + env);
             } else {
               throw new Error("Could not create authentication config: " + response.statusCode() + " / " + response.body());
             }
 
             // get the accessor
             getAuthData = HttpRequest.newBuilder()
-                                    .uri(URI.create("https://vault.apps.{{ .Values.vcluster.ip }}.nip.io/v1/sys/auth/vcluster-" + nsName))
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/sys/auth/vcluster-" + nsName + "-" + env))
                                     .header("Content-Type", "application/json")
                                     .header("X-Vault-Request","true")
                                     .header("X-Vault-Token",authToken)
@@ -205,7 +234,7 @@ spec:
             };
 
             createPolicy = HttpRequest.newBuilder()
-                                    .uri(URI.create("https://vault.apps.{{ .Values.vcluster.ip }}.nip.io/v1/sys/policies/acl/vcluster-" + nsName))
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/sys/policies/acl/vcluster-" + nsName + "-" + env))
                                     .header("Content-Type", "application/json")
                                     .header("X-Vault-Request","true")
                                     .header("X-Vault-Token",authToken)
@@ -219,7 +248,7 @@ spec:
             System.out.println(response.body());
 
             if (response.statusCode() == 204) {
-              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-policy",'vcluster-' + nsName);
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-policy",'vcluster-' + nsName + "-" + env);
             } else {
               throw new Error("Could not create policy: " + response.statusCode() + " / " + response.body());
             }
@@ -231,12 +260,12 @@ spec:
             rolePolicy = {
               "bound_service_account_names": "*",
               "bound_service_account_namespaces": "*",
-              "policies": "vcluster-" + nsName,
+              "policies": "vcluster-" + nsName + "-" + env,
               "ttl": "24h"
             }
 
             createRole = HttpRequest.newBuilder()
-                                    .uri(URI.create("https://vault.apps.{{ .Values.vcluster.ip }}.nip.io/v1/auth/vcluster-" + nsName + "/role/cluster-read"))
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/auth/vcluster-" + nsName + "-" + env + "/role/cluster-read"))
                                     .header("Content-Type", "application/json")
                                     .header("X-Vault-Request","true")
                                     .header("X-Vault-Token",authToken)
@@ -246,7 +275,7 @@ spec:
             response = http.send(createRole, BodyHandlers.ofString());
             
             if (response.statusCode() == 204) {
-              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-auth-role",'vcluster-' + nsName + "-cluster-read");
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-auth-role",'vcluster-' + nsName + "-" + env + "-cluster-read");
             } else {
               throw new Error("Could not create role: " + response.statusCode() + " / " + response.body());
             }
@@ -254,76 +283,3 @@ spec:
 
             return true;
           }
-    - taskType: customTask
-      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
-      params: 
-        targetName: k8s
-        template: |-
-            apiVersion: batch/v1
-            kind: Job
-            metadata:
-              name: deploy-helm-vcluster-$nsName$
-              namespace: {{ .Release.Namespace }}
-            labels:
-              name: deploy-helm-vcluster-$nsName$
-              app.kubernetes.io/name: openunison
-              app.kubernetes.io/instance: openunison-{{ .Release.Name }}
-              app.kubernetes.io/component: openunison-vcluster
-              app.kubernetes.io/part-of: openunison
-            spec:
-              parallelism: 1
-              completions: 1
-              backoffLimit: 3
-              selector:
-                matchLabels:
-                  job-name: deploy-helm-vcluster-$nsName$
-              template:
-                metadata:
-                  name: vdeploy-helm-vcluster-$nsName$
-                  namespace: {{ .Release.Namespace }}
-                  labels:
-                    job-name: deploy-helm-vcluster-$nsName$
-                spec:
-                    containers:
-                    - args:
-                        - bash
-                        - /scripts/deploy-vault-client.sh
-                      image: {{ .Values.vcluster.job_image }}
-                      imagePullPolicy: Always
-                      name: vcluster-onboard
-                      resources: {}
-                      volumeMounts:
-                        - mountPath: /scripts
-                          name: vcluster-scripts
-                      env:
-                      - name: VCLUSTER_NAME
-                        value: $nsName$
-                      securityContext:
-                        allowPrivilegeEscalation: false
-                        capabilities:
-                          drop:
-                          - "all"
-                    dnsPolicy: ClusterFirst
-                    serviceAccount: openunison-orchestra
-                    serviceAccountName: openunison-orchestra
-                    restartPolicy: OnFailure
-                    {{ if .Capabilities.APIVersions.Has "project.openshift.io/v1/Project" }}
-                    securityContext:
-                      seccompProfile:
-                        type: RuntimeDefault
-                      runAsNonRoot: true
-                    {{ else }}
-                    securityContext:
-                      fsGroup: 433
-                      supplementalGroups: [433]
-                      seccompProfile:
-                        type: RuntimeDefault
-                      runAsNonRoot: true
-                      runAsUser: 431
-                      runAsGroup: 433
-                    {{ end }}
-                    volumes:
-                    - name: vcluster-scripts
-                      configMap:
-                        name: vcluster-scripts
-        srcType: yaml

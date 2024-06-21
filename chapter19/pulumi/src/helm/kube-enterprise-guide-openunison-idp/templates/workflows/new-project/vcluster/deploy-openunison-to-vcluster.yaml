@@ -54,7 +54,7 @@ spec:
                   c: "MyCountry"
 
                 myvd_config_path: "WEB-INF/myvd.conf"
-                k8s_cluster_name: $nameSpace$
+                k8s_cluster_name: $nameSpace$-$env$
                 enable_impersonation: true
 
                 impersonation:
@@ -130,8 +130,13 @@ spec:
                         issuer: https://k8sou.{{ .Values.cp_dns_suffix }}/auth/idp/remotek8s
                   use_standard_jit_workflow: true
                   az_groups:
-                  - k8s-namespace-administrators-k8s-$nameSpace$-external
-                  - k8s-namespace-administrators-k8s-$nameSpace$-internal
+                  - k8s-namespace-owners-k8s-$nameSpace$-internal
+                  - k8s-namespace-owners-k8s-$nameSpace$-exgernal
+                  - k8s-namespace-operations-k8s-$nameSpace$-internal
+                  - k8s-namespace-operations-k8s-$nameSpace$-external
+                  - k8s-namespace-developer-k8s-$nameSpace$-internal
+                  - k8s-namespace-developer-k8s-$nameSpace$-external
+
         srcType: yaml
         writeToRequest: "true"
         requestAttribute: git-$remote-target$-$nameSpace$-vcluster-openunison-config
@@ -159,6 +164,11 @@ spec:
         uri: /api/v1/namespaces/openunison/configmaps/vcluster-openunison-$env$-$nameSpace$
         label: wait-ns-$env$-vcluster-openunison-cm-$nameSpace$
         conditions: []
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "Nolonger waiting for openunison configmap"
 
 
     - taskType: customTask
@@ -268,6 +278,11 @@ spec:
         label: wait-for-onboard-vcluster-openunison-$env$-$nameSpace$
         conditions:
         - .metadata.name=openunisoncomplete
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "Nolonger waiting for openunison integration with vcluster"
 
     # integration complete, cleanup in onboarded cluster
     - taskType: customTask

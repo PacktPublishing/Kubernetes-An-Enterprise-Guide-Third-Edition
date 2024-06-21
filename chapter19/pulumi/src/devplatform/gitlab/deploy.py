@@ -158,8 +158,8 @@ args:
     ),
     data={
         "tls.crt": load_ca_cert(),
-        domain_suffix:load_ca_cert(),
-        "gitlab." + domain_suffix: load_ca_cert()
+        domain_suffix + ".crt" :load_ca_cert(),
+        "gitlab." + domain_suffix + ".crt": load_ca_cert()
     },
     opts=pulumi.ResourceOptions(
         provider = k8s_provider,
@@ -215,15 +215,6 @@ args:
         )
     )
 
-    runners_override = """[[runners]]
-        [runners.kubernetes]
-          image = "ubuntu:22.04"
-        [[runners.kubernetes.volumes.secret]]
-          name = "internal-ca"
-          mount_path = "/etc/gitlab-runner/certs/"
-
-"""
-
     helm_values = {
         "global": {
             "hosts": {
@@ -257,7 +248,7 @@ args:
                 "customCAs": [
                     {
                         "secret": "internal-ca",
-                        "keys":["tls.crt",domain_suffix,"gitlab." + domain_suffix]
+                        "keys":["tls.crt",domain_suffix + ".crt","gitlab." + domain_suffix + ".crt"]
                     }
                 ]
             }
@@ -311,6 +302,77 @@ args:
             )
         )
     )
+
+    # only deploy the running once gitlab has been configured
+    gitlab_runner_token = config.get_secret('gitlab.runner.token') or None
+    if gitlab_runner_token:
+        # create a secret that will store our CA cert for gitlab to trust
+        runner_secret = k8s.core.v1.Secret(
+        "gitlab-runner-secret",
+        metadata= k8s.meta.v1.ObjectMetaArgs(
+            name="gitlab-runner-secret",
+            namespace="gitlab"
+        ),
+        data={
+            "runner-registration-token": "",
+            "runner-token": gitlab_runner_token.apply(lambda token : base64.b64encode(token.encode('utf-8')).decode('utf-8'))
+        },
+        opts=pulumi.ResourceOptions(
+            provider = k8s_provider,
+            depends_on=[gitlab_namespace],
+            retain_on_delete=False,
+            delete_before_replace=True,
+            custom_timeouts=pulumi.CustomTimeouts(
+                create="10m",
+                update="10m",
+                delete="10m"
+            )
+        )
+        )
+
+        # create the runner chart's values:
+        runner_values = {
+            "certsSecretName": "internal-ca",
+            "gitlabUrl": "https://gitlab." + domain_suffix,
+            "rbac": {
+                "create": True
+            },
+            "runners": {
+                "secret": "gitlab-runner-secret"
+            }
+        }
+
+        # deploy the runner chart
+        chart_name = "gitlab-runner"
+        chart_index_path = "index.yaml"
+        chart_url = "https://charts.gitlab.io"
+        index_url = f"{chart_url}/{chart_index_path}"
+        chart_version = get_latest_helm_chart_version(index_url, chart_name)
+
+        
+
+        runner_release = k8s.helm.v3.Release(
+                'gitlab-runner',
+                k8s.helm.v3.ReleaseArgs(
+                    chart='gitlab-runner',
+                    version=chart_version,
+                    namespace='gitlab',
+                    skip_await=False,
+                    repository_opts= k8s.helm.v3.RepositoryOptsArgs(
+                        repo=chart_url
+                    ),
+                    values=runner_values,
+                ),
+                opts=pulumi.ResourceOptions(
+                    provider = k8s_provider,
+                    depends_on=[internal_ca_secret,runner_secret,release],
+                    custom_timeouts=pulumi.CustomTimeouts(
+                        create="8m",
+                        update="10m",
+                        delete="10m"
+                    )
+                )
+            )
 
 
     

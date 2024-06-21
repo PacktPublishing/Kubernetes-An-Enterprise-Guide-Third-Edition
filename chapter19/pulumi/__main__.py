@@ -74,7 +74,7 @@ def main():
 
     # deploy mysql
     mysql_manifest_url = 'src/yaml/mysql.yaml'
-    k8s_yaml = k8s.yaml.ConfigFile("mysql", file=mysql_manifest_url,opts=pulumi.ResourceOptions(
+    mysql_release = k8s.yaml.ConfigFile("mysql", file=mysql_manifest_url,opts=pulumi.ResourceOptions(
             provider = k8s_provider,
             retain_on_delete=False,
             delete_before_replace=True,
@@ -121,7 +121,7 @@ def main():
     gitlab_root_token = config.get_secret(key="gitlab.root.token") or None
 
     # # Deploy OpenUnison
-    [openunison_cluster_management_release,orchestra_release,openunison_login_portal] = deploy_openunison("devplatform",k8s_provider,kubernetes_distribution,"devplatform","openunison",gitlab_root_token != None,cert_manager)
+    [openunison_cluster_management_release,orchestra_release,openunison_login_portal] = deploy_openunison("devplatform",k8s_provider,kubernetes_distribution,"devplatform","openunison",gitlab_root_token != None,cert_manager,mysql_release)
 
     # Deploy ArgoCD
     deploy_argocd("devplatform",k8s_provider,kubernetes_distribution,"devplatform","argocd",openunison_cluster_management_release,cert_manager)

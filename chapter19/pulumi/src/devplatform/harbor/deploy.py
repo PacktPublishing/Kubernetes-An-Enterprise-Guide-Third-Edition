@@ -262,7 +262,8 @@ def deploy_harbor(name: str, k8s_provider: Provider, kubernetes_distribution: st
     logging.info("in harbor oidc configuration")
     [harbor_oidc_secret,decoded_secret] = load_oidc_secret(k8s_provider,openunison_cluster_management_release)
 
-    try:
+    harbor_configured = config.get_bool("harbor.configured") or None
+    if harbor_configured:
         oidc_auth = ConfigAuth("harbor-oidc-config",
                                         auth_mode="oidc",
                                         primary_auth_mode=True,
@@ -277,5 +278,4 @@ def deploy_harbor(name: str, k8s_provider: Provider, kubernetes_distribution: st
                                         oidc_groups_claim="groups",
                                         oidc_admin_group="k8s-cluster-k8s-administrators-internal",
                                         opts = pulumi.ResourceOptions(depends_on=[release,harbor_oidc_secret]))
-    except:
-        logging.info("No OIDC configured")
+    
