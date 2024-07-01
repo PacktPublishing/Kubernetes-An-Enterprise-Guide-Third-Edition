@@ -28,7 +28,7 @@ tput setaf 7
 echo -e "\n \n*******************************************************************************************************************"
 echo -e "The NGINX server has been exposed on a LoadBalancer service with IP address: $svc_ip  \n"
 echo -e "\n\n Due to how networking works with KinD, we can only test the LoadBalancer address from the Docker host itself"
-echo -e "You can do this by using a simple curl command:   curl $svc_ip
+echo -e "You can do this by using a simple curl command:   curl $svc_ip"
 echo -e "******************************************************************************************************************* \n\n"
 tput setaf 2
 
