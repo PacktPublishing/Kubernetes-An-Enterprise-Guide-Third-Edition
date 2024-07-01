@@ -15,14 +15,14 @@ echo -e "\n*********************************************************************
 echo -e "Creating the NGINX LoadBalancer service"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-kubectl expose deployment nginx-web --port 8080 --target-port 8080 --type=LoadBalancer --name nginx-web-lb
+kubectl expose deployment nginx-web --port 80 --target-port 8080 --type=LoadBalancer --name nginx-web-lb
 
 tput setaf 5
 echo -e "\n*******************************************************************************************************************"
 echo -e "Getting the LoadBalancer IP address for the NGINX service"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-kubectl get service nginx-web-lb -o jsonpath='{.spec.LoadBalancerIP}'
+svc_ip=$(kubectl get service nginx-web-lb -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 tput setaf 7
 echo -e "\n \n*******************************************************************************************************************"
