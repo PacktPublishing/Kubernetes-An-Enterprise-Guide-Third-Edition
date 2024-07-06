@@ -15,7 +15,7 @@ spec:
         className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
         params:
           target: gitlab
-          name: $nameSpace$-production
+          name: $nameSpace$-prod
           attributes: requestAccessEnabled=false
 
       - taskType: customTask
@@ -47,10 +47,10 @@ spec:
           attributes: requestAccessEnabled=false
       
       - taskType: callWorkflow
-        name: new-application-production
+        name: new-application-prod
 
       - taskType: callWorkflow
-        name: new-ops-production
+        name: new-ops-prod
 
       - taskType: callWorkflow
         name: new-ops-dev

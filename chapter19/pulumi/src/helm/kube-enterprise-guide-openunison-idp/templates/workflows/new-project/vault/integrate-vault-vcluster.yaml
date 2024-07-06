@@ -179,13 +179,18 @@ spec:
 
             respToken = JSON.parse(vcluster.callWSPost(vcluster.getAuthToken(),vclusterHttp,"/api/v1/namespaces/vault-integration/serviceaccounts/vault-client/token",JSON.stringify({"kind":"TokenRequest","apiVersion":"authentication.k8s.io/v1","metadata":{"creationTimestamp":null},"spec":{"audiences":null,"expirationSeconds":31212000,"boundObjectRef":null},"status":{"token":"","expirationTimestamp":null}})));
 
-
+            var domain = "";
+            if (env == "dev") {
+              domain = "{{ .Values.dev_dns_suffix }}";
+            } else {
+              domain = "{{ .Values.prod_dns_suffix }}";
+            }
 
             // create auth config
             authConfigJson = {
               "issuer": "https://kubernetes.default.svc.cluster.local",
               "kubernetes_ca_cert": JSUtils.base64Decode(base64Cert),
-              "kubernetes_host": "https://k8sapi-" + nsName + "." + "{{ .Values.dev_dns_suffix }}",
+              "kubernetes_host": "https://k8sapi-" + nsName + "." + domain,
               "token_reviewer_jwt": respToken.status.token
             }
 

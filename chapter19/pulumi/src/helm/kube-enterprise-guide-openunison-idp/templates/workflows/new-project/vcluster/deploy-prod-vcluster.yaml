@@ -2,7 +2,7 @@
 apiVersion: openunison.tremolo.io/v1
 kind: Workflow
 metadata:
-  name: deploy-dev-vcluster
+  name: deploy-prod-vcluster
   namespace: {{ .Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-wave: "40"
@@ -15,22 +15,22 @@ spec:
     # add request attributes for the dev environment
     - taskType: addAttribute
       name: tremoloio.node.db.target
-      value: dev-mysql
+      value: prod-mysql
       addToRequest: true
 
     - taskType: addAttribute
       name: remote-target
-      value: k8s-kubernetes-dev
+      value: k8s-kubernetes-prod
       addToRequest: true
 
     - taskType: addAttribute
       name: env
-      value: dev
+      value: prod
       addToRequest: true
 
     - taskType: addAttribute
       name: domain
-      value: {{ .Values.dev_dns_suffix }}
+      value: {{ .Values.prod_dns_suffix }}
       addToRequest: true
 
     - taskType: callWorkflow

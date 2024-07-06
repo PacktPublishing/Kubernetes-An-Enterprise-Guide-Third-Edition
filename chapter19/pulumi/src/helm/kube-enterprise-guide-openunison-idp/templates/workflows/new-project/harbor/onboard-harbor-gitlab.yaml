@@ -2,12 +2,12 @@
 apiVersion: openunison.tremolo.io/v1
 kind: Workflow
 metadata:
-  name: onboard-harbor-tenant
+  name: onboard-harbor-gitlab
   namespace: {{ .Release.Namespace }}
 spec:
-  description: onboard harbor tenant
+  description: onboard harbor gitlab
   inList: false
-  label: Add tenant environment robot to harbor
+  label: Add gitlab environment robot to harbor
   orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
   tasks: |-
     - taskType: customTask
@@ -33,14 +33,12 @@ spec:
             // do nothing
           }
 
-          function createPullRobot(nsName,env,basicHeader,approvalID,ActionType) {
+          function createPullRobot(nsName,basicHeader,approvalID,ActionType) {
             http = HttpClient.newBuilder().build();
 
             // first, generate a new robot account that can pull from the project
-            newRobot = JSON.stringify({"permissions":[{"kind":"project","namespace":nsName,"access":[{"resource":"repository","action":"pull"}]}],"name": nsName + "-" + env + "-pull","description":null,"duration":-1,"disable":false,"level":"system"})
+            newRobot = JSON.stringify({"permissions":[{"kind":"project","namespace":nsName,"access":[{"resource":"repository","action":"pull"},{"resource":"repository","action":"push"},{"resource":"repository","action":"update"}]}],"name": nsName + "-gitlab-pull","description":null,"duration":-1,"disable":false,"level":"system"})
           
-            
-
             newRobotRequest = HttpRequest.newBuilder()
                                           .uri(URI.create("{{ .Values.harbor_url }}/api/v2.0/robots"))
                                           .header("Content-Type", "application/json")
@@ -51,9 +49,8 @@ spec:
             response = http.send(newRobotRequest, BodyHandlers.ofString());
             jsonResp = response.body();
 
-            if (response.statusCode() == 201 ) {
-
-              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"harbor-robot",nsName + "-" + env + "-pull");
+            if (response.statusCode() == 201 || response.statusCode() == 204) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"harbor-robot",nsName + "-gitlab-pull");
             } else {
               throw new Error("Could not create harbor project: " + response.statusCode() + " / " + response.body());
             }
@@ -65,46 +62,7 @@ spec:
             // generate a secret
             dockerCreds = {"auths":{"harbor.{{ .Values.cp_dns_suffix }}":{"username":robotName,"password":robotSecret,"auth":auth}}};
 
-
-            // push the secret into vault
-            // get the k8s target to get a token
-            k8s = task.getConfigManager().getProvisioningEngine().getTarget("k8s").getProvider();
-            payload = JSON.stringify({
-              "jwt": k8s.getAuthToken(),
-              "role": "ou_admin_role"
-            });
-
-            authTokenRequest = HttpRequest.newBuilder()
-                                          .uri(URI.create("{{ .Values.vault_url }}/v1/auth/kubernetes/login"))
-                                          .header("Content-Type", "application/json")
-                                          .POST(BodyPublishers.ofString(payload))
-                                          .build();
-
-            response = http.send(authTokenRequest, BodyHandlers.ofString());
-            jsonResp = response.body();
-            respToken = JSON.parse(jsonResp);
-            authToken = respToken.auth["client_token"];
-
-            newSecret = JSON.stringify({"data":{".dockerconfigjson":JSON.stringify(dockerCreds)},"options":{"cas":0}});
-
-            newSecretRequest = HttpRequest.newBuilder()
-                                          .uri(URI.create("{{ .Values.vault_url }}/v1/secret/data/vclusters/" + nsName + "-" + env + "/ns/default/pullsecret"))
-                                          .header("Content-Type", "application/json")
-                                          .header("X-Vault-Request","true")
-                                          .header("X-Vault-Token",authToken)
-                                          .POST(BodyPublishers.ofString(newSecret))
-                                          .build();
-
-            response = http.send(newSecretRequest, BodyHandlers.ofString());
-            jsonResp = response.body();
-
-            if (response.statusCode() == 200 || response.statusCode() == 204) {
-              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-secret-" + nsName + "-" + env + "-default","pullsecret");
-            } else {
-              throw new Error("Could not create secret: " + response.statusCode() + " / " + response.body());
-            }
-
-
+            return JSON.stringify(dockerCreds);
           }
 
           function doTask(user,request) {
@@ -113,7 +71,7 @@ spec:
             ActionType = Java.type("com.tremolosecurity.provisioning.core.ProvisioningUtil.ActionType");
             var nsName = request.get("nameSpace").toLowerCase();
             request.put("nsName",nsName);
-            var env = request.get("env").toLowerCase();
+            
             
             var approvalID = 0;
             if (request.containsKey("APPROVAL_ID")) {
@@ -128,8 +86,23 @@ spec:
             
 
             // create robot
-            createPullRobot(nsName,env,basicHeader,approvalID,ActionType);
+            var dockerCreds = createPullRobot(nsName,basicHeader,approvalID,ActionType);
+
+            request.put("gitlab_dockercreds",dockerCreds);
             
 
             return true;
           }
+
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateVariable
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-prod
+        project: $nameSpace$-application
+        key: config_json
+        value: "$gitlab_dockercreds$"
+        varType: FILE
+        protectedVar: "true"
+        masked: "false"
+        environment: "*"

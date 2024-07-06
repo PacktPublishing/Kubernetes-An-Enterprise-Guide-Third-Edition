@@ -275,12 +275,12 @@ def deploy_vault(name: str, k8s_provider: Provider, kubernetes_distribution: str
                                                             token_policies=["ou-admin"],
                                                             opts=pulumi.ResourceOptions(depends_on = [ou_admin_policy],provider=vault_provider))
             
-            # create a mount for our secrets
-            # cluster_mount = vault.Mount("cluster_mount",
-            #                             description="Mount for all secrets",
-            #                             path="secret",
-            #                             type="kv",
-            #                             opts=pulumi.ResourceOptions(depends_on = [ou_admin_policy],provider=vault_provider))
+            #create a mount for our secrets
+            cluster_mount = vault.Mount("cluster_mount",
+                                        description="Mount for all secrets",
+                                        path="secret",
+                                        type="kv",
+                                        opts=pulumi.ResourceOptions(depends_on = [ou_admin_policy],provider=vault_provider))
             
             # get the oidc client secret
             [vault_oidc_secret,oidc_client_secret] = load_oidc_secret(k8s_provider,openunison_cluster_management_release)

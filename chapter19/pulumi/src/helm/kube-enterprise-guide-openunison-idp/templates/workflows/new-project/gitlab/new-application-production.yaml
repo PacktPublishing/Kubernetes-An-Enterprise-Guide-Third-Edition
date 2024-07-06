@@ -2,7 +2,7 @@
 apiVersion: openunison.tremolo.io/v1
 kind: Workflow
 metadata:
-  name: new-application-production
+  name: new-application-prod
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: openunison
@@ -23,7 +23,7 @@ spec:
     - taskType: customTask
       className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject
       params:
-        namespace: $nameSpace$-production
+        namespace: $nameSpace$-prod
         name: $nameSpace$-application
         description: Application production
         issuesEnabled: "true"
@@ -34,14 +34,93 @@ spec:
         targetName: gitlab
         gitSshHost: {{ .Values.gitlab_ssh_host | quote }}
         createWebhook: "false"
+
+    # create the host variable used by CI/CD for gitlab host
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateVariable
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-prod
+        project: $nameSpace$-application
+        key: GITLAB_HOST
+        value: {{ .Values.gitlab_ssh_host | quote }}
+        varType: ENV_VAR
+        protectedVar: "false"
+        masked: "false"
+        environment: "*"
+
+    # create the host variable used by CI/CD for harbor host
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateVariable
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-prod
+        project: $nameSpace$-application
+        key: HARBOR_HOST
+        value: "harbor.{{ .Values.cp_dns_suffix }}"
+        varType: ENV_VAR
+        protectedVar: "false"
+        masked: "false"
+        environment: "*"
+
+    # create the host variable used by CI/CD for the namespace name
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateVariable
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-prod
+        project: $nameSpace$-application
+        key: NAMESPACE
+        value: "$nameSpace$"
+        varType: ENV_VAR
+        protectedVar: "false"
+        masked: "false"
+        environment: "*"
+
+    # add CA cert
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+      params:
+        javaScript: |-
+          function init(task,params) {
+            // nothing to do
+          }
+
+          function reInit(task) {
+            // do nothing
+          }
+
+          function doTask(user,request) {
+            JSUtils = Java.type("com.tremolosecurity.util.JSUtils");
+            var base64Cert = "{{ .Values.cacert }}";
+            var decodedCert = JSUtils.base64Decode(base64Cert);
+            request.put("decodedCaCert",decodedCert);
+          
+            return true;
+          }
+    
+    # create the host variable used by CI/CD for the enterprise ca certificate
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateVariable
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-prod
+        project: $nameSpace$-application
+        key: ca_certificate
+        value: "$decodedCaCert$"
+        varType: FILE
+        protectedVar: "false"
+        masked: "false"
+        environment: "*"
         
     
+
     # create a git file so there's something in the repo
     - taskType: customTask
       className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
       params:
         targetName: gitlab
-        namespace: $nameSpace$-production
+        namespace: $nameSpace$-prod
         project: $nameSpace$-application
         branch: main
         path: README.md

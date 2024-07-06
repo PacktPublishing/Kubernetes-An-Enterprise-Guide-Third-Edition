@@ -2,7 +2,7 @@
 apiVersion: openunison.tremolo.io/v1
 kind: Workflow
 metadata:
-  name: new-ops-production
+  name: new-ops-prod
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: openunison
@@ -23,7 +23,7 @@ spec:
     - taskType: customTask
       className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject
       params:
-        namespace: $nameSpace$-production
+        namespace: $nameSpace$-prod
         name: $nameSpace$-ops
         description: Application production
         issuesEnabled: "true"
@@ -41,7 +41,7 @@ spec:
       className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
       params:
         targetName: gitlab
-        namespace: $nameSpace$-production
+        namespace: $nameSpace$-prod
         project: $nameSpace$-ops
         branch: main
         path: README.md
@@ -56,7 +56,7 @@ spec:
       className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
       params:
         targetName: gitlab
-        namespace: $nameSpace$-production
+        namespace: $nameSpace$-prod
         project: $nameSpace$-ops
         branch: main
         path: yaml/cluster/clusterrolebindings/tenant-admins.yaml
@@ -83,7 +83,7 @@ spec:
       className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateDeploymentKey
       params:
           targetName: gitlab
-          namespace: $nameSpace$-production
+          namespace: $nameSpace$-prod
           project: $nameSpace$-ops
           keyLabel: openunison
           makeWriteable: "true"
@@ -100,7 +100,7 @@ spec:
             apiVersion: v1
             kind: Secret
             metadata:
-              name: openunison-git-$nameSpace$-production-key
+              name: openunison-git-$nameSpace$-prod-key
               namespace: openunison
             type: Opaque
             data:

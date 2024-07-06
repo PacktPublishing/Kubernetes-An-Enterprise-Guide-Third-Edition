@@ -95,6 +95,32 @@ spec:
           privateKeyReuestName: openunisonDeploySecretB64
           privateKeyReuestNamePT: openunisonDeploySecret
 
+    # create a deployment key for app code updates of the deployment image
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateDeploymentKey
+      params:
+          targetName: gitlab
+          namespace: $nameSpace$-dev
+          project: $nameSpace$-ops
+          keyLabel: app-repo
+          makeWriteable: "true"
+          privateKeyReuestName: appDeploySecretB64
+          privateKeyReuestNamePT: appDeploySecret
+
+    # create the file used by the patch key
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateVariable
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-prod
+        project: $nameSpace$-application
+        key: PATCH_KEY
+        value: "$appDeploySecret$"
+        varType: FILE
+        protectedVar: "false"
+        masked: "false"
+        environment: "*"
+
     # create secret to access the cluster operations repo
     - taskType: customTask
       className: com.tremolosecurity.provisioning.tasks.CreateK8sObject

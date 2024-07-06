@@ -182,12 +182,12 @@ spec:
                 params:
                   k8sTarget: k8s
                   toAdd: |-
-                    p, role:$nameSpace$-operations, applications, get, $nameSpace$/*, allow
-                    p, role:$nameSpace$-operations, applications, override, $nameSpace$/*, allow
-                    p, role:$nameSpace$-operations, applications, sync, $nameSpace$/*, allow
-                    p, role:$nameSpace$-operations, applications, update, $nameSpace$/*, allow
+                    p, role:$nameSpace$-operations, applications, get, $nameSpace$-$env$/*, allow
+                    p, role:$nameSpace$-operations, applications, override, $nameSpace$-$env$/*, allow
+                    p, role:$nameSpace$-operations, applications, sync, $nameSpace$-$env$/*, allow
+                    p, role:$nameSpace$-operations, applications, update, $nameSpace$-$env$/*, allow
                     
-                    p, role:$nameSpace$-operations, projects, get, $nameSpace$, allow
+                    p, role:$nameSpace$-operations, projects, get, $nameSpace$-$env$, allow
                     
                     g, k8s-namespace-operations-k8s-$nameSpace$-internal, role:$nameSpace$-operations
                     g, k8s-namespace-operations-k8s-$nameSpace$-external, role:$nameSpace$-operations
@@ -195,7 +195,7 @@ spec:
                     g, k8s-namespace-owners-k8s-$nameSpace$-external, role:$nameSpace$-operations
                     
                     
-                    p, role:$nameSpace$-dev, applications, get, $nameSpace$/*, allow
-                    p, role:$nameSpace$-dev, projects, get, $nameSpace$, allow
-                    g, k8s-namespace-developer-k8s-$nameSpace$-internal, role:$nameSpace$-dev
-                    g, k8s-namespace-developer-k8s-$nameSpace$-external, role:$nameSpace$-dev
+                    p, role:$nameSpace$-$env$, applications, get, $nameSpace$/*, allow
+                    p, role:$nameSpace$-$env$, projects, get, $nameSpace$, allow
+                    g, k8s-namespace-$env$eloper-k8s-$nameSpace$-internal, role:$nameSpace$-$env$
+                    g, k8s-namespace-$env$eloper-k8s-$nameSpace$-external, role:$nameSpace$-$env$
