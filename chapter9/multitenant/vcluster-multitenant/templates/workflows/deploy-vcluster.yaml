@@ -59,8 +59,8 @@ spec:
                   volumeMounts:
                   - mountPath: /etc/mysql-tls
                     name: mysql-tls
-                  - mountPath: /data
-                    name: data
+                  # - mountPath: /data
+                  #   name: data
                 volumes:
                 - name: mysql-tls
                   secret:
@@ -74,8 +74,6 @@ spec:
                 coredns:
                   replicas: 1
 
-        kind: ConfigMap
-        url: /api/v1/namespaces/{{ .Release.Namespace }}/configmaps
         srcType: yaml
         writeToRequest: "$useGit$"
         requestAttribute: git-secret-cluster-k8s-$nameSpace$
@@ -159,8 +157,6 @@ spec:
                     - name: vcluster-scripts
                       configMap:
                         name: vcluster-scripts
-        kind: Job
-        url: /apis/batch/v1/namespaces/{{ .Release.Namespace }}/jobs
         srcType: yaml
     
     - taskType: customTask

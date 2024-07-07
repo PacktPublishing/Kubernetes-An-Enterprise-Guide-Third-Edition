@@ -16,7 +16,7 @@ metadata:
     vault.hashicorp.com/secret-volume-path-myenv: '/etc/secrets'
     vault.hashicorp.com/agent-inject-template-myenv: |
           {{- with secret "secret/data/vclusters/tenant1/ns/default/config" -}}
-          MY_SECRET_PASSWORD="{{ index .Data "some-password" }}"
+          MY_SECRET_PASSWORD="{{ index .Data "somepassword" }}"
           {{- end }}
 spec:
   containers:

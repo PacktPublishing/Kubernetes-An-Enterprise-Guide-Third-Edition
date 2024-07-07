@@ -4,6 +4,20 @@ kind: Namespace
 metadata:
   name: tenant1
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant1-admin
+  namespace: tenant1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+- kind: ServiceAccount
+  name: vc-tenant1
+  namespace: tenant1
+---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:

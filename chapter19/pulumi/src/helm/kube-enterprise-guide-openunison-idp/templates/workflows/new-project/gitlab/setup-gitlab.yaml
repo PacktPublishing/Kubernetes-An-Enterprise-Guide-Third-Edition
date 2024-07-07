@@ -1,0 +1,61 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: setup-gitlab
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: create gitlab repos
+  inList: false
+  label: set gitlab
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+      # create groups in gitlab
+      - taskType: customTask
+        className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+        params:
+          target: gitlab
+          name: $nameSpace$-prod
+          attributes: requestAccessEnabled=false
+
+      - taskType: customTask
+        className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+        params:
+          target: gitlab
+          name: $nameSpace$-dev
+          attributes: requestAccessEnabled=false
+
+      - taskType: customTask
+        className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+        params:
+          target: gitlab
+          name: k8s-namespace-owners-k8s-$nameSpace$-internal
+          attributes: requestAccessEnabled=false
+
+      - taskType: customTask
+        className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+        params:
+          target: gitlab
+          name: k8s-namespace-operations-k8s-$nameSpace$-internal
+          attributes: requestAccessEnabled=false
+
+      - taskType: customTask
+        className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+        params:
+          target: gitlab
+          name: k8s-namespace-developer-k8s-$nameSpace$-internal
+          attributes: requestAccessEnabled=false
+      
+      - taskType: callWorkflow
+        name: new-application-prod
+
+      - taskType: callWorkflow
+        name: new-ops-prod
+
+      - taskType: callWorkflow
+        name: new-ops-dev
+      
+      - taskType: customTask
+        className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+        params:
+          message: "gitlab projects setup"

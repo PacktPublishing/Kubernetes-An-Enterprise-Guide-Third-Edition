@@ -1,0 +1,135 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: onboard-harbor-tenant
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: onboard harbor tenant
+  inList: false
+  label: Add tenant environment robot to harbor
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+      params:
+        javaScript: |-
+          System = Java.type("java.lang.System");
+          HttpClient = Java.type("java.net.http.HttpClient");
+          HttpRequest = Java.type("java.net.http.HttpRequest");
+          URI = Java.type("java.net.URI");
+          BodyPublishers = Java.type("java.net.http.HttpRequest.BodyPublishers");
+          BodyHandlers = Java.type("java.net.http.HttpResponse.BodyHandlers");
+          K8sUtils = Java.type("com.tremolosecurity.k8s.util.K8sUtils");
+          JSUtils = Java.type("com.tremolosecurity.util.JSUtils");
+          Base64 = Java.type("java.util.Base64");
+          GenPasswd = Java.type("com.tremolosecurity.provisioning.util.GenPasswd");
+
+          function init(task,params) {
+            // nothing to do
+          }
+
+          function reInit(task) {
+            // do nothing
+          }
+
+          function createPullRobot(nsName,env,basicHeader,approvalID,ActionType) {
+            http = HttpClient.newBuilder().build();
+
+            // first, generate a new robot account that can pull from the project
+            newRobot = JSON.stringify({"permissions":[{"kind":"project","namespace":nsName,"access":[{"resource":"repository","action":"pull"}]}],"name": nsName + "-" + env + "-pull","description":null,"duration":-1,"disable":false,"level":"system"})
+          
+            
+
+            newRobotRequest = HttpRequest.newBuilder()
+                                          .uri(URI.create("{{ .Values.harbor_url }}/api/v2.0/robots"))
+                                          .header("Content-Type", "application/json")
+                                          .header("Authorization",basicHeader)
+                                          .POST(BodyPublishers.ofString(newRobot))
+                                          .build();
+
+            response = http.send(newRobotRequest, BodyHandlers.ofString());
+            jsonResp = response.body();
+
+            if (response.statusCode() == 201 ) {
+
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"harbor-robot",nsName + "-" + env + "-pull");
+            } else {
+              throw new Error("Could not create harbor project: " + response.statusCode() + " / " + response.body());
+            }
+
+            groupRespData = JSON.parse(jsonResp);
+            robotName = groupRespData["name"];
+            robotSecret = groupRespData["secret"];
+            auth = Base64.getEncoder().encodeToString(JSUtils.string2bytes(robotName + ":" + robotSecret));
+            // generate a secret
+            dockerCreds = {"auths":{"harbor.{{ .Values.cp_dns_suffix }}":{"username":robotName,"password":robotSecret,"auth":auth}}};
+
+
+            // push the secret into vault
+            // get the k8s target to get a token
+            k8s = task.getConfigManager().getProvisioningEngine().getTarget("k8s").getProvider();
+            payload = JSON.stringify({
+              "jwt": k8s.getAuthToken(),
+              "role": "ou_admin_role"
+            });
+
+            authTokenRequest = HttpRequest.newBuilder()
+                                          .uri(URI.create("{{ .Values.vault_url }}/v1/auth/kubernetes/login"))
+                                          .header("Content-Type", "application/json")
+                                          .POST(BodyPublishers.ofString(payload))
+                                          .build();
+
+            response = http.send(authTokenRequest, BodyHandlers.ofString());
+            jsonResp = response.body();
+            respToken = JSON.parse(jsonResp);
+            authToken = respToken.auth["client_token"];
+
+            newSecret = JSON.stringify({"data":{".dockerconfigjson":JSON.stringify(dockerCreds)},"options":{"cas":0}});
+
+            newSecretRequest = HttpRequest.newBuilder()
+                                          .uri(URI.create("{{ .Values.vault_url }}/v1/secret/data/vclusters/" + nsName + "-" + env + "/ns/default/pullsecret"))
+                                          .header("Content-Type", "application/json")
+                                          .header("X-Vault-Request","true")
+                                          .header("X-Vault-Token",authToken)
+                                          .POST(BodyPublishers.ofString(newSecret))
+                                          .build();
+
+            response = http.send(newSecretRequest, BodyHandlers.ofString());
+            jsonResp = response.body();
+
+            if (response.statusCode() == 200 || response.statusCode() == 204) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-secret-" + nsName + "-" + env + "-default","pullsecret");
+            } else {
+              throw new Error("Could not create secret: " + response.statusCode() + " / " + response.body());
+            }
+
+
+          }
+
+          function doTask(user,request) {
+            
+
+            ActionType = Java.type("com.tremolosecurity.provisioning.core.ProvisioningUtil.ActionType");
+            var nsName = request.get("nameSpace").toLowerCase();
+            request.put("nsName",nsName);
+            var env = request.get("env").toLowerCase();
+            
+            var approvalID = 0;
+            if (request.containsKey("APPROVAL_ID")) {
+              approvalID = request.get("APPROVAL_ID");
+            }
+
+            // get the k8s target and generate a basic authentication header for working with the API
+            k8s = task.getConfigManager().getProvisioningEngine().getTarget("k8s").getProvider();
+            harborAdminCred = K8sUtils.loadSecret("k8s","harbor","harbor-admin").get("harbor-admin");
+            basicHeader = "Basic " + Base64.getEncoder().encodeToString(JSUtils.string2bytes("admin:" + harborAdminCred));
+
+            
+
+            // create robot
+            createPullRobot(nsName,env,basicHeader,approvalID,ActionType);
+            
+
+            return true;
+          }

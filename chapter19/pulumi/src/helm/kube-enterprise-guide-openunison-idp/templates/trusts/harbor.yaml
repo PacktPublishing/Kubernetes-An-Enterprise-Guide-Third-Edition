@@ -1,0 +1,25 @@
+apiVersion: openunison.tremolo.io/v1
+kind: Trust
+metadata:
+  labels:
+    app.kubernetes.io/name: openunison
+    app.kubernetes.io/instance: openunison-orchestra
+    app.kubernetes.io/component: harbor-sso
+    app.kubernetes.io/part-of: kube-enterprise-guide
+  name: harbor
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessTokenSkewMillis: 120000
+  accessTokenTimeToLive: 60000
+  authChainName: login-service
+  clientId: harbor # this is your harbor client id
+  clientSecret:
+    keyName: harbor.oidc.client_secret
+    secretName: harbor-oidc
+  codeLastMileKeyName: lastmile-oidc
+  codeTokenSkewMilis: 60000
+  publicEndpoint: true
+  redirectURI:
+  - {{ .Values.harbor_url }}/c/oidc/callback
+  signedUserInfo: false
+  verifyRedirect: true

@@ -1,0 +1,9 @@
+pulumi>=3.0.0,<4.0.0
+pulumi_kubernetes>=4.7.1
+kubernetes>=4.7.1
+beautifulsoup4
+pyyaml
+packaging
+pulumi_vault
+pulumiverse_harbor
+pulumi_gitlab

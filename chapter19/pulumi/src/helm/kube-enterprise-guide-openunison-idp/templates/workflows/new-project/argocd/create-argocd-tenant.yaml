@@ -1,0 +1,201 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: create-argocd-tenant
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: creates an argocd tenant to a vCluster
+  inList: false
+  label: Create ArgoCD Tenant
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+              - taskType: customTask
+                className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+                params:
+                  javaScript: |-
+                    function init(task,params) {
+                    // nothing to do
+                    }
+    
+                    function reInit(task) {
+                    // do nothing
+                    }
+    
+                    function doTask(user,request) {
+                        request.put("WORKFLOW",task.getWorkflow());
+                        return true;
+                    }
+
+              # create an argo project to store the argocd application
+              - taskType: customTask
+                className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+                params:
+                    targetName: k8s
+                    template: |-
+                        apiVersion: argoproj.io/v1alpha1
+                        kind: AppProject
+                        metadata:
+                            name: $nameSpace$-$env$
+                            namespace: argocd
+                        spec:
+                            description: Cluster operations project
+                            destinations:
+                            - server: https://oumgmt-$nameSpace$.$domain$
+                              namespace: "*"
+                            sourceRepos:
+                            - git@{{ .Values.gitlab_ssh_host }}:$nameSpace$-$env$/$nameSpace$-ops.git
+                            clusterResourceWhitelist:
+                            - group: "*"
+                              kind: "*"
+                            namespaceResourceWhitelist:
+                            - group: '*'
+                              kind: '*'
+                            sourceNamespaces:
+                            - $nameSpace$
+                    srcType: yaml
+                    writeToRequest: "true"
+                    requestAttribute: git-$env$-$nameSpace$-vcluster-tenant
+                    path: /k8s-cp-cp/namespaces/argocd/appprojects/$nameSpace$-$env$.yaml
+
+              # create a deployment key for argocd to use
+              - taskType: customTask
+                className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateDeploymentKey
+                params:
+                    targetName: gitlab
+                    namespace: $nameSpace$-$env$
+                    project: $nameSpace$-ops
+                    keyLabel: argocd
+                    makeWriteable: "false"
+                    privateKeyReuestName: argoPullSecretB64
+                    privateKeyReuestNamePT: argoPullSecret
+
+              # create secret to access the cluster operations repo
+              - taskType: customTask
+                className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+                params:
+                  targetName: k8s
+                  srcType: yaml
+                  template: |-
+                      apiVersion: v1
+                      kind: Secret
+                      metadata:
+                        name: creds-$namespace$-ops-$env$
+                        namespace: argocd
+                        labels:
+                            argocd.argoproj.io/secret-type: repo-creds
+                      type: Opaque
+                      data:
+                        sshPrivateKey: $argoPullSecretB64$
+                      stringData:
+                        type: git
+                        url: git@{{ .Values.gitlab_ssh_host }}:$nameSpace$-$env$/$nameSpace$-ops.git
+
+              # create secrets to store the cluster configuration information
+              - taskType: customTask
+                className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+                params:
+                    targetName: k8s
+                    srcType: yaml
+                    template: |-
+                        apiVersion: v1
+                        kind: Secret
+                        metadata:
+                          name: k8s-$nameSpace$-$env$
+                          namespace: argocd
+                          labels:
+                            argocd.argoproj.io/secret-type: cluster
+                            tremolo.io/clustertype: tenant-$nameSpace$-$env$
+                        type: Opaque
+                        stringData:
+                            name: k8s-$nameSpace$-$env$
+                            server: https://oumgmt-$nameSpace$.$domain$
+                            config: |
+                                {
+                                    "execProviderConfig": {
+                                        "command": "/custom-tools/remote-token.sh",
+                                        "args": ["k8sou.{{ .Values.cp_dns_suffix }}","k8s-$nameSpace$-$env$","/var/run/secrets/kubernetes.io/serviceaccount/token"],
+                                        "apiVersion": "client.authentication.k8s.io/v1"
+                                    },
+                                    "tlsClientConfig": {
+                                        "insecure": true
+                                    }
+                                }
+                    writeToRequest: "true"
+                    requestAttribute: git-$env$-$nameSpace$-vcluster-tenant
+                    path: /k8s-cp-cp/namespaces/argocd/secrets/k8s-$nameSpace$-$env$.yaml
+
+              # create an ApplicationSet that talks to the tenant vcluster using short lived tokens
+              - taskType: customTask
+                className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+                params:
+                    targetName: k8s
+                    srcType: yaml
+                    template: |-
+                        apiVersion: argoproj.io/v1alpha1
+                        kind: ApplicationSet
+                        metadata:
+                            name: $nameSpace$-$env$
+                            namespace: $nameSpace$
+                        spec:
+                            goTemplate: true
+                            goTemplateOptions: ["missingkey=error"]
+                            generators:
+                            - clusters: 
+                                selector:
+                                    matchLabels:
+                                        tremolo.io/clustertype: tenant-$nameSpace$-$env$
+                            template:
+                                metadata:
+                                    name: '{{ `{{.name}}` }}' # 'name' field of the Secret
+                                spec:
+                                    syncPolicy:
+                                        automated: {}
+                                    project: "$nameSpace$-$env$"
+                                    source:
+                                        repoURL: git@{{ .Values.gitlab_ssh_host }}:$nameSpace$-$env$/$nameSpace$-ops.git
+                                        targetRevision: HEAD
+                                        path: 'yaml' 
+                                        directory:
+                                            recurse: true
+                                    destination:
+                                        server: '{{ `{{.server}}` }}' # 'server' field of the secret
+                    writeToRequest: "true"
+                    requestAttribute: git-$env$-$nameSpace$-vcluster-tenant
+                    path: /k8s-cp-cp/namespaces/$nameSpace$/applicationsets/$nameSpace$-$env$.yaml
+            
+              # GitOps - push to cp repo
+              - taskType: customTask
+                className: com.tremolosecurity.provisioning.tasks.PushToGit
+                params:
+                    secretName: openunison-git-cluster-key
+                    nameSpace: openunison
+                    target: k8s
+                    keyName: id_rsa
+                    gitRepo: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
+                    requestObject: git-$env$-$nameSpace$-vcluster-tenant
+                    commitMsg: $env$ vcluster tenant for workflow $WORKFLOW.id$
+
+              # udpate argocd RBAC so that the teams can access their Applications
+              - taskType: customTask
+                className: com.tremolosecurity.argocd.tasks.AddtoRBAC
+                params:
+                  k8sTarget: k8s
+                  toAdd: |-
+                    p, role:$nameSpace$-operations, applications, get, $nameSpace$-$env$/*, allow
+                    p, role:$nameSpace$-operations, applications, override, $nameSpace$-$env$/*, allow
+                    p, role:$nameSpace$-operations, applications, sync, $nameSpace$-$env$/*, allow
+                    p, role:$nameSpace$-operations, applications, update, $nameSpace$-$env$/*, allow
+                    
+                    p, role:$nameSpace$-operations, projects, get, $nameSpace$-$env$, allow
+                    
+                    g, k8s-namespace-operations-k8s-$nameSpace$-internal, role:$nameSpace$-operations
+                    g, k8s-namespace-operations-k8s-$nameSpace$-external, role:$nameSpace$-operations
+                    g, k8s-namespace-owners-k8s-$nameSpace$-internal, role:$nameSpace$-operations
+                    g, k8s-namespace-owners-k8s-$nameSpace$-external, role:$nameSpace$-operations
+                    
+                    
+                    p, role:$nameSpace$-$env$, applications, get, $nameSpace$/*, allow
+                    p, role:$nameSpace$-$env$, projects, get, $nameSpace$, allow
+                    g, k8s-namespace-$env$eloper-k8s-$nameSpace$-internal, role:$nameSpace$-$env$
+                    g, k8s-namespace-$env$eloper-k8s-$nameSpace$-external, role:$nameSpace$-$env$

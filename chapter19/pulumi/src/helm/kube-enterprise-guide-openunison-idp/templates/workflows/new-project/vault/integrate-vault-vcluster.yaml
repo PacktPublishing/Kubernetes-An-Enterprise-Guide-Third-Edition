@@ -1,0 +1,290 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: integrate-vault-vcluster
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: Integrate vCluster and Vault
+  inList: false
+  label: Integrate vCluster and Vault
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+    # create a namespace that will hold the vault integration ServiceAccount
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: k8s-$nameSpace$-$env$
+        template: |-
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              name: vault-integration
+        srcType: yaml
+        writeToRequest: "true"
+        requestAttribute: vault-k8s-$nameSpace$-$env$
+        path: /yaml/cluster/namespaces/vault-integration.yaml
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: k8s-$nameSpace$-$env$
+        template: |-
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: vault-client
+              namespace: vault-integration
+        srcType: yaml
+        writeToRequest: "true"
+        requestAttribute: vault-k8s-$nameSpace$-$env$
+        path: /yaml/namespaces/$nameSpace$/serviceaccounts/vault-client.yaml
+
+    # create a ClusterRoleBinding that will allow Vault to validate tokens from our vCluster
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: k8s-$nameSpace$-$env$
+        template: |-
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: role-tokenreview-binding
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: system:auth-delegator
+            subjects:
+            - kind: ServiceAccount
+              name: vault-client
+              namespace: vault-integration
+        srcType: yaml
+        writeToRequest: "true"
+        requestAttribute: vault-k8s-$nameSpace$-$env$
+        path: /yaml/cluster/clusterrolebindings/role-tokenreview-binding.yaml
+
+    # GitOps - push to vCluster repo
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.PushToGit
+      params:
+        secretName: openunison-git-$nameSpace$-$env$-key
+        nameSpace: openunison
+        target: k8s
+        keyName: id_rsa
+        gitRepo: git@{{ .Values.gitlab_ssh_host }}:$nameSpace$-$env$/$nameSpace$-ops.git
+        requestObject: vault-k8s-$nameSpace$-$env$
+        commitMsg: $env$ vcluster vault integration for workflow $WORKFLOW.id$
+
+    # wait for the namespaces to sync
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+      params:
+        holdingTarget: k8s
+        namespace: openunison
+        target: k8s-$nameSpace$-$env$
+        uri: /apis/rbac.authorization.k8s.io/v1/clusterrolebindings/role-tokenreview-binding
+        label: wait-ns-$env$-vcluster-vault-$nameSpace$
+        conditions: []
+    
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+      params:
+        javaScript: |-
+          function init(task,params) {
+            // nothing to do
+          }
+
+          function reInit(task) {
+            // do nothing
+          }
+
+          function doTask(user,request) {
+            System = Java.type("java.lang.System");
+            HttpClient = Java.type("java.net.http.HttpClient");
+            HttpRequest = Java.type("java.net.http.HttpRequest");
+            URI = Java.type("java.net.URI");
+            BodyPublishers = Java.type("java.net.http.HttpRequest.BodyPublishers");
+            BodyHandlers = Java.type("java.net.http.HttpResponse.BodyHandlers");
+            K8sUtils = Java.type("com.tremolosecurity.k8s.util.K8sUtils");
+            JSUtils = Java.type("com.tremolosecurity.util.JSUtils");
+
+            ActionType = Java.type("com.tremolosecurity.provisioning.core.ProvisioningUtil.ActionType");
+            var nsName = request.get("nameSpace").toLowerCase();
+            request.put("nsName",nsName);
+            var env = request.get("env").toLowerCase();
+            var approvalID = 0;
+            if (request.containsKey("APPROVAL_ID")) {
+              approvalID = request.get("APPROVAL_ID");
+            }
+
+            // get the k8s target to get a token
+            k8s = task.getConfigManager().getProvisioningEngine().getTarget("k8s").getProvider();
+            payload = JSON.stringify({
+              "jwt": k8s.getAuthToken(),
+              "role": "ou_admin_role"
+            });
+
+            
+
+            
+            http = HttpClient.newBuilder().build();
+            authTokenRequest = HttpRequest.newBuilder()
+                                          .uri(URI.create("{{ .Values.vault_url }}/v1/auth/kubernetes/login"))
+                                          .header("Content-Type", "application/json")
+                                          .POST(BodyPublishers.ofString(payload))
+                                          .build();
+
+            response = http.send(authTokenRequest, BodyHandlers.ofString());
+            jsonResp = response.body();
+            respToken = JSON.parse(jsonResp);
+            authToken = respToken.auth["client_token"];
+
+            // create an authentication mechanism for the vcluster
+            authJson = {
+              "type": "kubernetes",
+              "description": "Authentication for vcluster " + nsName + "-" + env,
+              "config": {
+                "options": null,
+                "default_lease_ttl": "0s",
+                "max_lease_ttl": "0s",
+                "force_no_cache": false
+              },
+              "local": false,
+              "seal_wrap": false,
+              "external_entropy_access": false,
+              "options": null
+            };
+
+            createAuth = HttpRequest.newBuilder()
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/sys/auth/vcluster-" + nsName + "-" + env))
+                                    .header("Content-Type", "application/json")
+                                    .header("X-Vault-Request","true")
+                                    .header("X-Vault-Token",authToken)
+                                    .POST(BodyPublishers.ofString(JSON.stringify(authJson)))
+                                    .build();
+
+            response = http.send(createAuth, BodyHandlers.ofString());
+            
+            if (response.statusCode() == 204) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-authentication-method",'vcluster-' + nsName + "-" + env);
+            } else {
+              throw new Error("Could not create authentication method: " + response.statusCode() + " / " + response.body());
+            }
+            
+
+            var base64Cert = "{{ .Values.cacert }}";
+            vcluster = task.getConfigManager().getProvisioningEngine().getTarget("k8s-" + nsName + "-" + env).getProvider();
+            vclusterHttp = vcluster.createClient();
+
+            respToken = JSON.parse(vcluster.callWSPost(vcluster.getAuthToken(),vclusterHttp,"/api/v1/namespaces/vault-integration/serviceaccounts/vault-client/token",JSON.stringify({"kind":"TokenRequest","apiVersion":"authentication.k8s.io/v1","metadata":{"creationTimestamp":null},"spec":{"audiences":null,"expirationSeconds":31212000,"boundObjectRef":null},"status":{"token":"","expirationTimestamp":null}})));
+
+            var domain = "";
+            if (env == "dev") {
+              domain = "{{ .Values.dev_dns_suffix }}";
+            } else {
+              domain = "{{ .Values.prod_dns_suffix }}";
+            }
+
+            // create auth config
+            authConfigJson = {
+              "issuer": "https://kubernetes.default.svc.cluster.local",
+              "kubernetes_ca_cert": JSUtils.base64Decode(base64Cert),
+              "kubernetes_host": "https://k8sapi-" + nsName + "." + domain,
+              "token_reviewer_jwt": respToken.status.token
+            }
+
+            createAuthConfig = HttpRequest.newBuilder()
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/auth/vcluster-" + nsName + "-" + env + "/config"))
+                                    .header("Content-Type", "application/json")
+                                    .header("X-Vault-Request","true")
+                                    .header("X-Vault-Token",authToken)
+                                    .POST(BodyPublishers.ofString(JSON.stringify(authConfigJson)))
+                                    .build();
+
+            response = http.send(createAuthConfig, BodyHandlers.ofString());
+            
+            if (response.statusCode() == 204) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-authentication-config",'vcluster-' + nsName + "-" + env);
+            } else {
+              throw new Error("Could not create authentication config: " + response.statusCode() + " / " + response.body());
+            }
+
+            // get the accessor
+            getAuthData = HttpRequest.newBuilder()
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/sys/auth/vcluster-" + nsName + "-" + env))
+                                    .header("Content-Type", "application/json")
+                                    .header("X-Vault-Request","true")
+                                    .header("X-Vault-Token",authToken)
+                                    .GET()
+                                    .build();
+
+            response = http.send(getAuthData, BodyHandlers.ofString());
+            System.out.println("*****AUTH DATA****");
+            System.out.println(response.statusCode());
+            System.out.println(response.body());
+            authData = JSON.parse(response.body());
+
+            request.put("authMount",authData.accessor);
+
+            
+            // create a read-only-policy for the vcluster
+            hclTemplate = K8sUtils.loadConfigMap("k8s","{{ .Release.Namespace }}","vcluster-vault-policy-template").get("template.hcl");
+            hclTemplate = task.renderTemplate(hclTemplate,request);
+
+            System.out.println(hclTemplate);
+
+            policyJson = {
+              "policy": hclTemplate
+            };
+
+            createPolicy = HttpRequest.newBuilder()
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/sys/policies/acl/vcluster-" + nsName + "-" + env))
+                                    .header("Content-Type", "application/json")
+                                    .header("X-Vault-Request","true")
+                                    .header("X-Vault-Token",authToken)
+                                    .POST(BodyPublishers.ofString(JSON.stringify(policyJson)))
+                                    .build();
+
+            response = http.send(createPolicy, BodyHandlers.ofString());
+            
+            System.out.println("*****CREATE POLICY*****");
+            System.out.println(response.statusCode());
+            System.out.println(response.body());
+
+            if (response.statusCode() == 204) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-policy",'vcluster-' + nsName + "-" + env);
+            } else {
+              throw new Error("Could not create policy: " + response.statusCode() + " / " + response.body());
+            }
+            
+            
+
+
+            // generate a role
+            rolePolicy = {
+              "bound_service_account_names": "*",
+              "bound_service_account_namespaces": "*",
+              "policies": "vcluster-" + nsName + "-" + env,
+              "ttl": "24h"
+            }
+
+            createRole = HttpRequest.newBuilder()
+                                    .uri(URI.create("{{ .Values.vault_url }}/v1/auth/vcluster-" + nsName + "-" + env + "/role/cluster-read"))
+                                    .header("Content-Type", "application/json")
+                                    .header("X-Vault-Request","true")
+                                    .header("X-Vault-Token",authToken)
+                                    .POST(BodyPublishers.ofString(JSON.stringify(rolePolicy)))
+                                    .build();
+
+            response = http.send(createRole, BodyHandlers.ofString());
+            
+            if (response.statusCode() == 204) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-auth-role",'vcluster-' + nsName + "-" + env + "-cluster-read");
+            } else {
+              throw new Error("Could not create role: " + response.statusCode() + " / " + response.body());
+            }
+
+
+            return true;
+          }

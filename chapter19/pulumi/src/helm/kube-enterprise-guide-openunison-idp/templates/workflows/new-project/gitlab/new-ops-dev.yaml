@@ -1,0 +1,167 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: new-ops-dev
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: openunison
+    app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+    app.kubernetes.io/component: openunison-workflows
+    app.kubernetes.io/part-of: openunison
+spec:
+  description: create dev application infrastructure
+  inList: false
+  label: new dev infrastructure in production
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  dynamicConfiguration:
+    dynamic: false
+    className: ""
+    params: []
+  tasks: |-
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "setting up dev gitlab"
+
+    # create an operations project in gitlab
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateProject
+      params:
+        namespace: $nameSpace$-dev
+        name: $nameSpace$-ops
+        description: Application dev
+        issuesEnabled: "true"
+        mergeRequestsEnabled: "true"
+        wikiEnabled: "true"
+        snipitsEnabled: "true"
+        visibility: "2"
+        targetName: gitlab
+        gitSshHost: {{ .Values.gitlab_ssh_host | quote }}
+        createWebhook: "false"
+        
+    
+    # create a git file so there's something in the repo
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-dev
+        project: $nameSpace$-ops
+        branch: main
+        path: README.md
+        content: |-
+          # $nameSpace$-ops 
+  
+          Fork this project to create to create your application.
+        commitMessage: initializing the repository
+
+    # Create a ClusterRoleBinding for cluster-admins
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateGitFile
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-dev
+        project: $nameSpace$-ops
+        branch: main
+        path: yaml/cluster/clusterrolebindings/tenant-admins.yaml
+        content: |-
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: tenant-admins
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: cluster-admin
+            subjects:
+            - kind: Group
+              name: k8s-namespace-owners-k8s-$nameSpace$-internal
+            - kind: Group
+              name: k8s-namespace-operations-k8s-$nameSpace$-internal
+            - kind: Group
+              name: k8s-namespace-developer-k8s-$nameSpace$-internal
+        commitMessage: initializing the repository with admin CRB
+
+    # create a deployment key for argocd to use
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateDeploymentKey
+      params:
+          targetName: gitlab
+          namespace: $nameSpace$-dev
+          project: $nameSpace$-ops
+          keyLabel: openunison
+          makeWriteable: "true"
+          privateKeyReuestName: openunisonDeploySecretB64
+          privateKeyReuestNamePT: openunisonDeploySecret
+
+    # create a deployment key for app code updates of the deployment image
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateDeploymentKey
+      params:
+          targetName: gitlab
+          namespace: $nameSpace$-dev
+          project: $nameSpace$-ops
+          keyLabel: app-repo
+          makeWriteable: "true"
+          privateKeyReuestName: appDeploySecretB64
+          privateKeyReuestNamePT: appDeploySecret
+
+    # create the file used by the patch key
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateVariable
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-prod
+        project: $nameSpace$-application
+        key: PATCH_KEY
+        value: "$appDeploySecret$"
+        varType: FILE
+        protectedVar: "false"
+        masked: "false"
+        environment: "*"
+
+    # create secret to access the cluster operations repo
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params:
+        targetName: k8s
+        srcType: yaml
+        template: |-
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: openunison-git-$nameSpace$-dev-key
+              namespace: openunison
+            type: Opaque
+            data:
+              id_rsa: $openunisonDeploySecretB64$
+
+    # approvers need to be able to merge pull requests
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject
+      params:
+        groupName: k8s-namespace-owners-k8s-$nameSpace$-internal
+        targetName: gitlab
+        accessLevel: MAINTAINER
+
+    # operations and developer staff need to be able to fork projects
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject
+      params:
+        groupName: k8s-namespace-operations-k8s-$nameSpace$-internal
+        targetName: gitlab
+        accessLevel: MAINTAINER
+
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.AddGroupToProject
+      params:
+        groupName: k8s-namespace-developer-k8s-$nameSpace$-internal
+        targetName: gitlab
+        accessLevel: MAINTAINER
+
+   
+
+
+
+    

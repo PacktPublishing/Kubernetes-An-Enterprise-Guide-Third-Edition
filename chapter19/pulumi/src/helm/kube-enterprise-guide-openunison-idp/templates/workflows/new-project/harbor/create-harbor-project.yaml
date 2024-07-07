@@ -1,0 +1,96 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: create-harbor-project
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: Create harbor project
+  inList: false
+  label: Create Harbor Project
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+      params:
+        javaScript: |-
+          function init(task,params) {
+            // nothing to do
+          }
+
+          function reInit(task) {
+            // do nothing
+          }
+
+          function createProjectMembership(nsName,groupName,basicHeader,approvalID,ActionType,http) {
+            newGroup = JSON.stringify({"role_id":2,"member_group":{"group_name":groupName,"group_type":3}})
+          
+            newGroupRequest = HttpRequest.newBuilder()
+                                          .uri(URI.create("{{ .Values.harbor_url }}/api/v2.0/projects/" + nsName + "/members"))
+                                          .header("Content-Type", "application/json")
+                                          .header("Authorization",basicHeader)
+                                          .POST(BodyPublishers.ofString(newGroup))
+                                          .build();
+
+            response = http.send(newGroupRequest, BodyHandlers.ofString());
+            jsonResp = response.body();
+
+            if (response.statusCode() == 201) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"harbor-project-" + nsName + "-members",groupName);
+            } else {
+              throw new Error("Could not create harbor project: " + response.statusCode() + " / " + response.body());
+            }
+          }
+
+          function doTask(user,request) {
+            System = Java.type("java.lang.System");
+            HttpClient = Java.type("java.net.http.HttpClient");
+            HttpRequest = Java.type("java.net.http.HttpRequest");
+            URI = Java.type("java.net.URI");
+            BodyPublishers = Java.type("java.net.http.HttpRequest.BodyPublishers");
+            BodyHandlers = Java.type("java.net.http.HttpResponse.BodyHandlers");
+            K8sUtils = Java.type("com.tremolosecurity.k8s.util.K8sUtils");
+            JSUtils = Java.type("com.tremolosecurity.util.JSUtils");
+            Base64 = Java.type("java.util.Base64");
+
+            ActionType = Java.type("com.tremolosecurity.provisioning.core.ProvisioningUtil.ActionType");
+            var nsName = request.get("nameSpace").toLowerCase();
+            request.put("nsName",nsName);
+            
+            var approvalID = 0;
+            if (request.containsKey("APPROVAL_ID")) {
+              approvalID = request.get("APPROVAL_ID");
+            }
+
+            // get the k8s target and generate a basic authentication header for working with the API
+            k8s = task.getConfigManager().getProvisioningEngine().getTarget("k8s").getProvider();
+            harborAdminCred = K8sUtils.loadSecret("k8s","harbor","harbor-admin").get("harbor-admin");
+            basicHeader = "Basic " + Base64.getEncoder().encodeToString(JSUtils.string2bytes("admin:" + harborAdminCred));
+
+            http = HttpClient.newBuilder().build();
+
+            // create a new project
+            newProject = JSON.stringify({"project_name":nsName,"metadata":{"public":"false"},"storage_limit":107374182400,"registry_id":null});
+            newProjectRequest = HttpRequest.newBuilder()
+                                          .uri(URI.create("{{ .Values.harbor_url }}/api/v2.0/projects"))
+                                          .header("Content-Type", "application/json")
+                                          .header("Authorization",basicHeader)
+                                          .POST(BodyPublishers.ofString(newProject))
+                                          .build();
+
+            response = http.send(newProjectRequest, BodyHandlers.ofString());
+            jsonResp = response.body();
+
+            if (response.statusCode() == 201) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"harbor-project",nsName);
+            } else {
+              throw new Error("Could not create harbor project: " + response.statusCode() + " / " + response.body());
+            }
+
+            // create project memberships
+            createProjectMembership(nsName,"k8s-namespace-owners-k8s-" + nsName + "-internal",basicHeader,approvalID,ActionType,http);
+            createProjectMembership(nsName,"k8s-namespace-developer-k8s-" + nsName + "-internal",basicHeader,approvalID,ActionType,http);
+            createProjectMembership(nsName,"k8s-namespace-operations-k8s-" + nsName + "-internal",basicHeader,approvalID,ActionType,http);
+
+            return true;
+          }

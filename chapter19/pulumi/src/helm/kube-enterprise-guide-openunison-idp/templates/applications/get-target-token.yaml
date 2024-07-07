@@ -1,0 +1,49 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Application
+metadata:
+  name: get-target-token
+  namespace: openunison
+spec:
+  azTimeoutMillis: 3000
+  isApp: true
+  urls:
+  - hosts:
+    - "#[OU_HOST]"
+    filterChain:
+    - className: com.tremolosecurity.proxy.filters.JavaScriptFilter
+      params:
+        javaScript: |-
+          GlobalEntries = Java.type("com.tremolosecurity.server.GlobalEntries");
+          HashMap = Java.type("java.util.HashMap");
+          
+          function initFilter(config) {
+
+          }
+
+          function doFilter(request,response,chain) {
+            var targetName = request.getParameter("targetName").getValues().get(0);
+            var k8s = GlobalEntries.getGlobalEntries().getConfigManager().getProvisioningEngine().getTarget(targetName).getProvider()
+
+
+            response.getWriter().print(k8s.getAuthToken());
+          }
+
+    uri: /api/get-target-token
+    azRules:
+    - scope: filter
+      constraint: (sub=system:serviceaccount:argocd:argocd-application-controller)
+    - scope: filter
+      constraint: (sub=system:serviceaccount:openunison:openunison-{{ .Values.openunison.orchestra_name }})
+    authChain: oauth2k8s
+    results: {}
+  cookieConfig:
+    sessionCookieName: tremolosession
+    domain: "#[OU_HOST]"
+    secure: true
+    httpOnly: true
+    logoutURI: "/logout"
+    keyAlias: session-unison
+    timeout: 1
+    scope: -1
+    cookiesEnabled: false

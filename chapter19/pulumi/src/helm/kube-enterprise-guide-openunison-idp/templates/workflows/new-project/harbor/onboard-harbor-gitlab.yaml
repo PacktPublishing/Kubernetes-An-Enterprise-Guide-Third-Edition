@@ -1,0 +1,108 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: onboard-harbor-gitlab
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: onboard harbor gitlab
+  inList: false
+  label: Add gitlab environment robot to harbor
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+      params:
+        javaScript: |-
+          System = Java.type("java.lang.System");
+          HttpClient = Java.type("java.net.http.HttpClient");
+          HttpRequest = Java.type("java.net.http.HttpRequest");
+          URI = Java.type("java.net.URI");
+          BodyPublishers = Java.type("java.net.http.HttpRequest.BodyPublishers");
+          BodyHandlers = Java.type("java.net.http.HttpResponse.BodyHandlers");
+          K8sUtils = Java.type("com.tremolosecurity.k8s.util.K8sUtils");
+          JSUtils = Java.type("com.tremolosecurity.util.JSUtils");
+          Base64 = Java.type("java.util.Base64");
+          GenPasswd = Java.type("com.tremolosecurity.provisioning.util.GenPasswd");
+
+          function init(task,params) {
+            // nothing to do
+          }
+
+          function reInit(task) {
+            // do nothing
+          }
+
+          function createPullRobot(nsName,basicHeader,approvalID,ActionType) {
+            http = HttpClient.newBuilder().build();
+
+            // first, generate a new robot account that can pull from the project
+            newRobot = JSON.stringify({"permissions":[{"kind":"project","namespace":nsName,"access":[{"resource":"repository","action":"pull"},{"resource":"repository","action":"push"},{"resource":"repository","action":"update"}]}],"name": nsName + "-gitlab-pull","description":null,"duration":-1,"disable":false,"level":"system"})
+          
+            newRobotRequest = HttpRequest.newBuilder()
+                                          .uri(URI.create("{{ .Values.harbor_url }}/api/v2.0/robots"))
+                                          .header("Content-Type", "application/json")
+                                          .header("Authorization",basicHeader)
+                                          .POST(BodyPublishers.ofString(newRobot))
+                                          .build();
+
+            response = http.send(newRobotRequest, BodyHandlers.ofString());
+            jsonResp = response.body();
+
+            if (response.statusCode() == 201 || response.statusCode() == 204) {
+              task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"harbor-robot",nsName + "-gitlab-pull");
+            } else {
+              throw new Error("Could not create harbor project: " + response.statusCode() + " / " + response.body());
+            }
+
+            groupRespData = JSON.parse(jsonResp);
+            robotName = groupRespData["name"];
+            robotSecret = groupRespData["secret"];
+            auth = Base64.getEncoder().encodeToString(JSUtils.string2bytes(robotName + ":" + robotSecret));
+            // generate a secret
+            dockerCreds = {"auths":{"harbor.{{ .Values.cp_dns_suffix }}":{"username":robotName,"password":robotSecret,"auth":auth}}};
+
+            return JSON.stringify(dockerCreds);
+          }
+
+          function doTask(user,request) {
+            
+
+            ActionType = Java.type("com.tremolosecurity.provisioning.core.ProvisioningUtil.ActionType");
+            var nsName = request.get("nameSpace").toLowerCase();
+            request.put("nsName",nsName);
+            
+            
+            var approvalID = 0;
+            if (request.containsKey("APPROVAL_ID")) {
+              approvalID = request.get("APPROVAL_ID");
+            }
+
+            // get the k8s target and generate a basic authentication header for working with the API
+            k8s = task.getConfigManager().getProvisioningEngine().getTarget("k8s").getProvider();
+            harborAdminCred = K8sUtils.loadSecret("k8s","harbor","harbor-admin").get("harbor-admin");
+            basicHeader = "Basic " + Base64.getEncoder().encodeToString(JSUtils.string2bytes("admin:" + harborAdminCred));
+
+            
+
+            // create robot
+            var dockerCreds = createPullRobot(nsName,basicHeader,approvalID,ActionType);
+
+            request.put("gitlab_dockercreds",dockerCreds);
+            
+
+            return true;
+          }
+
+    - taskType: customTask
+      className: com.tremolosecurity.unison.gitlab.provisioning.tasks.CreateVariable
+      params:
+        targetName: gitlab
+        namespace: $nameSpace$-prod
+        project: $nameSpace$-application
+        key: config_json
+        value: "$gitlab_dockercreds$"
+        varType: FILE
+        protectedVar: "true"
+        masked: "false"
+        environment: "*"

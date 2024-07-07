@@ -1,0 +1,142 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vcluster-scripts
+  namespace: {{ .Release.Namespace }}
+data:
+  remote-token.sh: |-
+    #!/bin/bash
+    set -e
+
+    REMOTE_TOKEN=$(curl --insecure -H "Authorization: Bearer $(<$3)" https://$1/api/get-target-token?targetName=$2 2>/dev/null)
+
+    echo -n "{\"apiVersion\": \"client.authentication.k8s.io/v1\",\"kind\": \"ExecCredential\",\"status\": {\"token\": \"$REMOTE_TOKEN\"}}"
+
+  
+  onboard-cluster.sh: |-
+    #!/bin/bash
+    export KUBECONFIG=$(mktemp)
+    set -e
+    kubectl config set-credentials controlplane --exec-api-version='client.authentication.k8s.io/v1' --exec-command=bash --exec-arg=/scripts/remote-token.sh --exec-arg=$CP_HOST --exec-arg=$TARGET_NAME --exec-arg=/var/run/secrets/kubernetes.io/serviceaccount/token --exec-interactive-mode=Never
+    kubectl config set-cluster controlplane --server=$TARGET_URL --certificate-authority=/etc/openunison/tls.crt
+    kubectl config set-context controlplane --user=controlplane --cluster=controlplane
+    kubectl config set current-context controlplane
+
+    vcluster connect $VCLUSTER_NAME  -n $VCLUSTER_NAMESPACE -- bash /scripts/onboard-vcluster-to-controlplane.sh
+
+  onboard-vcluster-to-controlplane.sh: |-
+    #!/bin/bash
+    set -e
+    export PATH=$PATH:~/.krew/bin
+    mkdir -p ~/.kube
+    ln -s ~/.krew/bin/kubectl-ctx   /usr/local/openunison/.kube/kubectx
+
+    export VCLUSTER_CTX=$(kubectl ctx)
+
+    echo "VCluster context: $VCLUSTER_CTX"
+
+    helm repo add tremolo $TREMOLO_HELM_REPO
+    helm repo add kubernetes-dashboard $K8S_DASHBOARD_HELM_REPO
+    helm repo update
+
+    kubectl ctx
+
+    idp_token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    echo $idp_token
+
+    # setup the idp control-plane
+    kubectl config set-cluster idp-controlplane --server=https://kubernetes.default.svc:443 --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    kubectl config set-credentials idp-controlplane --token=$idp_token
+    kubectl config set-context idp-controlplane --user=idp-controlplane --cluster=idp-controlplane
+
+      # setup context to the cluster control-plane
+      kubectl config set-credentials tenant-vcluster --exec-api-version='client.authentication.k8s.io/v1' --exec-command=bash --exec-arg=/scripts/remote-token.sh --exec-arg=$CP_HOST --exec-arg=$TARGET_NAME --exec-arg=/var/run/secrets/kubernetes.io/serviceaccount/token --exec-interactive-mode=Never
+      kubectl config set-cluster tenant-vcluster --server=$TARGET_URL --certificate-authority=/etc/openunison/tls.crt
+      kubectl config set-context tenant-vcluster --user=tenant-vcluster --cluster=tenant-vcluster
+      kubectl config set current-context tenant-vcluster
+
+    echo "set clusters"
+
+    kubectl ctx $VCLUSTER_CTX
+
+    echo "set to vclusters"
+
+    echo "creating dashboard"
+
+    
+    helm upgrade --install --create-namespace kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard  --version 6.0.8  --set settings.clusterName=$VCLUSTER_LABEL --set settings.itemsPerPage=15 -n kubernetes-dashboard
+
+    echo "created dashboard"
+
+    echo "setting to control plane"
+
+    kubectl config set current-context idp-controlplane
+
+    echo "start install"
+
+    kubectl ouctl install-satelite -q $ORCHESTRA_NAME -w sat-client-secrets /etc/openunison/satelite.yaml idp-controlplane $VCLUSTER_CTX
+
+    kubectl config set current-context tenant-vcluster
+    kubectl create configmap openunisoncomplete -n $VCLUSTER_LABEL
+
+
+  
+  deploy-vcluster.sh: |-
+    #!/bin/bash
+    set -e
+    export KUBECONFIG=$(mktemp)
+    kubectl config set-credentials controlplane --exec-api-version='client.authentication.k8s.io/v1' --exec-command=bash --exec-arg=/scripts/remote-token.sh --exec-arg=$CP_HOST --exec-arg=$TARGET_NAME --exec-arg=/var/run/secrets/kubernetes.io/serviceaccount/token --exec-interactive-mode=Never
+    kubectl config set-cluster controlplane --server=$TARGET_URL --certificate-authority=/etc/openunison/tls.crt
+    kubectl config set-context controlplane --user=controlplane --cluster=controlplane
+    kubectl config set current-context controlplane
+
+    vcluster create $VCLUSTER_NAME --distro k3s --upgrade -f  /etc/openunison/vcluster-values.yaml  -n $VCLUSTER_NAME --connect=false
+    while [[ $(kubectl get pods -l vcluster.loft.sh/namespace=kube-system -n $VCLUSTER_NAME -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for vcluster clusterdns pod" && sleep 1; done
+    sleep 60
+    kubectl create configmap deploymentcomplete -n $VCLUSTER_NAME
+
+  run-helm.sh: |-
+    #!/bin/bash
+    set -e
+    kubectl create ns vault
+    helm install vault hashicorp/vault --namespace vault --set global.externalVaultAddr=https://vault.{{ .Values.cp_dns_suffix}}/ --set injector.enabled=true
+
+  deploy-vault-client.sh: |-
+    #!/bin/bash
+    set -e
+    export PATH=$PATH:~/.krew/bin
+    helm repo add hashicorp https://helm.releases.hashicorp.com 
+    helm repo update
+
+
+    kubectl config set-cluster controlplane --server=https://kubernetes.default.svc:443 --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    kubectl config set-credentials controlplane --token=/var/run/secrets/kubernetes.io/serviceaccount/token
+    kubectl config set-context controlplane --user=controlplane --user=controlplane
+
+    vcluster connect $VCLUSTER_NAME  -n $VCLUSTER_NAME -- bash /scripts/run-helm.sh
+
+  deploy-eso-to-vcluster.sh: |-
+    #!/bin/bash
+    set -e
+    export PATH=$PATH:~/.krew/bin
+    mkdir -p ~/.kube
+    ln -s ~/.krew/bin/kubectl-ctx   /usr/local/openunison/.kube/kubectx
+
+    helm repo add external-secrets https://charts.external-secrets.io
+    helm repo update
+
+    kubectl ctx
+    
+    # setup context to the cluster control-plane
+    kubectl config set-credentials tenant-vcluster --exec-api-version='client.authentication.k8s.io/v1' --exec-command=bash --exec-arg=/scripts/remote-token.sh --exec-arg=$CP_HOST --exec-arg=$TARGET_NAME --exec-arg=/var/run/secrets/kubernetes.io/serviceaccount/token --exec-interactive-mode=Never
+    kubectl config set-cluster tenant-vcluster --server=$TARGET_URL --certificate-authority=/etc/openunison/tls.crt
+    kubectl config set-context tenant-vcluster --user=tenant-vcluster --cluster=tenant-vcluster
+    kubectl config set current-context tenant-vcluster
+
+    helm upgrade --install external-secrets \
+      external-secrets/external-secrets \
+        -n external-secrets --wait --wait-for-jobs
+
+    kubectl create cm deployment-complete -n external-secrets
+
+    

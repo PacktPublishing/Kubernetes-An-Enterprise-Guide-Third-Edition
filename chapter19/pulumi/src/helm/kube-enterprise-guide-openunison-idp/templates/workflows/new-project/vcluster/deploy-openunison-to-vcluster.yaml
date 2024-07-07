@@ -1,0 +1,302 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: deploy-openunison-to-vcluster
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: Integrates the vCluster and control plane with OpenUnison
+  inList: false
+  label: Integrate cp with vcluster
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: k8s
+        template: |-
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: vcluster-openunison-$env$-$nameSpace$
+              namespace: {{ .Release.Namespace }}
+              labels:
+                name: vcluster-openunison-$nameSpace$
+                app.kubernetes.io/name: openunison
+                app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+                app.kubernetes.io/component: openunison-vcluster
+                app.kubernetes.io/part-of: openunison
+              annotations:
+                tremolo.io/managedByGit: "$useGit$"
+            binaryData:
+              tls.crt: "$b64cert$"
+            data:
+              satelite.yaml: |-
+                network:
+                  openunison_host: "k8sou-$nameSpace$.$domain$"
+                  dashboard_host: "k8sdb-$nameSpace$.$domain$"
+                  api_server_host: "k8sapi-$nameSpace$.$domain$"
+                  session_inactivity_timeout_seconds: 900
+                  k8s_url: https://0.0.0.0:6443
+                  force_redirect_to_tls: true
+                  createIngressCertificate: false
+                  ingress_type: nginx
+                  ingress_annotations:
+                    cert-manager.io/cluster-issuer: "enterprise-ca"
+                  
+
+
+                cert_template:
+                  ou: "Kubernetes"
+                  o: "MyOrg"
+                  l: "My Cluster"
+                  st: "State of Cluster"
+                  c: "MyCountry"
+
+                myvd_config_path: "WEB-INF/myvd.conf"
+                k8s_cluster_name: $nameSpace$-$env$
+                enable_impersonation: true
+
+                impersonation:
+                  use_jetstack: true
+                  explicit_certificate_trust: true
+                  enablePassthrough: true
+                  ca_secret_name: unison-ca
+
+                dashboard:
+                  namespace: "kubernetes-dashboard"
+                  cert_name: "kubernetes-dashboard-certs"
+                  label: "app.kubernetes.io/name=kubernetes-dashboard"
+                  service_name: kubernetes-dashboard
+                  require_session: true
+                certs:
+                  use_k8s_cm: false
+
+                trusted_certs:
+                  - name: unison-ca
+                    pem_b64: $b64cert$
+
+                monitoring:
+                  prometheus_service_account: system:serviceaccount:monitoring:prometheus-k8s
+
+                      
+                network_policies:
+                  enabled: false
+                  ingress:
+                    enabled: true
+                    labels:
+                      kubernetes.io/metadata.name: ingress-nginx
+                  monitoring:
+                    enabled: true
+                    labels:
+                      kubernetes.io/metadata.name: monitoring
+                  apiserver:
+                    enabled: true
+                    labels:
+                      kubernetes.io/metadata.name: kube-system
+
+                services:
+                  enable_tokenrequest: false
+                  token_request_audience: https://kubernetes.default.svc.cluster.local
+                  token_request_expiration_seconds: 600
+                  node_selectors: []
+                  liveness_probe:
+                  - /usr/local/openunison/bin/check_alive.sh
+                  - https://127.0.0.1:8443/auth/idp/k8sIdp/.well-known/openid-configuration
+                  - issuer
+                  - https://127.0.0.1:8443/check_alive
+                  - Anonymous
+                  readiness_probe:
+                  - /usr/local/openunison/bin/check_alive.sh
+                  - https://127.0.0.1:8443/auth/idp/k8sIdp/.well-known/openid-configuration
+                  - issuer
+                  - https://127.0.0.1:8443/check_alive
+                  - Anonymous
+                  
+                openunison:
+                  replicas: 1
+                  non_secret_data:
+                    K8S_DB_SSO: oidc
+                    SHOW_PORTAL_ORGS: "false"
+                    K8S_DEPLOYMENT_NAME: "$nameSpace$"
+                  secrets: []                  
+                  enable_provisioning: false
+                  management_proxy:
+                    enabled: true
+                    #external_admin_group: k8s-namespace-administrators-k8s-$nameSpace$
+                    #external_suffix: -external
+                    host: oumgmt-$nameSpace$.$domain$
+                    remote:
+                        issuer: https://k8sou.{{ .Values.cp_dns_suffix }}/auth/idp/remotek8s
+                  use_standard_jit_workflow: true
+                  az_groups:
+                  - k8s-namespace-owners-k8s-$nameSpace$-internal
+                  - k8s-namespace-owners-k8s-$nameSpace$-exgernal
+                  - k8s-namespace-operations-k8s-$nameSpace$-internal
+                  - k8s-namespace-operations-k8s-$nameSpace$-external
+                  - k8s-namespace-developer-k8s-$nameSpace$-internal
+                  - k8s-namespace-developer-k8s-$nameSpace$-external
+
+        srcType: yaml
+        writeToRequest: "true"
+        requestAttribute: git-$remote-target$-$nameSpace$-vcluster-openunison-config
+        path: /k8s-cp-cp/namespaces/openunison/configmaps/vcluster-openunison-$env$-$nameSpace$.yaml
+
+    # GitOps - push to cluster repo
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.PushToGit
+      params:
+        secretName: openunison-git-cluster-key
+        nameSpace: openunison
+        target: k8s
+        keyName: id_rsa
+        gitRepo: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
+        requestObject: git-$remote-target$-$nameSpace$-vcluster-openunison-config
+        commitMsg: $env$ vcluster openunison configuration for workflow $WORKFLOW.id$
+
+    # wait for the namespaces to sync
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+      params:
+        holdingTarget: k8s
+        namespace: openunison
+        target: k8s
+        uri: /api/v1/namespaces/openunison/configmaps/vcluster-openunison-$env$-$nameSpace$
+        label: wait-ns-$env$-vcluster-openunison-cm-$nameSpace$
+        conditions: []
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "Nolonger waiting for openunison configmap"
+
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: k8s
+        template: |-
+            apiVersion: batch/v1
+            kind: Job
+            metadata:
+              name: onboard-vcluster-openunison-$env$-$nameSpace$
+              namespace: {{ .Release.Namespace }}
+              labels:
+                name: vcluster-$nameSpace$
+                app.kubernetes.io/name: openunison
+                app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+                app.kubernetes.io/component: openunison-vcluster
+                app.kubernetes.io/part-of: openunison
+            spec:
+              parallelism: 1
+              completions: 1
+              backoffLimit: 3
+              selector:
+                matchLabels:
+                  job-name: onboard-vcluster-openunison-$env$-$nameSpace$
+              template:
+                metadata:
+                  name: vcluster-onboard-openunison-$env$-$nameSpace$
+                  namespace: {{ .Release.Namespace }}
+                  labels:
+                    job-name: onboard-vcluster-openunison-$env$-$nameSpace$
+                spec:
+                    containers:
+                    - args:
+                        - bash
+                        - /scripts/onboard-cluster.sh
+                      image: {{ .Values.vcluster.job_image }}
+                      imagePullPolicy: Always
+                      name: vcluster-onboard-openunison
+                      resources: {}
+                      volumeMounts:
+                        - mountPath: /etc/openunison
+                          name: openunison-helm-values
+                        - mountPath: /scripts
+                          name: vcluster-scripts
+                      env:
+                      - name: VCLUSTER_NAME
+                        value: $nameSpace$
+                      - name: VCLUSTER_NAMESPACE
+                        value: $nameSpace$
+                      - name: TREMOLO_HELM_REPO
+                        value: https://nexus.tremolo.io/repository/helm-betas/
+                      - name: K8S_DASHBOARD_HELM_REPO
+                        value: https://kubernetes.github.io/dashboard/
+                      - name: VCLUSTER_LABEL
+                        value: $nameSpace$
+                      - name: CP_HOST
+                        value: k8sou.{{ .Values.cp_dns_suffix}}
+                      - name: TARGET_NAME
+                        value: k8s-kubernetes-$env$
+                      - name: TARGET_URL
+                        value: https://oumgmt-proxy.$domain$
+                      - name: CA_CRT
+                        value: $b64cert$
+                      - name: ORCHESTRA_NAME
+                        value: {{ .Values.openunison.orchestra_name }}
+                      securityContext:
+                        allowPrivilegeEscalation: false
+                        capabilities:
+                          drop:
+                          - "all"
+                    dnsPolicy: ClusterFirst
+                    serviceAccount: openunison-{{ .Values.openunison.orchestra_name }}
+                    serviceAccountName: openunison-{{ .Values.openunison.orchestra_name }}
+                    restartPolicy: OnFailure
+                    {{ if .Capabilities.APIVersions.Has "project.openshift.io/v1/Project" }}
+                    securityContext:
+                      seccompProfile:
+                        type: RuntimeDefault
+                      runAsNonRoot: true
+                    {{ else }}
+                    securityContext:
+                      fsGroup: 433
+                      supplementalGroups: [433]
+                      seccompProfile:
+                        type: RuntimeDefault
+                      runAsNonRoot: true
+                      runAsUser: 431
+                      runAsGroup: 433
+                    {{ end }}
+                    volumes:
+                    - name: openunison-helm-values
+                      configMap:
+                        name: vcluster-openunison-$env$-$nameSpace$
+                    - name: vcluster-scripts
+                      configMap:
+                        name: vcluster-scripts
+        srcType: yaml
+    
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+      params:
+        holdingTarget: k8s
+        namespace: openunison
+        target: k8s-kubernetes-$env$
+        uri: /api/v1/namespaces/$nameSpace$/configmaps/openunisoncomplete
+        label: wait-for-onboard-vcluster-openunison-$env$-$nameSpace$
+        conditions:
+        - .metadata.name=openunisoncomplete
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "Nolonger waiting for openunison integration with vcluster"
+
+    # integration complete, cleanup in onboarded cluster
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.DeleteK8sObject
+      params:
+        targetName: k8s-kubernetes-$env$
+        kind:  ConfigMap
+        url: /api/v1/namespaces/$nameSpace$/configmaps/openunisoncomplete
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.DeleteK8sObject
+      params:
+        targetName: k8s
+        kind:  Job
+        url: /apis/batch/v1/namespaces/openunison/jobs/onboard-vcluster-openunison-$env$-$nameSpace$
+
+    

@@ -1,0 +1,26 @@
+apiVersion: openunison.tremolo.io/v1
+kind: Trust
+metadata:
+  labels:
+    app.kubernetes.io/name: openunison
+    app.kubernetes.io/instance: openunison-orchestra
+    app.kubernetes.io/component: vault-sso
+    app.kubernetes.io/part-of: kube-enterprise-guide
+  name: vault
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessTokenSkewMillis: 120000
+  accessTokenTimeToLive: 60000
+  authChainName: login-service
+  clientId: vault # this is your vault client id
+  clientSecret:
+    keyName: vault.oidc.client_secret
+    secretName: vault-oidc
+  codeLastMileKeyName: lastmile-oidc
+  codeTokenSkewMilis: 60000
+  publicEndpoint: true
+  redirectURI:
+  - {{ .Values.vault_url }}/ui/vault/auth/oidc/oidc/callback
+  - {{ .Values.vault_url }}/oidc/oidc/callback
+  signedUserInfo: false
+  verifyRedirect: true

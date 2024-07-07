@@ -1,0 +1,134 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: create-vcluster-db
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: Creates the vCluster MySQL DB
+  inList: false
+  label: Create vCluster DB
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+      params:
+        javaScript: |-
+          function init(task,params) {
+            // nothing to do
+          }
+
+          function reInit(task) {
+            // do nothing
+          }
+
+          function doTask(user,request) {
+            System = Java.type("java.lang.System");
+            ActionType = Java.type("com.tremolosecurity.provisioning.core.ProvisioningUtil.ActionType");
+            var nameSpace = request.get("nameSpace").toLowerCase();
+            request.put("nameSpace",nameSpace);
+            var approvalID = 0;
+            if (request.containsKey("APPROVAL_ID")) {
+              approvalID = request.get("APPROVAL_ID");
+            }
+
+            System.out.println("nameSpace: " + nameSpace);
+            var targetName = request.get("tremoloio.node.db.target");
+
+            sql = task.getConfigManager().getProvisioningEngine().getTarget(targetName).getProvider().getDS().getConnection();
+            try {
+              var createdb = 'CREATE DATABASE vcluster_' + nameSpace;
+              var createuser = "CREATE USER 'vcluster_" + nameSpace + "'@'%' REQUIRE SUBJECT '/O=k8s-enterprise-guide/CN=vcluster_" + nameSpace + "' AND ISSUER '/CN=enterprise-ca'";
+              var grantaccess = "GRANT ALL PRIVILEGES ON vcluster_" + nameSpace + ".* TO 'vcluster_" + nameSpace + "'@'%'";
+
+              var stmt = sql.createStatement();
+
+              stmt.executeUpdate(createdb);
+
+              task.getConfigManager().getProvisioningEngine().logAction(targetName,true,ActionType.Add,approvalID, task.getWorkflow(),"mysql-db",'vcluster_' + nameSpace);
+
+              stmt.executeUpdate(createuser);
+
+              task.getConfigManager().getProvisioningEngine().logAction(targetName,true,ActionType.Add,approvalID, task.getWorkflow(),"mysql-user",'vcluster_' + nameSpace);
+
+              stmt.executeUpdate(grantaccess);
+
+              task.getConfigManager().getProvisioningEngine().logAction(targetName,false,ActionType.Add,approvalID, task.getWorkflow(),"mysql-user-access",'vcluster_' + nameSpace);
+              
+            } finally {
+              sql.close();
+            }
+
+            return true;
+          }
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: $remote-target$
+        template: |-
+            apiVersion: cert-manager.io/v1
+            kind: Certificate
+            metadata:
+              name: vcluster-$nameSpace$
+              namespace: $nameSpace$
+            labels:
+              name: vcluster-$nameSpace$
+              app.kubernetes.io/name: openunison
+              app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+              app.kubernetes.io/component: openunison-vcluster
+              app.kubernetes.io/part-of: openunison
+            annotations:
+              tremolo.io/managedByGit: "$useGit$"
+            spec:
+              secretName: vcluster-client-tls
+              duration: 2160h
+              renewBefore: 360h
+              subject:
+                organizations:
+                  - k8s-enterprise-guide
+              commonName: vcluster_$nameSpace$
+              isCA: false
+              privateKey:
+                algorithm: RSA
+                encoding: PKCS1
+                size: 2048
+              usages:
+                - server auth
+                - client auth
+              issuerRef:
+                name: enterprise-ca
+                kind: ClusterIssuer
+                group: cert-manager.io
+
+        srcType: yaml
+        writeToRequest: "true"
+        requestAttribute: git-$remote-target$-$nameSpace$-cert
+        path: /k8s-cp-$env$/namespaces/$nameSpace$/certificates/vcluster-$nameSpace$.yaml
+
+    # GitOps - push to cluster repo
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.PushToGit
+      params:
+        secretName: openunison-git-cluster-key
+        nameSpace: openunison
+        target: k8s
+        keyName: id_rsa
+        gitRepo: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
+        requestObject: git-$remote-target$-$nameSpace$-cert
+        commitMsg: $env$ Certificate for workflow $WORKFLOW.id$
+
+    # wait for the namespaces to sync
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+      params:
+        holdingTarget: k8s
+        namespace: openunison
+        target: $remote-target$
+        uri: /apis/cert-manager.io/v1/namespaces/$nameSpace$/certificates/vcluster-$nameSpace$
+        label: wait-ns-$env$-cert-$nameSpace$
+        conditions: []
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "cert deployed, deploying vcluster"

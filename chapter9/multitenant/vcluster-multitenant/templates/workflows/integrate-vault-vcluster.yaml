@@ -19,8 +19,6 @@ spec:
             kind: Namespace
             metadata:
               name: vault-integration
-        kind: Namespace
-        url: /api/v1/namespaces
         srcType: yaml
         writeToRequest: "$useGit$"
         requestAttribute: git-secret-cluster-k8s-$nameSpace$
@@ -36,8 +34,6 @@ spec:
             metadata:
               name: vault-client
               namespace: vault-integration
-        kind: ServiceAccount
-        url: /api/v1/namespaces/vault-integration/serviceaccounts
         srcType: yaml
         writeToRequest: "$useGit$"
         requestAttribute: git-secret-cluster-k8s-$nameSpace$
@@ -60,8 +56,6 @@ spec:
             - kind: ServiceAccount
               name: vault-client
               namespace: vault-integration
-        kind: ClusterRoleBinding
-        url: /apis/rbac.authorization.k8s.io/v1/clusterrolebindings
         srcType: yaml
         writeToRequest: "$useGit$"
         requestAttribute: git-secret-cluster-k8s-$nameSpace$
@@ -332,6 +326,4 @@ spec:
                     - name: vcluster-scripts
                       configMap:
                         name: vcluster-scripts
-        kind: Job
-        url: /apis/batch/v1/namespaces/{{ .Release.Namespace }}/jobs
         srcType: yaml

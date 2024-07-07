@@ -24,7 +24,6 @@ cert_template:
 myvd_config_path: "WEB-INF/myvd.conf"
 k8s_cluster_name: impersonation
 enable_impersonation: true
-image: docker.io/mlbiam/openunison-k8s:1.0.38
 impersonation:
   use_jetstack: true
   explicit_certificate_trust: true
@@ -95,12 +94,15 @@ openunison:
     K8S_DEPLOYMENT_NAME: vCluster Control Plane
     K8S_DEPLOYMENT_DESC: vCluster host that runs all tenant vClusters
   secrets: []
+  role_attribute: portalGroups
+  groups:
+    areJson: "true"
   html:
-    image: ghcr.io/openunison/openunison-k8s-react:0.0.1
     legacy: false
   enable_provisioning: true
   use_standard_jit_workflow: false
   activemq_use_pvc: true
+  
   naas:
     workflows:
       new_namespace:
@@ -117,7 +119,7 @@ openunison:
 myvd_configmap: myvd-book
 
 database:
-  hibernate_dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+  hibernate_dialect: org.hibernate.dialect.MySQLDialect
   quartz_dialect: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
   driver: com.mysql.jdbc.Driver
   url: jdbc:mysql://mysql.mysql.svc:3306/unison

@@ -1,0 +1,434 @@
+{{- $root := . -}}
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: create-new-project
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
+spec:
+  description: functional workflow for creating namespaces
+  inList: false
+  label: Create New Namespace
+  orgId: 04901973-5f4c-46d9-9e22-55e88e168776
+  tasks: |-
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CheckForGit
+              params: {}
+           
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+              params:
+                target: jitdb
+                name: approvers-k8s-$cluster$-$nameSpace$
+                attributes:
+                - unison.group.create.sql=INSERT INTO localGroups (name,description) VALUES (?,?)
+                - unison.group.create.param.2=Approve access to $cluster$ $nameSpace$
+              
+            
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+              params:
+                target: jitdb
+                name: k8s-namespace-owners-k8s-$nameSpace$-internal
+                attributes:
+                - unison.group.create.sql=INSERT INTO localGroups (name,description) VALUES (?,?)
+                - unison.group.create.param.2=Manage membership of the $nameSpace$ project, responsible for push to production
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+              params:
+                target: jitdb
+                name: k8s-namespace-operations-k8s-$nameSpace$-internal
+                attributes:
+                - unison.group.create.sql=INSERT INTO localGroups (name,description) VALUES (?,?)
+                - unison.group.create.param.2=Manage operations of the $nameSpace$ project, responsible for day to day operations
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.AddGroupToStore
+              params:
+                target: jitdb
+                name: k8s-namespace-developer-k8s-$nameSpace$-internal
+                attributes:
+                - unison.group.create.sql=INSERT INTO localGroups (name,description) VALUES (?,?)
+                - unison.group.create.param.2=Developer for project $nameSpace$
+            
+            
+                  
+            - taskType: mapping
+              strict: true
+              map:
+                - targetAttributeName: uid
+                  targetAttributeSource: uid
+                  sourceType: user
+              onSuccess:
+                - taskType: addGroup
+                  name: approvers-k8s-k8s-$nameSpace$
+                  remove: false
+                - taskType: addGroup
+                  name: k8s-namespace-owners-k8s-$nameSpace$-internal
+                  remove: false
+                - taskType: provision
+                  sync: false
+                  target: jitdb
+                  setPassword: false
+                  onlyPassedInAttributes: false
+                  attributes: ["uid"]
+                
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    kind: Namespace
+                    apiVersion: v1
+                    metadata:
+                      name: "$nameSpace$"
+                      labels:
+                        name: "$nameSpace$"
+                        tremolo.io/request-access: $enableInternal$
+                      annotations:
+                        tremolo.io/managedByGit: "$useGit$"
+                        $gitUrlAnnotation$
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-cp/cluster/namespaces/$nameSpace$.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: owners
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: admin
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-owners-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-cp/namespaces/$nameSpace$/rolebindings/owners.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: operations
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: admin
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-operations-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-cp/namespaces/$nameSpace$/rolebindings/operations.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: developer
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: view
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-developer-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-cp/namespaces/$nameSpace$/rolebindings/developer.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    kind: Namespace
+                    apiVersion: v1
+                    metadata:
+                      name: "$nameSpace$"
+                      labels:
+                        name: "$nameSpace$"
+                        tremolo.io/request-access: $enableInternal$
+                      annotations:
+                        tremolo.io/managedByGit: "$useGit$"
+                        $gitUrlAnnotation$
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-dev/cluster/namespaces/$nameSpace$.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: owners
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: admin
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-owners-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-dev/namespaces/$nameSpace$/rolebindings/owners.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: operations
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: admin
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-operations-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-dev/namespaces/$nameSpace$/rolebindings/operations.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: developer
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: admin
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-developer-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-dev/namespaces/$nameSpace$/rolebindings/developer.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    kind: Namespace
+                    apiVersion: v1
+                    metadata:
+                      name: "$nameSpace$"
+                      labels:
+                        name: "$nameSpace$"
+                        tremolo.io/request-access: $enableInternal$
+                      annotations:
+                        tremolo.io/managedByGit: "$useGit$"
+                        $gitUrlAnnotation$
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-prod/cluster/namespaces/$nameSpace$.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: owners
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: admin
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-owners-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-prod/namespaces/$nameSpace$/rolebindings/owners.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: operations
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: admin
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-operations-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-prod/namespaces/$nameSpace$/rolebindings/operations.yaml
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+              params:
+                targetName: k8s
+                template: |-
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: RoleBinding
+                    metadata:
+                      name: developer
+                      namespace: $nameSpace$
+                    roleRef:
+                      apiGroup: rbac.authorization.k8s.io
+                      kind: ClusterRole
+                      name: view
+                    subjects:
+                    - apiGroup: rbac.authorization.k8s.io
+                      kind: Group
+                      name: k8s-namespace-developer-k8s-$nameSpace$-internal
+                srcType: yaml
+                writeToRequest: "true"
+                requestAttribute: git-secret-cluster-k8s-$nameSpace$
+                path: /k8s-cp-prod/namespaces/$nameSpace$/rolebindings/developer.yaml
+
+            # GitOps - push to cluster repo
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.PushToGit
+              params:
+                secretName: openunison-git-cluster-key
+                nameSpace: openunison
+                target: k8s
+                keyName: id_rsa
+                gitRepo: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
+                requestObject: git-secret-cluster-k8s-$nameSpace$
+                commitMsg: For workflow $WORKFLOW.id$
+
+            # wait for the namespaces to sync
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+              params:
+                holdingTarget: k8s
+                namespace: openunison
+                target: k8s-kubernetes-dev
+                uri: /api/v1/namespaces/$nameSpace$
+                label: wait-ns-$nameSpace$
+                conditions: []
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+              params:
+                message: "Nolonger waiting for dev namespace sync"
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+              params:
+                holdingTarget: k8s
+                namespace: openunison
+                target: k8s-kubernetes-prod
+                uri: /api/v1/namespaces/$nameSpace$
+                label: wait-ns-$nameSpace$
+                conditions: []
+              
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+              params:
+                message: "Nolonger waiting for prod namespace sync"
+
+            
+            # setup gitlab
+            - taskType: callWorkflow
+              name: setup-gitlab
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+              params:
+                message: "deployed gitlab"
+
+            - taskType: callWorkflow
+              name: create-harbor-project
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+              params:
+                message: "created harbor project"
+
+            - taskType: callWorkflow
+              name: onboard-harbor-gitlab
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+              params:
+                message: "onboard harbor gitlab secret"
+
+            - taskType: callWorkflow
+              name: deploy-dev-vcluster
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+              params:
+                message: "deployed dev vcluster"
+
+            - taskType: callWorkflow
+              name: deploy-prod-vcluster
+
+            - taskType: customTask
+              className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+              params:
+                message: "deployed prod vcluster"
+
+           
+
+           

@@ -1,0 +1,74 @@
+{{- $root := . -}}
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: new-project
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
+spec:
+  description: Create New Project
+  inList: false
+  label: Create New Project
+  orgId: 04901973-5f4c-46d9-9e22-55e88e168776
+  tasks: |-
+           - taskType: customTask
+             className: com.tremolosecurity.provisioning.customTasks.CopyFromUserToRequest
+             params:
+               attribute:
+               - nameSpace
+               keepInUser: "true"
+
+           - taskType: customTask
+             className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+             params:
+               javaScript: |-
+                 function init(task,params) {
+                   // nothing to do
+                 }
+ 
+                 function reInit(task) {
+                   // do nothing
+                 }
+ 
+                 function doTask(user,request) {
+                   // start with control plane
+                   var targetName = "k8s";
+                   GlobalEntries = Java.type("com.tremolosecurity.server.GlobalEntries");
+                   var target = GlobalEntries.getGlobalEntries().getConfigManager().getProvisioningEngine().getTarget(targetName).getProvider();
+                   request.put("clusterLabel",target.getLabel());
+                   request.put("cluster","k8s");
+                   return true;
+                 }
+
+           - taskType: customTask
+             className: com.tremolosecurity.provisioning.customTasks.LoadAttributes
+             params:
+               nameAttr: uid
+               name: 
+               - givenName
+               - sn
+               - mail
+
+           
+           - taskType: addAttribute
+             name: enableInternal
+             value: enabled
+             addToRequest: true
+           
+           - taskType: approval
+             emailTemplate: A new project has been requested
+             mailAttr: mail
+             failureEmailSubject: Project not approved
+             failureEmailMsg: |-
+               Because:
+               ${reason}
+             label: Create New Project - $nameSpace$
+             approvers:
+             - scope: group
+               constraint: cn=administrators-internal,ou=groups,ou=shadow,o=Tremolo
+             onSuccess:
+             - taskType: callWorkflow
+               name: create-new-project
+             

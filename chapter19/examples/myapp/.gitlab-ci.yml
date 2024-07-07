@@ -1,0 +1,45 @@
+stages:
+- build
+- deploy
+
+
+build-job:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint:
+      - ""
+  script:
+    - mkdir -p /kaniko/.docker
+    - cp $config_json /kaniko/.docker/config.json
+    - /kaniko/executor
+        --dockerfile source/Dockerfile
+        --context source
+        --destination  $HARBOR_HOST/$NAMESPACE/mypython:${CI_COMMIT_SHORT_SHA}
+        --registry-certificate $HARBOR_HOST=$ca_certificate
+
+deploy-job:
+  stage: deploy
+  environment: production
+  image: docker.io/mlbiam/vcluster-onboard:1.0.0
+  script: |-
+    mkdir ~/.ssh
+    cp $PATCH_KEY ~/.ssh/id_rsa
+    chmod go-rwx ~/.ssh/id_rsa
+    ssh-keyscan $GITLAB_HOST > ~/.ssh/known_hosts
+    cd /tmp
+    mkdir remote
+    cd remote
+    git clone git@$GITLAB_HOST:$NAMESPACE-dev/$NAMESPACE-ops.git
+    cd $NAMESPACE-ops
+    git config user.name gitlab-cicd
+    git config user.email gitlab-cicd@$GITLAB_HOST
+    kubectl patch --local -f yaml/namespaces/default/deployments/python-hello.yaml -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"python-hello\",\"image\":\"$HARBOR_HOST/$NAMESPACE/mypython:${CI_COMMIT_SHORT_SHA}\"}]}}}}" -o yaml > /tmp/python-hello.yaml
+    cp /tmp/python-hello.yaml yaml/namespaces/default/deployments/python-hello.yaml
+    git add yaml/namespaces/default/deployments/python-hello.yaml
+    git commit -m "commit automated build from commit ${CI_COMMIT_SHORT_SHA}"
+    git push
+
+
+
+

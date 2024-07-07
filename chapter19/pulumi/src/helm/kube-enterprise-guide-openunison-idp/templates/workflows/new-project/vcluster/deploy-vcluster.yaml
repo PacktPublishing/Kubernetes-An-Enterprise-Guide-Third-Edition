@@ -1,0 +1,269 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: deploy-vcluster
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: Creates the vCluster MySQL DB
+  inList: false
+  label: Create vCluster DB
+  orgId: 43625c4c-43a5-4e48-89da-7005a60cfcff
+  tasks: |-
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "in deploy-vcluster"
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.JavaScriptTask
+      params:
+        javaScript: |-
+          function init(task,params) {
+            // nothing to do
+          }
+
+          function reInit(task) {
+            // do nothing
+          }
+
+          function cert2pem(certName) {
+            GlobalEntries = Java.type("com.tremolosecurity.server.GlobalEntries");
+            Base64 = Java.type("org.apache.commons.codec.binary.Base64");
+            StringBuffer = Java.type("java.lang.StringBuffer");
+
+            cert = GlobalEntries.getGlobalEntries().getConfigManager().getCertificate(certName);
+            encoder = new Base64(64);
+            b = new StringBuffer();
+            b.append("-----BEGIN CERTIFICATE-----\n");
+            b.append(encoder.encodeAsString(cert.getEncoded()));
+            b.append("-----END CERTIFICATE-----");
+            return b.toString();
+
+          }
+
+          function doTask(user,request) {
+            System = Java.type("java.lang.System");
+            pem = cert2pem("unison-ca");
+            Base64 = Java.type("java.util.Base64");
+            JSUtils = Java.type("com.tremolosecurity.util.JSUtils");
+            request.put("b64cert",Base64.getEncoder().encodeToString(JSUtils.string2bytes(pem)));
+            
+
+            return true;
+          }
+    
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: k8s
+        template: |-
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: vcluster-$env$-$nameSpace$
+              namespace: {{ .Release.Namespace }}
+              labels:
+                name: vcluster-$nameSpace$
+                app.kubernetes.io/name: openunison
+                app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+                app.kubernetes.io/component: openunison-vcluster
+                app.kubernetes.io/part-of: openunison
+              annotations:
+                tremolo.io/managedByGit: "$useGit$"
+            binaryData:
+              tls.crt: $b64cert$
+            data:
+              vcluster-values.yaml: |-
+                # Enable HA mode
+                enableHA: true
+
+                # Scale up k3s replicas
+                replicas: 1
+
+                sync:
+                  ingresses:
+                    enabled: true
+
+                syncer:
+                  extraArgs:
+                  - --service-account-token-secrets=true
+                
+                # Set external datastore endpoint
+                vcluster:
+                  env:
+                    - name: K3S_DATASTORE_ENDPOINT
+                      value: mysql://vcluster_$nameSpace$@tcp(mysql.mysql.svc:3306)/vcluster_$nameSpace$
+                    - name: K3S_DATASTORE_CERTFILE
+                      value: /etc/mysql-tls/tls.crt
+                    - name: K3S_DATASTORE_KEYFILE
+                      value: /etc/mysql-tls/tls.key
+                    - name: K3S_DATASTORE_CAFILE
+                      value: /etc/mysql-tls/ca.crt
+                  volumeMounts:
+                  - mountPath: /etc/mysql-tls
+                    name: mysql-tls
+                  # - mountPath: /data
+                  #   name: data
+                volumes:
+                - name: mysql-tls
+                  secret:
+                    secretName: vcluster-client-tls
+
+                # Disable persistent storage as all data (including bootstrap data) is stored in external datastore
+                storage:
+                  persistence: false
+
+                # Scale up CoreDNS replicas
+                coredns:
+                  replicas: 1
+
+        srcType: yaml
+        writeToRequest: "true"
+        requestAttribute: git-$remote-target$-$nameSpace$-vcluster-config
+        path: /k8s-cp-cp/namespaces/openunison/configmaps/vcluster-$env$-$nameSpace$.yaml
+    
+    # GitOps - push to cluster repo
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.PushToGit
+      params:
+        secretName: openunison-git-cluster-key
+        nameSpace: openunison
+        target: k8s
+        keyName: id_rsa
+        gitRepo: git@gitlab-ssh.{{ .Values.cp_dns_suffix }}:cluster-operations/cluster-operations.git
+        requestObject: git-$remote-target$-$nameSpace$-vcluster-config
+        commitMsg: $env$ vcluster configuration for workflow $WORKFLOW.id$
+
+    # wait for the namespaces to sync
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+      params:
+        holdingTarget: k8s
+        namespace: openunison
+        target: k8s
+        uri: /api/v1/namespaces/openunison/configmaps/vcluster-$env$-$nameSpace$
+        label: wait-ns-$env$-vcluster-cm-$nameSpace$
+        conditions: []
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "Nolonger waiting for vcluster to deploy"
+
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.CreateK8sObject
+      params: 
+        targetName: k8s
+        template: |-
+            apiVersion: batch/v1
+            kind: Job
+            metadata:
+              name: onboard-vcluster-$env$-$nameSpace$
+              namespace: {{ .Release.Namespace }}
+              labels:
+                name: vcluster-$nameSpace$
+                app.kubernetes.io/name: openunison
+                app.kubernetes.io/instance: openunison-{{ .Release.Name }}
+                app.kubernetes.io/component: openunison-vcluster
+                app.kubernetes.io/part-of: openunison
+            spec:
+              parallelism: 1
+              completions: 1
+              backoffLimit: 3
+              selector:
+                matchLabels:
+                  job-name: onboard-vcluster-$env$-$nameSpace$
+              template:
+                metadata:
+                  name: vcluster-onboard-$nameSpace$
+                  namespace: {{ .Release.Namespace }}
+                  labels:
+                    job-name: onboard-vcluster-$env$-$nameSpace$
+                spec:
+                    containers:
+                    - args:
+                        - bash
+                        - /scripts/deploy-vcluster.sh
+                      image: {{ .Values.vcluster.job_image }}
+                      imagePullPolicy: Always
+                      name: vcluster-onboard
+                      resources: {}
+                      volumeMounts:
+                        - mountPath: /etc/openunison
+                          name: vcluster-helm-values
+                        - mountPath: /scripts
+                          name: vcluster-scripts
+                      env:
+                      - name: VCLUSTER_NAME
+                        value: $nameSpace$
+                      - name: CP_HOST
+                        value: k8sou.{{ .Values.cp_dns_suffix}}
+                      - name: TARGET_NAME
+                        value: k8s-kubernetes-$env$
+                      - name: TARGET_URL
+                        value: https://oumgmt-proxy.$domain$
+                      securityContext:
+                        allowPrivilegeEscalation: false
+                        capabilities:
+                          drop:
+                          - "all"
+                    dnsPolicy: ClusterFirst
+                    serviceAccount: openunison-{{ .Values.openunison.orchestra_name }}
+                    serviceAccountName: openunison-{{ .Values.openunison.orchestra_name }}
+                    restartPolicy: OnFailure
+                    {{ if .Capabilities.APIVersions.Has "project.openshift.io/v1/Project" }}
+                    securityContext:
+                      seccompProfile:
+                        type: RuntimeDefault
+                      runAsNonRoot: true
+                    {{ else }}
+                    securityContext:
+                      fsGroup: 433
+                      supplementalGroups: [433]
+                      seccompProfile:
+                        type: RuntimeDefault
+                      runAsNonRoot: true
+                      runAsUser: 431
+                      runAsGroup: 433
+                    {{ end }}
+                    volumes:
+                    - name: vcluster-helm-values
+                      configMap:
+                        name: vcluster-$env$-$nameSpace$
+                    - name: vcluster-scripts
+                      configMap:
+                        name: vcluster-scripts
+        srcType: yaml
+    
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.WaitForStatus
+      params:
+        holdingTarget: k8s
+        namespace: openunison
+        target: k8s-kubernetes-$env$
+        uri: /api/v1/namespaces/$nameSpace$/configmaps/deploymentcomplete
+        label: wait-for-create-vcluster-$nameSpace$
+        conditions:
+        - .metadata.name=deploymentcomplete
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "Nolonger waiting for creating vcluster"
+
+    # integration complete, cleanup in onboarded cluster
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.DeleteK8sObject
+      params:
+        targetName: k8s-kubernetes-$env$
+        kind:  ConfigMap
+        url: /api/v1/namespaces/$nameSpace$/configmaps/deploymentcomplete
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.tasks.DeleteK8sObject
+      params:
+        targetName: k8s
+        kind:  Job
+        url: /apis/batch/v1/namespaces/openunison/jobs/onboard-vcluster-$env$-$nameSpace$

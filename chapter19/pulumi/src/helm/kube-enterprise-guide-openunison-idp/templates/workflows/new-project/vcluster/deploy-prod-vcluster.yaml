@@ -1,0 +1,98 @@
+---
+apiVersion: openunison.tremolo.io/v1
+kind: Workflow
+metadata:
+  name: deploy-prod-vcluster
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
+spec:
+  description: deploys vcluster to a remote node
+  inList: false
+  label: deploy vcluster
+  orgId: 04901973-5f4c-46d9-9e22-55e88e168776
+  tasks: |-
+    # add request attributes for the dev environment
+    - taskType: addAttribute
+      name: tremoloio.node.db.target
+      value: prod-mysql
+      addToRequest: true
+
+    - taskType: addAttribute
+      name: remote-target
+      value: k8s-kubernetes-prod
+      addToRequest: true
+
+    - taskType: addAttribute
+      name: env
+      value: prod
+      addToRequest: true
+
+    - taskType: addAttribute
+      name: domain
+      value: {{ .Values.prod_dns_suffix }}
+      addToRequest: true
+
+    - taskType: callWorkflow
+      name: create-vcluster-db
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "deployed cert"
+
+    - taskType: callWorkflow
+      name: deploy-vcluster
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "deployed vcluster"
+
+    - taskType: callWorkflow
+      name: deploy-openunison-to-vcluster
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "integrated openunison"
+
+    - taskType: callWorkflow
+      name: create-argocd-tenant
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "argo-tenant-created"
+
+    - taskType: callWorkflow
+      name: integrate-vault-vcluster
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "integrated with vault"
+
+    - taskType: callWorkflow
+      name: deploy-external-secret-operator
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "deployed external secret operator"
+
+    - taskType: callWorkflow
+      name: onboard-harbor-tenant
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "deployed pull secret"
+
+    - taskType: callWorkflow
+      name: sync-harbor-pull-secret
+
+    - taskType: customTask
+      className: com.tremolosecurity.provisioning.customTasks.PrintUserInfo
+      params:
+        message: "synced pull secret"
