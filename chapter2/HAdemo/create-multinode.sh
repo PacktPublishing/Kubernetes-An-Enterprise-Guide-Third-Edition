@@ -19,7 +19,7 @@ echo -e "\n \n******************************************************************
 echo -e "Create KinD Cluster using cluster01-kind.yaml configuration - Using the v1.30 Image"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
-kind create cluster --name multinode --config multinode.yaml --image surovich/node:v1.30
+kind create cluster --name multinode --config multinode.yaml --image kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e
 
 # Add a label to the worker node, ingress-ready=true.  The NGINX deployment will only deploy to nodes that have this label.
 
