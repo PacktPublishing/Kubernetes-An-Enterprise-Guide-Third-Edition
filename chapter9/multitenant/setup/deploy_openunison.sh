@@ -56,7 +56,8 @@ kubectl expose deployment/blackhole --type=ClusterIP --port 1025 --target-port=1
 
 echo "Deploying the Kubernetes Dashboard"
 
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard -f ./kubernetes-dashboard-values.yaml
 
 echo "Deploying ActiveDirectory (ApacheDS)"
 

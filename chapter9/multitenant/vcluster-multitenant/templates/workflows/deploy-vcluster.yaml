@@ -126,6 +126,8 @@ spec:
                       env:
                       - name: VCLUSTER_NAME
                         value: $nsName$
+                      - name: ONBOARD_SCRIPT
+                        value: "/usr/local/openunison/onboard-vcluster-to-controlplane-db7.sh"
                       securityContext:
                         allowPrivilegeEscalation: false
                         capabilities:
