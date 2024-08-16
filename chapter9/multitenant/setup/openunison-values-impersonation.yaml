@@ -103,7 +103,14 @@ openunison:
     legacy: false
   enable_provisioning: true
   use_standard_jit_workflow: false
-  activemq_use_pvc: true
+  
+
+  amq:
+    enabled: true
+    pvc:
+      enabled: true
+      accessmode: ReadWriteOnce
+      storageclass: local-path
   
   naas:
     workflows:
