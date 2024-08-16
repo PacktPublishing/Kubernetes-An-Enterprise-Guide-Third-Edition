@@ -25,6 +25,9 @@ kubectl create -f /tmp/vault-ingress.yaml
 sed "s/IPADDR/$hostip/g" < ./api-server-ingress.yaml  > /tmp/api-server-ingress.yaml
 kubectl create -f /tmp/api-server-ingress.yaml
 
+echo "sleeping 30 seconds"
+sleep 30s
+
 # install CLI
 ./install_vault.sh
 
