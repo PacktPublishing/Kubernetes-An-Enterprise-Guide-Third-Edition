@@ -33,6 +33,8 @@ dashboard:
   cert_name: "kubernetes-dashboard-certs"
   label: "k8s-app=kubernetes-dashboard"
   service_name: kubernetes-dashboard
+  new: true
+  require_session: true
 certs:
   use_k8s_cm: false
 
@@ -89,9 +91,6 @@ openunison:
   non_secret_data:
     K8S_DB_SSO: oidc
   secrets: []
-  html:
-    image: ghcr.io/openunison/openunison-k8s-react:0.0.1
-    legacy: false
   enable_provisioning: false
   use_standard_jit_workflow: true
 

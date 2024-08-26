@@ -32,7 +32,7 @@ echo -e "***********************************************************************
 tput setaf 3
 
 export hostip=$(hostname  -I | cut -f1 -d' ' | sed 's/[.]/-/g')
-helm upgrade --namespace istio-system --set auth.strategy="header" --repo https://kiali.org/helm-charts kiali-server kiali-server --set external_services.prometheus.url=http://Prometheus:9090 --set external_services.tracing.in_cluster_url="http://tracing:80/jaeger" --set external_services.tracing.url="https://jaeger.apps.$hostip.nip.io" --set external_services.tracing.in_cluster_url="http://grafana:3000" --set external_services.grafana.url="https://grafana.apps.$hostip.nip.io"
+helm upgrade --version v1.78.0 --namespace istio-system --set auth.strategy="header" --repo https://kiali.org/helm-charts kiali-server kiali-server --set external_services.prometheus.url=http://Prometheus:9090 --set external_services.tracing.in_cluster_url="http://tracing:80/jaeger" --set external_services.tracing.url="https://jaeger.apps.$hostip.nip.io" --set external_services.tracing.in_cluster_url="http://grafana:3000" --set external_services.grafana.url="https://grafana.apps.$hostip.nip.io"
 
 kubectl delete pods -l app=kiali -n istio-system
 

@@ -31,49 +31,45 @@ spec:
               tremolo.io/managedByGit: "$useGit$"
             data:
               vcluster-values.yaml: |-
-                # Enable HA mode
-                enableHA: true
-
-                # Scale up k3s replicas
-                replicas: 1
-
                 sync:
-                  ingresses:
-                    enabled: true
-
-                syncer:
-                  extraArgs:
-                  - --service-account-token-secrets=true
-                
-                # Set external datastore endpoint
-                vcluster:
-                  env:
-                    - name: K3S_DATASTORE_ENDPOINT
-                      value: mysql://vcluster_$nsName$@tcp(mysql.mysql.svc:3306)/vcluster_$nsName$
-                    - name: K3S_DATASTORE_CERTFILE
-                      value: /etc/mysql-tls/tls.crt
-                    - name: K3S_DATASTORE_KEYFILE
-                      value: /etc/mysql-tls/tls.key
-                    - name: K3S_DATASTORE_CAFILE
-                      value: /etc/mysql-tls/ca.crt
-                  volumeMounts:
-                  - mountPath: /etc/mysql-tls
-                    name: mysql-tls
-                  # - mountPath: /data
-                  #   name: data
-                volumes:
-                - name: mysql-tls
-                  secret:
-                    secretName: vcluster-client-tls
-
-                # Disable persistent storage as all data (including bootstrap data) is stored in external datastore
-                storage:
-                  persistence: false
-
-                # Scale up CoreDNS replicas
-                coredns:
-                  replicas: 1
-
+                  fromHost:
+                    ingressClasses:
+                      enabled: true
+                  toHost:
+                    ingresses:
+                      enabled: true
+                    pods:
+                      useSecretsForSATokens: true
+                controlPlane:
+                  backingStore:
+                    database:
+                      external:
+                        enabled: true
+                        dataSource: mysql://vcluster_$nsName$@tcp(mysql.mysql.svc:3306)/vcluster_$nsName$
+                        keyFile: /etc/mysql-tls/tls.key
+                        certFile:  /etc/mysql-tls/tls.crt
+                        caFile: /etc/mysql-tls/ca.crt 
+                  coredns:
+                    deployment:
+                      replicas: 1
+                  distro:
+                    k3s:
+                      enabled: true
+                  statefulSet:
+                    highAvailability:
+                      replicas: 1
+                    persistence:
+                      addVolumes:
+                      - name: mysql-tls
+                        secret:
+                          secretName: vcluster-client-tls
+                      addVolumeMounts:
+                      - name: mysql-tls
+                        mountPath: /etc/mysql-tls
+                      volumeClaim:
+                        enabled: false
+                    scheduling:
+                      podManagementPolicy: OrderedReady
         srcType: yaml
         writeToRequest: "$useGit$"
         requestAttribute: git-secret-cluster-k8s-$nameSpace$
@@ -126,6 +122,8 @@ spec:
                       env:
                       - name: VCLUSTER_NAME
                         value: $nsName$
+                      - name: ONBOARD_SCRIPT
+                        value: "/usr/local/openunison/onboard-vcluster-to-controlplane-db7.sh"
                       securityContext:
                         allowPrivilegeEscalation: false
                         capabilities:
