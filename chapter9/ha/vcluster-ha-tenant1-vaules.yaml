@@ -23,6 +23,9 @@ controlPlane:
       - name: mysql-tls
         secret:
           secretName: vcluster-client-tls
+      addVolumeMounts:
+      - name: mysql-tls
+        mountPath: /etc/mysql-tls
       volumeClaim:
         enabled: false
     scheduling:
