@@ -1,0 +1,63 @@
+nginx:
+  enabled: false
+
+kong:
+  enabled: false
+
+api:
+  scaling:
+    replicas: 1
+  containers:
+    ports:
+    - name: api-tls
+      containerPort: 8001
+      protocol: TCP
+    volumeMounts: 
+      - mountPath: /tmp
+        name: tmp-volume
+      - mountPath: /certs
+        name: tls
+  volumes:
+    - name: tmp-volume
+      emptyDir: {}
+    - name: tls
+      secret:
+        secretName: kubernetes-dashboard-certs
+        optional: true
+
+web:
+  scaling:
+    replicas: 1
+  containers:
+    ports:
+    - name: api-tls
+      containerPort: 8001
+      protocol: TCP
+    volumeMounts: 
+      - mountPath: /tmp
+        name: tmp-volume
+      - mountPath: /certs
+        name: tls
+  volumes:
+    - name: tmp-volume
+      emptyDir: {}
+    - name: tls
+      secret:
+        secretName: kubernetes-dashboard-certs
+        optional: true
+
+auth:
+  scaling:
+    replicas: 0
+  volumeMounts: 
+    - mountPath: /tmp
+      name: tmp-volume
+    - mountPath: /certs
+      name: tls
+  volumes:
+    - name: tmp-volume
+      emptyDir: {}
+    - name: tls
+      secret:
+        secretName: kubernetes-dashboard-certs
+        optional: false
