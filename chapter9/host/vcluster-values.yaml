@@ -1,3 +1,14 @@
+controlPlane:
+  distro:
+    k3s:
+      enabled: true
+  statefulSet:
+    scheduling:
+      podManagementPolicy: OrderedReady
 sync:
-  ingresses:
-    enabled: true
+  fromHost:
+    ingressClasses:
+      enabled: true
+  toHost:
+    ingresses:
+      enabled: true
