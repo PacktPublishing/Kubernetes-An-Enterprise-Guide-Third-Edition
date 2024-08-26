@@ -31,6 +31,13 @@ spec:
               tremolo.io/managedByGit: "$useGit$"
             data:
               vcluster-values.yaml: |-
+                sync:
+                  fromHost:
+                    ingressClasses:
+                      enabled: true
+                  toHost:
+                    ingresses:
+                      enabled: true
                 controlPlane:
                   backingStore:
                     database:
