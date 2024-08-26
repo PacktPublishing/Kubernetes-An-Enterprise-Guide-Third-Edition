@@ -38,6 +38,8 @@ spec:
                   toHost:
                     ingresses:
                       enabled: true
+                    pods:
+                      useSecretsForSATokens: true
                 controlPlane:
                   backingStore:
                     database:
