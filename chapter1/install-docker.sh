@@ -34,7 +34,7 @@ echo -e "\n \n******************************************************************
 echo -e "Changing how Daemon restarts are handled by Ubuntu 22.04 by Default"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-sed -i "/#\$nrconf{restart} = 'i';/s/.*/\$nrconf{restart} = 'a';/" /etc/needrestart/needrestart.conf
+sudo sed -i "/#\$nrconf{restart} = 'i';/s/.*/\$nrconf{restart} = 'a';/" /etc/needrestart/needrestart.conf
 
 tput setaf 6
 echo -e "\n \n*******************************************************************************************************************"
