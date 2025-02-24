@@ -55,7 +55,7 @@ You can use any DNS server, to make the example easier to follow, we are using a
 - One DNS record for each exposed CoreDNS pod in the clusters, these entries must be in your base root domain, for our example, foowidgets.k8s - If using the same subnet as the example, the entries would be:  
   
   gslb-ns-nyc-gb     10.2.1.220  
-  gslb-ns-buf-gb     10.2.1.223  
+  gslb-ns-buf-gb     10.2.1.225  
 
 - Create a new delegation for the gb.foowidgets.k8s zone, forwarding to both CoreDNS servers (1) in each K8s cluster - the delegated FQDNs for our CoreDNS servers in our example are: gslb-ns-us-nyc-gb.foowidgets.k8s and gslb-ns-us-buf-gb.foowidgets.k8s.  If you are using a Windows DNS server, you can right click your domain in DNS Manager and select 'New Delegation'.  It will ask you for the domain you want to delegate, enter gb and click next.  The final step is to add the delegated Name Servers - add both name servers, gslb-ns-us-nyc-gb.foowidgets.k8s and gslb-ns-us-buf-gb.foowidgets.k8s. and click next to finish the delegation.  
     
