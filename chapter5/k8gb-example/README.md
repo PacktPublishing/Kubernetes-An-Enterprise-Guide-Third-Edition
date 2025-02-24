@@ -1,4 +1,4 @@
-# K8GB Installation Scripts - (BETA Release) - Last Updated: 1/19/2022  
+# K8GB Installation Scripts - Last Updated: 2/24/2025  
 This is a WIP (Work in Progress) - When the scripts are complete, we will remove the WIP status.  
 This directory contains scripts to create the two clusters used in Chapter 4's K8GB example.    
   
