@@ -28,3 +28,4 @@ coredns:
     create: true
     name: coredns
   serviceType: LoadBalancer
+  loadBalancerIP: 10.3.1.120
