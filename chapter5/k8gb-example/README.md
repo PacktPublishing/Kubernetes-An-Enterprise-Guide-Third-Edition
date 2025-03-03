@@ -1,6 +1,11 @@
 # K8GB Installation Scripts - Last Updated: 2/24/2025  
 This directory contains scripts to create the two clusters used in Chapter 5's K8GB example.    
   
+## Important Notes  
+Depending on what OS, and the configuration of them, you may run into caching issues on clients.   What you will see is that on a Windows client, the client will try to connect to the "original" DNS that was recolved for a certain amount of time before they client will attempt to connect to any "updated" records.  You may also run into caching issues from DNS server configurations, which vary greatly across different resolvers and configurations in organizations.  This is beyond what we want to cover in this example and gets fairly deep into DNS resolution.  
+  
+To keep it simple - we suggest that when you test to see if/how fail over is working, use curl on a Linux machine, or if you are using a Browser or Windows machine to do a curl test, close any applications that were used to make a connection to the NGINX server - (ie: Close your browser and reopen it before connecting again, or close the command promt/powershell window you used to test with curl before each test.)   This will force Windows to bypass the cache, using the most recent, updated, GSLB record, instead of a cached name that may be down.  
+  
 ## Requirements for Cluster Creation  
   
 To create the example from the book, you will need access to the following:  
@@ -10,8 +15,7 @@ To create the example from the book, you will need access to the following:
 - A DNS server with permissions to create a new Zone that will be delegated to the CoreDNS servers in the K8s clusters (DNSmasq will not work for this, you need a full DNS server where you are able to create A-records and zone delegation / conditional forwarding)     
 - The required K8GB DNS entries for the CoreDNS servers in each K8s clusters (For our example, we will use a Windows 2019 Server as the DNS server)  
 - The main Edge DNS server you are using for this implementation should be the default DNS server for your clients.  
-  
-      
+       
 # Using the Scripts to create the Infrastructure    
 The following list contains a high level overview of how the scripts can be used to create the K8GB deployment described in Chapter 5.  
   
@@ -32,6 +36,25 @@ The demo assumes that you have your own DNS server that you can create a delegat
                       (MetalLB Config: 10.3.1.91-10.3.1.120) 
                       (CoreDNS LB IP: 10.3.1.120)  
     
+### K8GB Resource Overview  
+You need to create a K8GB resource to create your GSLB record.  This section explains what each option in our configuration is and what the setting provides.  
+  
+* dnsZone: This is the DNS zone used for GSLB records. The zone "gb.foowidgets.k8s" is where the GSLB configuration will manage DNS records. GSLB helps with routing traffic based on geography or other factors.  
+* edgeDNSZone: This is the main DNS zone where the gslb zone will be delegated. The DNS records in "foowidgets.k8s" will reference the gb.foowidgets.k8s zone, creating a delegation for DNS resolution.  
+* edgeDNSServers: This is the list of DNS server(s) used to resolve the DNS records, usually these are your "standard" DNS servers that clients are assigned. The 10.2.1.14 server will be the main DNS resolver for communication between different GSLB instances in the cluster.  
+* clusterGeoTag: This is the geographical tag for the GSLB instance. "us-buf", and "us-nyc" represents specific geographical locations or clusters, distinguishing this GSLB instance from others in different regions.  
+* extGslbClustersGeoTags: This is a list of external GSLB geo tags that this instance will pair with. We use "us-buf" and "us-nyc" to represent external GSLB instances located in New York City and Buffalo. These pairings are important for load balancing across different regions.  
+* log.format: Specifies the format of the logs. Here, it is set to "simple", meaning the logs will be in a more human-readable format. The alternative is "json", which is structured and more machine-readable.  
+* log.level: Defines the level of detail in the logs. The levels are in increasing order of verbosity: panic, fatal, error, warn, info, debug, and trace. The "trace" level provides the most detailed logging, useful for debugging.  
+* coredns.isClusterService: Specifies whether CoreDNS should be considered as a cluster-wide service or not. Here, it's set to false, meaning this configuration does not treat CoreDNS as a cluster service.  
+* coredns.deployment.skipConfig: When set to true, this skips the creation of a new CoreDNS deployment and uses the CoreDNS deployment that comes with k8gb.  
+* oredns.image.repository: The Docker repository for the CoreDNS plugin used by k8gb. The repository absaoss/k8s_crd refers to the custom CoreDNS plugin image built for the project.  
+* coredns.image.tag: Specifies the image version, which is v0.1.1 in this case.    
+* coredns.serviceAccount.create: When set to true, this will create a new service account for CoreDNS.  
+* coredns.serviceAccount.name: The name of the created service account, which is "coredns".  
+* coredns.serviceType: Specifies the type of service for CoreDNS. Here, it is set to LoadBalancer, which means a load balancer will be provisioned to expose the CoreDNS service externally (if applicable).  
+* coredns.loadBalancerIP: Defines the static IP address to assign to the CoreDNS LoadBalancer service. Here, it's set to 10.3.1.120  
+  
 ### Ubuntu Server - NYC Cluster Build  
 To configure our K8s cluster in NYC, we have a single node for the example that will act as our control plane and worker node, it's an Ubuntu Server 24.04, IP Address: 10.3.1.55  ** Your IP will be different, make a note of it for the steps **  
   
