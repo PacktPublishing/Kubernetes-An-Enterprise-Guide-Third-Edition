@@ -113,12 +113,12 @@ Since the primary GeoTag was set to us-nyc, this should reply with the HTML page
 To make the request fail over to the Buffalo cluster, we will simulate a failure in NYC by scaling the NGINX deployment to 0 replicas.  In the NYC cluster, run the following command:  
   
 ```
-kubectl scale deployment nginx-fe -n demo --replicas=0  
+kubectl scale deployment nginx -n demo --replicas=0  
 ```  
    
 This will cause K8GB to fail the record from the NYC cluster to the Buffalo cluster.  This usually happens within 1-5 seconds.  
   
-Either refresh your browser window, or open a new tab/instance and enter the URL to test the NGINX server, fe.gb.foowidgets.k8s 
+You can try to refresh your browser to see the updated connecting, but as mentioned in the beginning of this page, your client cache may be pointing to the old connection for an amount of time - to bypass this, you should close and reopen your browser and enter the URL to test the NGINX server, fe.gb.foowidgets.k8s 
   
 ![image](https://user-images.githubusercontent.com/60396639/150191509-88daa179-b667-42d7-8b0a-d9225c300c8e.png)
   
