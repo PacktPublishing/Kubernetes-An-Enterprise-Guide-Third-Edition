@@ -109,7 +109,7 @@ The output you will see next will be the new KinD clusters being created.
 ```
 Creating NYC cluster...
 Creating cluster "nyc" ...
- ✓ Ensuring node image (kindest/node:v1.30.0) 🖼
+ ✓ Ensuring node image (kindest/node:v1.32.2) 🖼
  ✓ Preparing nodes 📦 📦
  ✓ Writing configuration 📜
  ✓ Starting control-plane 🕹️
@@ -125,7 +125,7 @@ NYC cluster created successfully.
 
 Creating Buffalo cluster...
 Creating cluster "buffalo" ...
- ✓ Ensuring node image (kindest/node:v1.30.0) 🖼
+ ✓ Ensuring node image (kindest/node:v1.32.2) 🖼
  ✓ Preparing nodes 📦 📦
  ✓ Writing configuration 📜
  ✓ Starting control-plane 🕹️
@@ -156,10 +156,10 @@ docker ps
 Which will output something similar to what you se below:  
 ```
 CONTAINER ID   IMAGE                  COMMAND                  CREATED          STATUS          PORTS                                                                            NAMES
-836b2ed41793   kindest/node:v1.29.2   "/usr/local/bin/entr…"   23 minutes ago   Up 23 minutes   192.168.37.15:53->53/tcp, 192.168.37.15:80->80/tcp, 192.168.37.15:443->443/tcp   buffalo-worker
-deb2b5b98f71   kindest/node:v1.29.2   "/usr/local/bin/entr…"   23 minutes ago   Up 23 minutes   192.168.37.15:6443->6443/tcp                                                     buffalo-control-plane
-105f34aeee16   kindest/node:v1.29.2   "/usr/local/bin/entr…"   23 minutes ago   Up 23 minutes   192.168.37.10:53->53/tcp, 192.168.37.10:80->80/tcp, 192.168.37.10:443->443/tcp   nyc-worker
-41f070bbaa74   kindest/node:v1.29.2   "/usr/local/bin/entr…"   23 minutes ago   Up 23 minutes   192.168.37.10:6443->6443/tcp                                                     nyc-control-plane
+836b2ed41793   kindest/node:v1.32.2   "/usr/local/bin/entr…"   23 minutes ago   Up 23 minutes   192.168.37.15:53->53/tcp, 192.168.37.15:80->80/tcp, 192.168.37.15:443->443/tcp   buffalo-worker
+deb2b5b98f71   kindest/node:v1.32.2   "/usr/local/bin/entr…"   23 minutes ago   Up 23 minutes   192.168.37.15:6443->6443/tcp                                                     buffalo-control-plane
+105f34aeee16   kindest/node:v1.32.2   "/usr/local/bin/entr…"   23 minutes ago   Up 23 minutes   192.168.37.10:53->53/tcp, 192.168.37.10:80->80/tcp, 192.168.37.10:443->443/tcp   nyc-worker
+41f070bbaa74   kindest/node:v1.32.2   "/usr/local/bin/entr…"   23 minutes ago   Up 23 minutes   192.168.37.10:6443->6443/tcp                                                     nyc-control-plane
 ```
   
 You will see that each clusters control plane node and worker node are bound to the matching virtual IP's that were entered.  
@@ -189,8 +189,8 @@ Will show the nodes in the cluster.
   
 ```
 NAME                    STATUS     ROLES           AGE   VERSION
-buffalo-control-plane   NotReady   control-plane   29m   v1.29.2
-buffalo-worker          NotReady   <none>          28m   v1.29.2
+buffalo-control-plane   NotReady   control-plane   29m   v1.32.2
+buffalo-worker          NotReady   <none>          28m   v1.32.2
 ```
   
 Now, we will use the Context to the nyc cluster using kubectl config use-context kind-nyc  
@@ -205,8 +205,8 @@ And finally, to verify the active cluster is the nyc cluster, we will look at th
 kubectl get nodes  
 ```
 NAME                STATUS     ROLES           AGE   VERSION
-nyc-control-plane   NotReady   control-plane   31m   v1.29.2
-nyc-worker          NotReady   <none>          31m   v1.29.2
+nyc-control-plane   NotReady   control-plane   31m   v1.32.2
+nyc-worker          NotReady   <none>          31m   v1.32.2
 ```
   
 You now have two KinD Clusters running on your single host!   
