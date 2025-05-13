@@ -1,0 +1,21 @@
+{
+ "cluster": {
+    "v1": {
+        "Namespace": {
+            
+                "ns-with-ingress": {
+                    "metadata": {
+                        "labels": {
+                             "allowingress": "true"
+                        }
+                    }
+                },
+                "ns-without-ingress": {
+                    "metadata": {
+                    }
+                }
+            
+        }
+    }
+ }   
+}
