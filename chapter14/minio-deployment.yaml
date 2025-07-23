@@ -71,7 +71,7 @@ spec:
           claimName: minio-cfg
       containers:
       - name: minio
-        image: minio/minio:latest
+        image: minio/minio:RELEASE.2023-10-16T04-13-43Z
         imagePullPolicy: IfNotPresent
         args:
         - server
@@ -144,7 +144,7 @@ spec:
         emptyDir: {}
       containers:
       - name: mc
-        image: minio/mc:latest
+        image: minio/mc:RELEASE.2023-10-24T05-18-28Z
         imagePullPolicy: IfNotPresent
         command:
         - /bin/sh
