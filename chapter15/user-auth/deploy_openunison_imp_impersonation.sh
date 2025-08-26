@@ -145,7 +145,7 @@ echo -e "Downloading ouctl utility and moving it to /tmp/ouctl"
 echo -e "*******************************************************************************************************************"
 tput setaf 3
 
-wget https://nexus.tremolo.io/repository/ouctl/ouctl-0.0.11-linux -O /tmp/ouctl
+wget https://nexus.tremolo.io/repository/ouctl/ouctl-0.0.13-linux -O /tmp/ouctl
 chmod +x /tmp/ouctl
 
 tput setaf 5

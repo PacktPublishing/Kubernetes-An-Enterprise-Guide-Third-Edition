@@ -1,4 +1,4 @@
-apiVersion: constraints.gatekeeper.sh/v1
+apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sAllowedRegistries
 metadata:
   name: restrict-openunison-registries
@@ -15,3 +15,5 @@ spec:
         kinds:
         - CronJob
     namespaces: ["testpolicy"]
+  parameters:
+    registries: ["docker.io/nginx/"]
