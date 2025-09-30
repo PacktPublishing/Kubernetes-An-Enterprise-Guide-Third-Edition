@@ -15,9 +15,9 @@ echo -e "\n*********************************************************************
 echo -e "Deploying the NGINX pod"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-kubectl create deployment nginx-web --image bitnami/nginx -n testapp
+kubectl create deployment nginx-web --image nginx -n testapp
 
-kubectl expose deployment nginx-web --port 8080 --target-port 8080 -n testapp
+kubectl expose deployment nginx-web --port 80 --target-port 8080 -n testapp
 
 # Find IP address of Docker Host
 # We need to know the IP of the Host since we use nip.io for name resolution.  Nip.ip names follow the standard <url>.<host ip>.nip.io
