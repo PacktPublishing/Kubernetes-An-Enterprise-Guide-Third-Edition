@@ -169,6 +169,7 @@ spec:
           - "--tls-private-key-file=/certs/tls.key"
           - "--addr=0.0.0.0:8443"
           - "/policies/inject.rego"
+          - "-v0-compatible"
           livenessProbe:
             httpGet:
               path: /health?plugins
