@@ -34,7 +34,7 @@ echo -e "\n \n******************************************************************
 echo -e "Changing how Daemon restarts are handled by Ubuntu 22.04 by Default"
 echo -e "*******************************************************************************************************************"
 tput setaf 2
-sed -i "/#\$nrconf{restart} = 'i';/s/.*/\$nrconf{restart} = 'a';/" /etc/needrestart/needrestart.conf
+sudo sed -i "/#\$nrconf{restart} = 'i';/s/.*/\$nrconf{restart} = 'a';/" /etc/needrestart/needrestart.conf
 
 tput setaf 6
 echo -e "\n \n*******************************************************************************************************************"
@@ -55,7 +55,7 @@ echo -e "***********************************************************************
 tput setaf 2
 echo \
   "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  "$(. /etc/os-release && if [ -n "$UBUNTU_CODENAME" ]; then echo "$UBUNTU_CODENAME"; else echo "$VERSION_CODENAME"; fi;)" stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update -y
 
