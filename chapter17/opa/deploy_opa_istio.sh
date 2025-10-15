@@ -43,11 +43,11 @@ kubectl get cm istio -n istio-system -o yaml > /tmp/istio-config-$(date +"%Y-%m-
 kubectl get cm istio -n istio-system -o json | jq -r '.data.mesh' > /tmp/istio-config-mesh-$(date +"%Y-%m-%d-%H:%M:%S").yaml
 kubectl get cm istio -n istio-system -o json | jq -r '.data.mesh' > /tmp/istio-config/mesh.yaml
 yq -o json /tmp/istio-config/mesh.yaml > /tmp/istio-config/mesh.json
-jq '.extensionProviders[.|length] |= . + {"name":"opa-ext-authz-grpc","envoyExtAuthzGrpc": {"service": "opa-ext-authz-grpc.local","port": "9191"}}'  < /tmp/istio-config/mesh.json > /tmp/istio-config/mesh-patched.json
+jq '.extensionProviders[.|length] |= . + {"name":"opa-ext-authz-grpc","envoyExtAuthzGrpc": {"service": "opa-ext-authz-grpc.local","port": 9191}}'  < /tmp/istio-config/mesh.json > /tmp/istio-config/mesh-patched.json
 yq -o yaml /tmp/istio-config/mesh-patched.json | grep -v null > /tmp/istio-config/mesh
 rm -rf /tmp/istio-system
 mkdir /tmp/istio-system
-cp /tmp/istio-config/mesh /tmp/istio-system/mesh.yaml
+cp /tmp/istio-config/mesh /tmp/istio-system/mesh
 kubectl delete cm istio -n istio-system
 kubectl create cm istio -n istio-system --from-file=/tmp/istio-system
 
