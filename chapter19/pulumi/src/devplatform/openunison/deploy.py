@@ -119,7 +119,6 @@ def deploy_openunison_charts(ca_cert,k8s_provider: Provider, kubernetes_distribu
 
 
     openunison_helm_values = {
-        "image":"docker.io/tremolosecurity/betas:1.0.41",
         "enable_wait_for_job": True,
         "network": {
             "openunison_host": "k8sou." + domain_suffix,

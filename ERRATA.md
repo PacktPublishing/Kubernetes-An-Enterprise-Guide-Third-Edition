@@ -41,3 +41,15 @@ Has an incorrect URL, it should be `k8sou.apps.192-168-2-119.nip.io`:
 export USERINFO=$(echo -n '{"sub":"marc","groups":["group1","group2"]}' | base64 -w 0)
 curl -H "Authorization: Bearer $(curl --insecure -u 'mmosley:start123' https://k8sou.apps.192-168-2-53.nip.io/k8s-api-token/token/user 2>/dev/null| jq -r '.token.id_token')" -H "User-Info: $USERINFO" http://service.192-168-2-53.nip.io/who-am-i
 ```
+
+## Chapter 19, Page 599
+
+The Vault unsealing script needs to be run from your pulumi directory.  instead of `../vault/unseal.sh` it should be `/path/to/Kubernetes-An-Enterprise-Guide-Third-Edition/chapter19/vault/unseal.sh`.
+
+When showing the secrets:
+
+`pulumi config --show-secrets`
+
+## Chapter 19, Page 600
+
+Just as with vault, run the `harbor-get-root-password.sh` script directly from your pulumi stack directory.  Instead of `../scripts/harbor-get-root-password.sh` to `/path/to/Kubernetes-An-Enterprise-Guide-Third-Edition/chapter19/scripts/harbor-get-root-password.sh`
