@@ -257,9 +257,10 @@ args:
         "nginx-ingress": {
             "enabled": False
         },
-        "certmanager": {
-            "install": False,
-        },
+        # "certmanager": {
+        #     "install": False,
+        # },
+        "installCertmanager": False,
         "certsSecretName": "internal-ca",
         "gitlab-runner": {
             "install": False,
