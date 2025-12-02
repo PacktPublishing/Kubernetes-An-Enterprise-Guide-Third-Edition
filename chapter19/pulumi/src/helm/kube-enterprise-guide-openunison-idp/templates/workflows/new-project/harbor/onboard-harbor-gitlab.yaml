@@ -49,7 +49,7 @@ spec:
             response = http.send(newRobotRequest, BodyHandlers.ofString());
             jsonResp = response.body();
 
-            if (response.statusCode() == 201 || response.statusCode() == 204) {
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
               task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"harbor-robot",nsName + "-gitlab-pull");
             } else {
               throw new Error("Could not create harbor project: " + response.statusCode() + " / " + response.body());

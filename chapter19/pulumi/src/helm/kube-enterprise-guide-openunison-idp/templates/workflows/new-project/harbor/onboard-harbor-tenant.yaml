@@ -82,6 +82,7 @@ spec:
 
             response = http.send(authTokenRequest, BodyHandlers.ofString());
             jsonResp = response.body();
+            System.out.println("vault-json-response:" + jsonResp);
             respToken = JSON.parse(jsonResp);
             authToken = respToken.auth["client_token"];
 
@@ -98,7 +99,7 @@ spec:
             response = http.send(newSecretRequest, BodyHandlers.ofString());
             jsonResp = response.body();
 
-            if (response.statusCode() == 200 || response.statusCode() == 204) {
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
               task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-secret-" + nsName + "-" + env + "-default","pullsecret");
             } else {
               throw new Error("Could not create secret: " + response.statusCode() + " / " + response.body());
