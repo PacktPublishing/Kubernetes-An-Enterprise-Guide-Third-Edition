@@ -90,7 +90,7 @@ data:
     kubectl config set-context controlplane --user=controlplane --cluster=controlplane
     kubectl config set current-context controlplane
 
-    vcluster create $VCLUSTER_NAME --distro k3s --upgrade -f  /etc/openunison/vcluster-values.yaml  -n $VCLUSTER_NAME --connect=false
+    vcluster create $VCLUSTER_NAME --upgrade -f  /etc/openunison/vcluster-values.yaml  -n $VCLUSTER_NAME --connect=false
     while [[ $(kubectl get pods -l vcluster.loft.sh/namespace=kube-system -n $VCLUSTER_NAME -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for vcluster clusterdns pod" && sleep 1; done
     sleep 60
     kubectl create configmap deploymentcomplete -n $VCLUSTER_NAME

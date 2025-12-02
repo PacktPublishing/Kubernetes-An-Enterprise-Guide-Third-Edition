@@ -137,6 +137,7 @@ spec:
 
             response = http.send(authTokenRequest, BodyHandlers.ofString());
             jsonResp = response.body();
+            System.out.println("vault-json-response:" + jsonResp);
             respToken = JSON.parse(jsonResp);
             authToken = respToken.auth["client_token"];
 
@@ -166,7 +167,7 @@ spec:
 
             response = http.send(createAuth, BodyHandlers.ofString());
             
-            if (response.statusCode() == 204) {
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
               task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-authentication-method",'vcluster-' + nsName + "-" + env);
             } else {
               throw new Error("Could not create authentication method: " + response.statusCode() + " / " + response.body());
@@ -204,7 +205,7 @@ spec:
 
             response = http.send(createAuthConfig, BodyHandlers.ofString());
             
-            if (response.statusCode() == 204) {
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
               task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-authentication-config",'vcluster-' + nsName + "-" + env);
             } else {
               throw new Error("Could not create authentication config: " + response.statusCode() + " / " + response.body());
@@ -252,7 +253,7 @@ spec:
             System.out.println(response.statusCode());
             System.out.println(response.body());
 
-            if (response.statusCode() == 204) {
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
               task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-policy",'vcluster-' + nsName + "-" + env);
             } else {
               throw new Error("Could not create policy: " + response.statusCode() + " / " + response.body());
@@ -279,7 +280,7 @@ spec:
 
             response = http.send(createRole, BodyHandlers.ofString());
             
-            if (response.statusCode() == 204) {
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
               task.getConfigManager().getProvisioningEngine().logAction("k8s",true,ActionType.Add,approvalID, task.getWorkflow(),"vault-auth-role",'vcluster-' + nsName + "-" + env + "-cluster-read");
             } else {
               throw new Error("Could not create role: " + response.statusCode() + " / " + response.body());
